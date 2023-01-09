@@ -253,17 +253,6 @@ def _popen (expr) :
     return p.communicate()
 
 
-
-
-
-def _popen (expr) :
-    cmd = f"/usr/bin/python3 ../lex.py --expr {expr}"
-    sp = split(cmd)
-    p = Popen(sp, stdout= PIPE, stderr= PIPE, encoding= "utf-8")
-    return p.communicate()
-
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
