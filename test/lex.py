@@ -207,6 +207,63 @@ def test_quoted_unicode () :
     print("OK")
 
 
+def test_check_nontokenized_start () :
+    print("TEST CHECK NONTOKENIZED START - ", end="", flush= True)
+
+    stdout, stderr = _popen("!@#()")
+    msg = "Exception: Non-tokenized range at start: 0 3  \"!@#\""
+
+    if not (msg in stderr):
+        print(f"FAIL - non-tokenized @ char at start\nstderr: {stderr}", flush= True)
+        exit()
+
+    print("OK")
+
+def test_check_nontokenized_middle () :
+    print("TEST CHECK NONTOKENIZED MIDDLE - ", end="", flush= True)
+
+    stdout, stderr = _popen("(!@#)")
+    msg = "Exception: Non-tokenized range at middle: 1 4  \"!@#\"" 
+
+    if not (msg in stderr):
+        print(f"FAIL - non-tokenized @ char at middle\nstderr: {stderr}", flush= True)
+        exit()
+
+    print("OK")
+
+def test_check_nontokenized_end () :
+    print("TEST CHECK NONTOKENIZED END - ", end="", flush= True)
+
+    stdout, stderr = _popen("()!@#")
+    msg = "Exception: Non-tokenized range at end: 2 5  \"!@#\"" 
+
+    if not (msg in stderr):
+        print(f"FAIL - non-tokenized @ char at end\nstderr: {stderr}", flush= True)
+        #print(stdout)
+        exit()
+
+    print("OK")
+
+
+
+def _popen (expr) :
+    cmd = f"/usr/bin/python3 ../lex.py --expr \"{expr}\""
+    sp = split(cmd)
+    p = Popen(sp, stdout= PIPE, stderr= PIPE, encoding= "utf-8")
+    return p.communicate()
+
+
+
+
+
+def _popen (expr) :
+    cmd = f"/usr/bin/python3 ../lex.py --expr {expr}"
+    sp = split(cmd)
+    p = Popen(sp, stdout= PIPE, stderr= PIPE, encoding= "utf-8")
+    return p.communicate()
+
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

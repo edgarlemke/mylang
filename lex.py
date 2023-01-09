@@ -113,8 +113,43 @@ def tokenize (code):
     # sort token_list list by start position of the token
     token_list.sort(key=lambda x: x[1]) 
 
+    # check for non-tokenized ranges
+    _check_nontokenized(token_list, code)
 
     return token_list
+
+
+def _check_nontokenized (token_list, code) :
+    last_t = None
+    for t in token_list:
+        t_start = int(t[1])
+
+        # check for the start
+        if last_t == None:
+            if t_start > 0:
+                ntrange = code[0:t_start]
+                raise Exception(f"Non-tokenized range at start: 0 {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
+        
+        # check for the middle
+        else:
+            last_t_end = int(last_t[2])
+
+            if t_start > last_t_end:
+                ntrange = code[last_t_end:t_start]
+                raise Exception(f"Non-tokenized range at middle: {last_t_end} {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
+
+        last_t = t
+
+    # check for the end
+    t_end = int(t[2])
+    code_end = len(code)
+    if t_end < code_end:
+        ntrange = code[t_end:code_end]
+        raise Exception(f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
+
+
+
+
 
 
 def list_print (l) :
