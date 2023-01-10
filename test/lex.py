@@ -59,7 +59,7 @@ def test_par_open_space_par_close () :
     """
     basictest(
             "TEST PAR_OPEN SPACE PAR_CLOSE - ",
-            """(("PAR_OPEN" "0" "1" "(")("SPACE" "1" "2" " ")("PAR_CLOSE" "2" "3" ")"))\n""",
+            """(("PAR_OPEN" "0" "1" "(") ("SPACE" "1" "2" " ") ("PAR_CLOSE" "2" "3" ")"))\n""",
             "( )"
     )
 
@@ -92,7 +92,7 @@ def test_abc_xyz () :
     """ 
     basictest(
             "TEST (\"abc\" \"xyz\") - ",
-            """(("PAR_OPEN" "0" "1" "(")("QUOTE" "1" "2" "\"")("VALUE" "2" "5" "abc")("QUOTE" "5" "6" "\"")("SPACE" "6" "7" " ")("QUOTE" "7" "8" "\"")("VALUE" "8" "11" "xyz")("QUOTE" "11" "12" "\"")("PAR_CLOSE" "12" "13" ")"))\n""",
+            """(("PAR_OPEN" "0" "1" "(") ("QUOTE" "1" "2" "\"") ("VALUE" "2" "5" "abc") ("QUOTE" "5" "6" "\"") ("SPACE" "6" "7" " ") ("QUOTE" "7" "8" "\"") ("VALUE" "8" "11" "xyz") ("QUOTE" "11" "12" "\"") ("PAR_CLOSE" "12" "13" ")"))\n""",
             "(\\\"abc\\\" \\\"xyz\\\")"
     )
 

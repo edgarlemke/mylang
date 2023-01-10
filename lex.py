@@ -4,6 +4,8 @@
 import argparse
 import re
 
+import list as list_
+
 
 
 def tokenize (code):
@@ -24,6 +26,7 @@ def tokenize (code):
         ["PAR_OPEN", "\("],
         ["PAR_CLOSE", "\)"],
         ["SPACE", " "],
+        ["BREAKLINE", "\n"],
         ["QUOTE", "\""],
         ["VALUE", "\w+"],
     ]
@@ -116,6 +119,13 @@ def tokenize (code):
     # check for non-tokenized ranges
     _check_nontokenized(token_list, code)
 
+    # remove breaklines
+    cp = token_list.copy()
+    for token in cp:
+        if token[0] == "BREAKLINE":
+            cp.remove(token)
+    token_list = cp
+
     return token_list
 
 
@@ -147,45 +157,6 @@ def _check_nontokenized (token_list, code) :
         ntrange = code[t_end:code_end]
         raise Exception(f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
 
-
-
-
-
-
-def list_print (l) :
-    """
-    Convert Python3 lists to their printable version in LISP-like format
-
-    Returns a str
-    """
-
-    # lists always start with (
-    to_print = ["("]
-
-    # iter over list, looking for other lists to convert
-    for i in l:
-        # if found a list, call this same function to convert it
-        if type(i) == list:
-            cvt = list_print(i)
-
-        # if didn't find a list, put the value between quotes for printing
-        else:
-            cvt = "\"%s\"" % str(i)
-
-        # if there's previous content in to_print list, add a space before our new content
-        if len(to_print) > 1 and to_print[len(to_print)-1] != ")" and cvt[0] != "(": 
-            to_print.append(" ")
-
-        # append the converted new content to to_print
-        to_print.append(cvt)
-
-    # lists always end with )
-    to_print.append(")")
-
-    # join the to_print list into a str
-    r = "".join(to_print)
-
-    return r
 
 if __name__ == "__main__":
 
@@ -221,4 +192,4 @@ if __name__ == "__main__":
     # generate token list from content variable
     token_list = tokenize(expr)
 
-    print( list_print(token_list) )
+    print( list_.list_print(token_list) )
