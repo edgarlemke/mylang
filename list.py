@@ -17,9 +17,33 @@ def list_print (l) :
         if type(i) == list:
             cvt = list_print(i)
 
-        # if didn't find a list, put the value between quotes for printing
+        # if didn't find a list, quote and escape needed characters
         else:
-            cvt = "\"%s\"" % str(i)
+            str_i = str(i)
+
+            quoted_chars = ["(", ")", " ", "\""]
+            esc_chars = ["\""]
+
+            cvt_li = []
+            quote = False
+            # iter over string checking for quoted and escaped chars
+            for ch in str_i:
+                # detect need for quotes
+                if ch in quoted_chars:
+                    quote = True
+
+                # escape char
+                if ch in esc_chars:
+                    ch = f"\\{ch}"
+
+                cvt_li.append(ch)
+
+            # add quotes if needed
+            if quote:
+                cvt_li = ["\""] + cvt_li + ["\""]
+            
+            # join back into str
+            cvt = "".join(cvt_li)
 
         # if there's previous content in to_print list, add a space before our new content
         if len(to_print) > 1 and to_print[len(to_print)-1] != ")":
