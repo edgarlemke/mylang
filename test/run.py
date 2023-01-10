@@ -4,16 +4,15 @@ from subprocess import Popen, PIPE
 from shlex import split
 
 
-def test_parser_rule__expr__quote_value_quote () :
-    print("TEST PARSER RULE [[\"EXPR\"], [\"QUOTE\", \"VALUE\", \"QUOTE\"] - ", end="", flush= True)
+def basictest (msg, expr, expected) :
+    print(msg, end="", flush= True)
 
-    stdout, stderr = _popen("\\\" \\\"")
+    stdout, stderr = _popen(expr)
 
     if stderr != "":
         print(f"FAIL - stderr not empty: {stderr}")
         exit()
 
-    expected = """(("EXPR" (("QUOTE" "0" "1" "\"") ("VALUE" "1" "2" " ") ("QUOTE" "2" "3" "\""))))"""
     if stdout != expected:
         print(f"""FAIL - stdout not corrent:
             expected:   {expected}
@@ -21,6 +20,12 @@ def test_parser_rule__expr__quote_value_quote () :
         exit()
 
     print("OK")
+
+def test_parser_rule__expr__quote_value_quote () :
+    basictest("TEST PARSER RULE  EXPR -> QUOTE VALUE QUOTE - ", "\\\" \\\"", """(("EXPR" (("QUOTE" "0" "1" "\"") ("VALUE" "1" "2" " ") ("QUOTE" "2" "3" "\""))))""")
+
+def test_parser_rule__list__par_open_par_close () :
+    basictest("TEST PARSER RULE  LIST -> PAR_OPEN PAR_CLOSE - ", "()", """(("EXPR" (("LIST" (("PAR_OPEN" "0" "1" "(") ("PAR_CLOSE" "1" "2" ")"))))))""")
 
 
 def _popen (expr) :

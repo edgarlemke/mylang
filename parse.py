@@ -88,13 +88,24 @@ def _get_bottom_up_order (token_list) :
 def _match (buf_slice):
     #print(f"buf_slice: {buf_slice}")
     rules = [
-        [["EXPR"],["QUOTE", "VALUE", "QUOTE"]],
+        [["EXPR"], ["QUOTE", "VALUE", "QUOTE"]],
+        [["EXPR"], ["LIST"]],
+        #[["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
+        #[["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]]
+        [["LIST"], ["PAR_OPEN", "PAR_CLOSE"]],
+        #[["LIST"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]
+        #[["LIST"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]
+        #[["EXPR"], ["OP_SET_TOKEN", "EXPR", "EXPR"]],
+        #[["EXPR"], ["OP_SET_PARSER_RULE", "EXPR", "EXPR"]],
     ]
 
     for r in rules:
         matches = []
 
         for i, item in enumerate(buf_slice):
+            if i > len(r[1])-1:
+                break
+
             if item[0] == r[1][i]:
                 matches.append(True)
 
