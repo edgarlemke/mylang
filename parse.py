@@ -96,6 +96,7 @@ def _match (buf_slice):
         [["LIST"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
 
         [["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
+        [["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
     ]
 
     for r in rules:

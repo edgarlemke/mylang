@@ -38,6 +38,18 @@ def test_parser_rule__expr_group__expr_space_expr () :
     """
     basictest("TEST PARSER RULE  EXPR_GROUP -> EXPR SPACE EXPR - ", "(\\\"abc\\\" \\\"xyz\\\")", """(("EXPR" (("LIST" (("PAR_OPEN" "0" "1" "(") ("EXPR_GROUP" (("EXPR" (("QUOTE" "1" "2" "\"") ("VALUE" "2" "5" "abc") ("QUOTE" "5" "6" "\""))) ("SPACE" "6" "7" " ") ("EXPR" (("QUOTE" "7" "8" "\"") ("VALUE" "8" "11" "xyz") ("QUOTE" "11" "12" "\""))))) ("PAR_CLOSE" "12" "13" ")"))))))""")
 
+def test_parser_rule__expr_group__expr_group_space_expr () :
+    """
+    Tests
+        EXPR_GROUP -> EXPR_GROUP SPACE EXPR
+        LIST -> PAR_OPEN EXPR_GROUP PAR_CLOSE
+    """
+    basictest(
+            "TEST PARSER RULE  EXPR_GROUP -> EXPR_GROUP SPACE EXPR - ",
+            "(\\\"abc\\\" \\\"jkl\\\" \\\"xyz\\\")",
+            """(("EXPR" (("LIST" (("PAR_OPEN" "0" "1" "(") ("EXPR_GROUP" (("EXPR_GROUP" (("EXPR" (("QUOTE" "1" "2" "\"") ("VALUE" "2" "5" "abc") ("QUOTE" "5" "6" "\""))) ("SPACE" "6" "7" " ") ("EXPR" (("QUOTE" "7" "8" "\"") ("VALUE" "8" "11" "jkl") ("QUOTE" "11" "12" "\""))))) ("SPACE" "12" "13" " ") ("EXPR" (("QUOTE" "13" "14" "\"") ("VALUE" "14" "17" "xyz") ("QUOTE" "17" "18" "\""))))) ("PAR_CLOSE" "18" "19" ")"))))))"""
+    )
+            
 
 def _popen (expr) :
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-parse-tree"
