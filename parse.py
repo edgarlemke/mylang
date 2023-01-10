@@ -55,38 +55,7 @@ def parse (token_list) :
     return parsetree
 
 
-def _get_bottom_up_order (token_list) :
-    bottom_up_order = {}
-
-    def _follow(li, depth):
-
-        if depth not in bottom_up_order.keys():
-            bottom_up_order[depth] = []
-
-        bottom_up_order[depth].append(li)
-
-        for l in li:
-            if type(l) != list:
-                continue
-
-            _follow(l, depth+1)
-
-    _follow(token_list, 0)
-
-    # reverse
-    rev_bottom_up_order = []
-    rev = list(bottom_up_order.keys())
-    rev.reverse()
-
-    for i, key in enumerate(rev):
-        rev_bottom_up_order.append( bottom_up_order[key] )
-    bottom_up_order = rev_bottom_up_order
-
-    return bottom_up_order
-
-
 def _match (buf_slice):
-    #print(f"buf_slice: {buf_slice}")
     rules = [
         [["EXPR"], ["QUOTE", "VALUE", "QUOTE"]],
         [["EXPR"], ["LIST"]],
@@ -112,5 +81,4 @@ def _match (buf_slice):
         if all(matches) and len(matches) == len(r[1]):
             return r
 
-    #raise Exception(f"No parser rule found for list: {buf_slice}")
     return False
