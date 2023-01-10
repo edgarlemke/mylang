@@ -3,29 +3,6 @@
 
 def parse (token_list) :
 
-#    parsetree = _get_bottom_up_order(token_list)
-#    #print(parsetree)
-#
-#    #parsetree = _parse_lit_tokens(parsetree)
-#    treecp = parsetree.copy()[1:]
-#    print(treecp)
-#    print(len(treecp))
-#
-#    for oi, order_list in enumerate(treecp):
-#        for i, li in enumerate(order_list):
-#            rule = _match(li)
-#
-#            new = rule[0]
-#            new.append(li)
-#
-#            treecp[oi][i] = new
-#
-#            #print(oi+1)
-#            #treecp[oi+1]
-#
-#    print(treecp)
-
-
     buf = []
     token_ct = 0
     while True:
@@ -106,25 +83,6 @@ def _get_bottom_up_order (token_list) :
     bottom_up_order = rev_bottom_up_order
 
     return bottom_up_order
-
-
-
-#def _parse_lit_tokens (parsetree) :
-#    lit_tokens = ["PAR_OPEN", "PAR_CLOSE", "SPACE", "QUOTE", "VALUE"]
-#
-#    for order in parsetree.keys():
-#        order_li = parsetree[order]
-#
-#        for li in order_li:
-#            if li[0] in lit_tokens:
-#                lit_li = ["LIT", li]
-#
-#                for ho_li_index, ho_li in enumerate( parsetree[order+1].copy() ):
-#                    for ho_li_ch_index, ho_li_ch in enumerate(ho_li):
-#                        if ho_li_ch == li:
-#                            parsetree[order+1][ho_li_index][ho_li_ch_index] = lit_li
-#
-#    return parsetree
 
 
 def _match (buf_slice):
