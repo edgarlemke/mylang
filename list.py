@@ -27,14 +27,14 @@ def list_print (l) :
             cvt_li = []
             quote = False
             # iter over string checking for quoted and escaped chars
-            for ch in str_i:
+            for index, ch in enumerate(str_i):
                 # detect need for quotes
                 if ch in quoted_chars:
                     quote = True
 
                 # escape char
-                if ch in esc_chars:
-                    ch = f"\\{ch}"
+                if ch in esc_chars and str_i[index-1] != "\\":
+                  ch = f"\\{ch}"
 
                 cvt_li.append(ch)
 

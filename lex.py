@@ -15,7 +15,27 @@ def tokenize (code):
     Returns a list
     """
 
-    # return variable
+    token_list = _match_tokens(code)
+    token_list = _match_value_tokens(token_list, code)
+    token_list = _decide_dup_tokens(token_list)
+
+    # sort token_list list by start position of the token
+    token_list.sort(key=lambda x: x[1]) 
+
+    # check for non-tokenized ranges
+    _check_nontokenized(token_list, code)
+
+    # remove breaklines
+    cp = token_list.copy()
+    for token in cp:
+        if token[0] == "BREAKLINE":
+            cp.remove(token)
+    token_list = cp
+
+    return token_list
+
+
+def _match_tokens (code) :
     token_list = []
 
     # rules list
@@ -51,6 +71,10 @@ def tokenize (code):
             #print(token)
             token_list.append(token)
 
+    return token_list
+
+
+def _match_value_tokens (token_list, code) :
     # match VALUE tokens
     quotes = []
     for token in token_list:
@@ -88,10 +112,19 @@ def tokenize (code):
 
         i += 2
 
+    return token_list
+
+
+def _decide_dup_tokens (token_list) :
     # remove tokens with same start and end (meant for VALUE tokens)
-    cp = token_list.copy()
-    for token in cp:
-        for token2 in cp:
+    token_list_iter = token_list.copy()
+    removed = []
+    for token in token_list_iter:
+        for token2 in token_list_iter:
+            # skip already remover tokens
+            if token2 in removed:
+                continue
+
             # change only different tokens, skip non-VALUE tokens
             if id(token) == id(token2) or token[0] != "VALUE":
                 continue
@@ -102,31 +135,21 @@ def tokenize (code):
             if (token[1] == token2[1]) and (token[2] == token2[2]):
                 # remove duplicated VALUE tokens
                 if token2[0] == "VALUE":
-                    cp.remove(token2)
+                    token_list.remove(token2)
+                    removed.append(token2)
 
                 # remove SPACE, PAR_OPEN and PAR_CLOSE tokens that correspond to VALUE tokens between QUOTE tokens
                 if token2[0] in ['SPACE','PAR_OPEN','PAR_CLOSE']:
-                    cp.remove(token2)
+                    token_list.remove(token2)
+                    removed.append(token2)
             
-            ## remove QUOTE tokens that correspond to scaped quotes between QUOTE tokens
+            # remove QUOTE tokens that correspond to scaped quotes between QUOTE tokens
             if token2[0] == "QUOTE" and token[1] == token2[1]-1 and token[2] == token2[2]:
-               cp.remove(token2)
-    token_list = cp
-
-    # sort token_list list by start position of the token
-    token_list.sort(key=lambda x: x[1]) 
-
-    # check for non-tokenized ranges
-    _check_nontokenized(token_list, code)
-
-    # remove breaklines
-    cp = token_list.copy()
-    for token in cp:
-        if token[0] == "BREAKLINE":
-            cp.remove(token)
-    token_list = cp
+               token_list.remove(token2)
+               removed.append(token2)
 
     return token_list
+
 
 
 def _check_nontokenized (token_list, code) :
