@@ -82,17 +82,17 @@ def test_abc_xyz () :
     `(\"abc\" \"xyz\")` expression should return:
         one PAR_OPEN token
         one QUOTE token
-        one VALUE token
+        one QVALUE token
         one QUOTE token
         one SPACE token
         one QUOTE token
-        one VALUE token
+        one QVALUE token
         one QUOTE token
         one PAR_CLOSE token
     """ 
     basictest(
             "TEST (\"abc\" \"xyz\") - ",
-            """((PAR_OPEN 0 1 "(") (QUOTE 1 2 "\\\"") (VALUE 2 5 abc) (QUOTE 5 6 "\\\"") (SPACE 6 7 " ") (QUOTE 7 8 "\\\"") (VALUE 8 11 xyz) (QUOTE 11 12 "\\\"") (PAR_CLOSE 12 13 ")"))\n""",
+            """((PAR_OPEN 0 1 "(") (QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\"") (SPACE 6 7 " ") (QUOTE 7 8 "\\\"") (QVALUE 8 11 xyz) (QUOTE 11 12 "\\\"") (PAR_CLOSE 12 13 ")"))\n""",
             "(\\\"abc\\\" \\\"xyz\\\")"
     )
 

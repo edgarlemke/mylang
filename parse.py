@@ -57,7 +57,8 @@ def parse (token_list) :
 
 def _match (buf_slice):
     rules = [
-        [["EXPR"], ["QUOTE", "VALUE", "QUOTE"]],
+        [["EXPR"], ["VALUE"]],
+        [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
         [["EXPR"], ["LIST"]],
 
         [["LIST"], ["PAR_OPEN", "PAR_CLOSE"]],
@@ -68,6 +69,7 @@ def _match (buf_slice):
         [["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
     ]
 
+    all_matches = []
     for r in rules:
         matches = []
 
@@ -79,6 +81,24 @@ def _match (buf_slice):
                 matches.append(True)
 
         if all(matches) and len(matches) == len(r[1]):
-            return r
+            #return r
+            all_matches.append(r)
+
+
+    largest = None
+    for m in all_matches:
+        if largest == None:
+            largest = m
+            continue
+
+        if len(largest[1]) < len(m[1]):
+            largest = m
+            continue
+
+        if len(largest[1]) == len(m[1]):
+            raise Exception(f"Rule mismatch: {largest} {m}")
+
+    if largest != None:
+        return largest
 
     return False

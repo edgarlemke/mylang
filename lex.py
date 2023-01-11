@@ -104,10 +104,10 @@ def _match_value_tokens (token_list, code) :
             end_quote = quotes[i+1]
             value_end = end_quote[1]
 
-        # if start is different from end, add quoted VALUE token to list
+        # if start is different from end, add QVALUE token to list
         if value_start != value_end:
             value = code[value_start : value_end]
-            token = ["VALUE", value_start, value_end, value]
+            token = ["QVALUE", value_start, value_end, value]
             token_list.append(token)
 
         i += 2
@@ -126,27 +126,35 @@ def _decide_dup_tokens (token_list) :
                 continue
 
             # change only different tokens, skip non-VALUE tokens
-            if id(token) == id(token2) or token[0] != "VALUE":
+            if id(token) == id(token2):
                 continue
 
-            # token[0] is always "VALUE"...
+            if token[0] == "VALUE":
+                # remotions for tokens of same start and end
+                if (token[1] == token2[1]) and (token[2] == token2[2]):
+                    # remove duplicated VALUE tokens
+                    if token2[0] == "VALUE":
+                        token_list.remove(token2)
+                        removed.append(token2)
+    
+            elif token[0] == "QVALUE":
+                # remotions for tokens of same start and end
+                if (token[1] == token2[1]) and (token[2] == token2[2]):
+                    # remove duplicated VALUE and QVALUE tokens
+                    if token2[0] in ["VALUE", "QVALUE"]:
+                        token_list.remove(token2)
+                        removed.append(token2)
+    
+                    # remove SPACE, PAR_OPEN and PAR_CLOSE tokens that correspond to VALUE tokens between QUOTE tokens
+                    if token2[0] in ['SPACE','PAR_OPEN','PAR_CLOSE']:
+                        token_list.remove(token2)
+                        removed.append(token2)
+                
+                # remove QUOTE tokens that correspond to scaped quotes between QUOTE tokens
+                if token2[0] == "QUOTE" and token[1] == token2[1]-1 and token[2] == token2[2]:
+                   token_list.remove(token2)
+                   removed.append(token2)
 
-            # remotions for tokens of same start and end
-            if (token[1] == token2[1]) and (token[2] == token2[2]):
-                # remove duplicated VALUE tokens
-                if token2[0] == "VALUE":
-                    token_list.remove(token2)
-                    removed.append(token2)
-
-                # remove SPACE, PAR_OPEN and PAR_CLOSE tokens that correspond to VALUE tokens between QUOTE tokens
-                if token2[0] in ['SPACE','PAR_OPEN','PAR_CLOSE']:
-                    token_list.remove(token2)
-                    removed.append(token2)
-            
-            # remove QUOTE tokens that correspond to scaped quotes between QUOTE tokens
-            if token2[0] == "QUOTE" and token[1] == token2[1]-1 and token[2] == token2[2]:
-               token_list.remove(token2)
-               removed.append(token2)
 
     return token_list
 
