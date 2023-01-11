@@ -16,6 +16,11 @@ def tokenize (code):
     """
 
     token_list = _match_tokens(code)
+    
+    if len(token_list) == 0:
+        raise Exception("No token match!")
+
+
     token_list = _match_value_tokens(token_list, code)
     token_list = _decide_dup_tokens(token_list)
 
@@ -121,8 +126,8 @@ def _decide_dup_tokens (token_list) :
     removed = []
     for token in token_list_iter:
         for token2 in token_list_iter:
-            # skip already remover tokens
-            if token2 in removed:
+            # skip already removed tokens
+            if token in removed or token2 in removed:
                 continue
 
             # change only different tokens, skip non-VALUE tokens
@@ -136,10 +141,10 @@ def _decide_dup_tokens (token_list) :
                     if token2[0] == "VALUE":
                         token_list.remove(token2)
                         removed.append(token2)
-    
+
             elif token[0] == "QVALUE":
                 # remotions for tokens of same start and end
-                if (token[1] == token2[1]) and (token[2] == token2[2]):
+                if ((token[1] == token2[1]) and (token[2] >= token2[2])) or ((token[1] <= token2[1]) and (token[2] == token2[2])):
                     # remove duplicated VALUE and QVALUE tokens
                     if token2[0] in ["VALUE", "QVALUE"]:
                         token_list.remove(token2)

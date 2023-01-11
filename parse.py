@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
 
-def parse (token_list) :
+def parse (token_list, root) :
 
     buf = []
     token_ct = 0
+
+    last_found_rule = None
     while True:
         # check token_ct
         if token_ct == len(token_list):
@@ -28,6 +30,7 @@ def parse (token_list) :
 
                 # ... found matching rule
                 found_rule = True
+                #print(f"match - rule {rule} buf_slice {buf_slice}")
 
                 # reduce
                 #
@@ -38,7 +41,7 @@ def parse (token_list) :
                     popped.append( buf.pop(i) )
                 #
                 # substitute the slice with target
-                inplace = rule[0]
+                inplace = rule[0].copy()
                 inplace.append(popped)
                 buf.insert(i, inplace)
                 #
@@ -47,7 +50,23 @@ def parse (token_list) :
 
             # if found no rule in buffer slices break out of while loop that looks for rules
             if not found_rule:
+
+                all_tokens_buffered = token_ct + 1 == len(token_list)
+                if not all_tokens_buffered:
+                    break
+
+                # ... all tokens have been buffered
+
+                buff_len_one = len(buf) == 1
+                buff_expr = buf[0][0] == root
+                if not (buff_len_one and buff_expr):
+                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\nbuf: {buf}")
+
+
                 break
+            
+            else:
+                last_found_rule = inplace
 
         token_ct += 1
 
@@ -67,6 +86,7 @@ def _match (buf_slice):
 
         [["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
         [["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
+
     ]
 
     all_matches = []
@@ -99,6 +119,7 @@ def _match (buf_slice):
             raise Exception(f"Rule mismatch: {largest} {m}")
 
     if largest != None:
+        #print(f"buf_slice: {buf_slice}\nlargest: {largest}\n")
         return largest
 
     return False

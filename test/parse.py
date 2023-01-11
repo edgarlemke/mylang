@@ -54,6 +54,21 @@ def test_parser_rule__expr_group__expr_group_space_expr () :
     )
 
 
+def test_invalid_syntax () :
+    print("TEST INVALID SYNTAX - ", end="")
+
+    stdout, stderr = _popen("())")
+
+    expected = "Invalid syntax!"
+    if not (expected in stderr):
+        print(f"""FAIL - stderr not correct
+                expected: {expected}
+                got: {stderr}""")
+        exit()
+
+    print("OK")
+
+
 def _popen (expr) :
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-parse-tree"
     sp = split(cmd)

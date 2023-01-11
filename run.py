@@ -9,7 +9,7 @@ import list as list_
 
 def run (expr, print_parse_tree= False) :
     token_list = lex.tokenize(expr) 
-    parsetree = parse.parse(token_list)
+    parsetree = parse.parse(token_list, "EXPR")
 
     if print_parse_tree:
         print( list_.list_print(parsetree), end="" )

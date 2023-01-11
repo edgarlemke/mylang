@@ -96,8 +96,6 @@ def test_abc_xyz () :
             "(\\\"abc\\\" \\\"xyz\\\")"
     )
 
-
-
 def _test_unicode (i) :
     ch = chr(i)
     cat = unicodedata.category(ch)
@@ -207,6 +205,23 @@ def test_quoted_unicode () :
     print("OK")
 
 
+def test_no_token_match () :
+    print("TEST NO TOKEN MATCH - ", end= "")
+
+    p = Popen(split("/usr/bin/python3 ../lex.py --expr \"\""), stdout= PIPE, stderr= PIPE, encoding= "utf-8")
+    stdout, stderr = p.communicate()
+
+    expected = "No token match!"
+
+    if not (expected in stderr):
+        print(f"""FAIL - stderr not correct: 
+        expected: {expected}
+        got: {stderr}""")
+        exit()
+
+    print("OK")
+
+
 def test_check_nontokenized_start () :
     print("TEST CHECK NONTOKENIZED START - ", end="", flush= True)
 
@@ -260,6 +275,7 @@ def test_check_no_argument () :
         exit()
 
     print("OK")
+
 
 
 
