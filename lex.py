@@ -53,7 +53,28 @@ def _match_tokens (code) :
         ["SPACE", " "],
         ["BREAKLINE", "\n"],
         ["QUOTE", "\""],
-        ["VALUE", "\w+"],
+
+        #["VALUE", "\w+"],
+        ["INT", "[0-9]+"],
+
+        ["INCL", "incl"],
+
+        ["FN", "fn"],
+        ["CALL", "call"],
+        ["RET", "ret"],
+
+        ["SET", "set"],
+        ["MUT", "mut"],
+
+        ["RES", "res"],
+
+        ["IF", "if"],
+        ["ELSE", "else"],
+        ["ELIF", "elif"],
+
+        ["WHILE", "while"],
+
+        ["FOR", "for"],
     ]
 
     # iter over rules list matching tokens
@@ -121,7 +142,6 @@ def _match_value_tokens (token_list, code) :
 
 
 def _decide_dup_tokens (token_list) :
-    # remove tokens with same start and end (meant for VALUE tokens)
     token_list_iter = token_list.copy()
     removed = []
     for token in token_list_iter:
@@ -130,36 +150,23 @@ def _decide_dup_tokens (token_list) :
             if token in removed or token2 in removed:
                 continue
 
-            # change only different tokens, skip non-VALUE tokens
+            # change only different tokens
             if id(token) == id(token2):
                 continue
 
-            if token[0] == "VALUE":
-                # remotions for tokens of same start and end
-                if (token[1] == token2[1]) and (token[2] == token2[2]):
-                    # remove duplicated VALUE tokens
-                    if token2[0] == "VALUE":
-                        token_list.remove(token2)
-                        removed.append(token2)
+            def rem (t):
+                token_list.remove(t)
+                removed.append(t)
 
-            elif token[0] == "QVALUE":
-                # remotions for tokens of same start and end
-                if ((token[1] == token2[1]) and (token[2] >= token2[2])) or ((token[1] <= token2[1]) and (token[2] == token2[2])):
-                    # remove duplicated VALUE and QVALUE tokens
-                    if token2[0] in ["VALUE", "QVALUE"]:
-                        token_list.remove(token2)
-                        removed.append(token2)
-    
-                    # remove SPACE, PAR_OPEN and PAR_CLOSE tokens that correspond to VALUE tokens between QUOTE tokens
-                    if token2[0] in ['SPACE','PAR_OPEN','PAR_CLOSE']:
-                        token_list.remove(token2)
-                        removed.append(token2)
-                
-                # remove QUOTE tokens that correspond to scaped quotes between QUOTE tokens
-                if token2[0] == "QUOTE" and token[1] == token2[1]-1 and token[2] == token2[2]:
-                   token_list.remove(token2)
-                   removed.append(token2)
 
+            if (token[1] <= token2[1]) and (token[2] >= token2[2]):
+
+                if token[0] == "QVALUE":
+                    if token2[0] in ["PAR_OPEN", "PAR_CLOSE", "SPACE"]:
+                        rem(token2)
+
+                if (token[1] == token2[1] and token[2] > token2[2]) or (token[1] < token2[1] and token[2] == token2[2]):
+                    rem(token2)
 
     return token_list
 

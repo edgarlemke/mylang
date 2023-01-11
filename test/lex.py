@@ -71,11 +71,15 @@ def test_quote () :
     expr = "\\\""
     basictest("TEST QUOTE - ", """((QUOTE 0 1 "\\\""))\n""", expr)
 
-def test_value () :
-    """
-    `mynametoken` expression should return only one VALUE token
-    """
-    basictest("TEST VALUE - ", """((VALUE 0 11 mynametoken))\n""", "mynametoken")
+#def test_value () :
+#    """
+#    `mynametoken` expression should return only one VALUE token
+#    """
+#    basictest("TEST VALUE - ", """((VALUE 0 11 mynametoken))\n""", "mynametoken")
+
+def test_int () :
+    basictest("TEST INT - ", """((INT 0 3 123))\n""", "123")
+
 
 def test_abc_xyz () :
     """
@@ -203,6 +207,44 @@ def test_quoted_unicode () :
                 exit()
 
     print("OK")
+
+
+def test_incl () :
+    basictest("TEST INCL - ", "((INCL 0 4 incl))\n", "incl")
+
+def test_fn () :
+    basictest("TEST FN - ", "((FN 0 2 fn))\n", "fn")
+
+def test_call () :
+    basictest("TEST CALL - ", "((CALL 0 4 call))\n", "call")
+
+def test_ret () :
+    basictest("TEST RET - ", "((RET 0 3 ret))\n", "ret")
+
+def test_set () :
+    basictest("TEST SET - ", "((SET 0 3 set))\n", "set")
+
+def test_mut () :
+    basictest("TEST MUT - ", "((MUT 0 3 mut))\n", "mut")
+
+def test_res () :
+    basictest("TEST RES - ", "((RES 0 3 res))\n", "res")
+
+def test_if () :
+    basictest("TEST IF - ", "((IF 0 2 if))\n", "if")
+
+def test_else () :
+    basictest("TEST ELSE - ", "((ELSE 0 4 else))\n", "else")
+
+def test_elif () :
+    basictest("TEST ELIF - ", "((ELIF 0 4 elif))\n", "elif")
+
+def test_while () :
+    basictest("TEST WHILE - ", "((WHILE 0 5 while))\n", "while")
+
+def test_for () :
+    basictest("TEST FOR - ", "((FOR 0 3 for))\n", "for")
+
 
 
 def test_no_token_match () :

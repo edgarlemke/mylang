@@ -21,8 +21,8 @@ def basictest (msg, expr, expected) :
 
     print("OK")
 
-def test_parser_rule__expr__value () :
-    basictest("TEST RULE  EXPR -> VALUE - ", "anyvalue", """((EXPR ((VALUE 0 8 anyvalue))))""")
+#def test_parser_rule__expr__value () :
+#    basictest("TEST RULE  EXPR -> VALUE - ", "anyvalue", """((EXPR ((VALUE 0 8 anyvalue))))""")
 
 def test_parser_rule__expr__quote_value_quote () :
     basictest("TEST RULE  EXPR -> QUOTE QVALUE QUOTE - ", "\\\" \\\"", """((EXPR ((QUOTE 0 1 "\\\"") (QVALUE 1 2 " ") (QUOTE 2 3 "\\\""))))""")
