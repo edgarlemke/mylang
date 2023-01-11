@@ -211,6 +211,9 @@ if __name__ == "__main__":
 
     elif expr != None:
         expr = str(expr)
+
+    elif src == None and expr == None:
+        raise Exception("Either --src or --expr argument must be provided")
         
     # generate token list from content variable
     token_list = tokenize(expr)
