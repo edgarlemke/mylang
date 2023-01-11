@@ -7,10 +7,7 @@ def parse (token_list, root) :
     token_ct = 0
 
     last_found_rule = None
-    while True:
-        # check token_ct
-        if token_ct == len(token_list):
-            break
+    while token_ct < len(token_list):
 
         # shift
         buf.append(token_list[token_ct])
