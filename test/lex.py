@@ -80,6 +80,9 @@ def test_quote () :
 def test_int () :
     basictest("TEST INT - ", """((INT 0 3 123))\n""", "123")
 
+def test_float () :
+    basictest("TEST FLOAT - ", """((FLOAT 0 4 3.14))\n""", "3.14")
+
 
 def test_abc_xyz () :
     """

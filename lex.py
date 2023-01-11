@@ -56,6 +56,7 @@ def _match_tokens (code) :
 
         #["VALUE", "\w+"],
         ["INT", "[0-9]+"],
+        ["FLOAT", "[0-9]+\.[0-9]+"],
 
         ["INCL", "incl"],
 
