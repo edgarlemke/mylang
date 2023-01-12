@@ -76,6 +76,7 @@ def _match (buf_slice):
         [["EXPR"], ["INT"]],
         [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
         [["EXPR"], ["PAR_GROUP"]],
+        [["EXPR"], ["FN_DECL"]],
 
         [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
         [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
@@ -83,6 +84,14 @@ def _match (buf_slice):
 
         [["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
         [["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
+
+        # fn related
+        [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
+        [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "NAMEPAIR"]],
+        [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "NAMEPAIR"]],
+
+        [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
+        [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME"]],
     ]
 
     all_matches = []
