@@ -54,7 +54,8 @@ def _match_tokens (code) :
         ["BREAKLINE", "\n"],
         ["QUOTE", "\""],
 
-        #["VALUE", "\w+"],
+        ["NAME", "\w+"],
+
         ["INT", "[0-9]+"],
         ["FLOAT", "[0-9]+\.[0-9]+"],
 
@@ -166,8 +167,13 @@ def _decide_dup_tokens (token_list) :
                     if token2[0] in ["PAR_OPEN", "PAR_CLOSE", "SPACE"]:
                         rem(token2)
 
+                if token2[0] == "NAME":
+                    rem(token2)
+
                 if (token[1] == token2[1] and token[2] > token2[2]) or (token[1] < token2[1] and token[2] == token2[2]):
                     rem(token2)
+
+
 
     return token_list
 
