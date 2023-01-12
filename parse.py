@@ -75,11 +75,11 @@ def _match (buf_slice):
     rules = [
         [["EXPR"], ["INT"]],
         [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
-        [["EXPR"], ["LIST"]],
+        [["EXPR"], ["PAR_GROUP"]],
 
-        [["LIST"], ["PAR_OPEN", "PAR_CLOSE"]],
-        [["LIST"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
-        [["LIST"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
+        [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
+        [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
+        [["PAR_GROUP"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
 
         [["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
         [["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
