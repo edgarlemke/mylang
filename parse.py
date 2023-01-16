@@ -74,6 +74,7 @@ def parse (token_list, root) :
 def _match (buf_slice):
     rules = [
         [["EXPR"], ["INT"]],
+        [["EXPR"], ["NOP"]],
         [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
         [["EXPR"], ["PAR_GROUP"]],
         [["EXPR"], ["FN_DECL"]],

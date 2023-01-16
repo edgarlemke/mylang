@@ -57,14 +57,16 @@ def test_parser_rule__expr_group__expr_group_space_expr () :
 def test_parser_rule_fn_decl_0 () :
     basictest(
             "TEST RULE  FN_DECL 0 - ",
-            "fn main  ui8 x  ui8",
+            """fn main  ui8 x  ui8
+\tret x""",
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8))))))"""
     )
 
 def test_parser_rule_fn_decl_1 () :
     basictest(
             "TEST RULE  FN_DECL 1 - ",
-            "fn main  ui8 x ui8 y  ui8",
+            """fn main  ui8 x ui8 y  ui8
+\tret x""",
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR_GROUP ((NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (NAMEPAIR ((NAME 15 18 ui8) (SPACE 18 19 " ") (NAME 19 20 y))))) (SPACE 20 21 " ") (SPACE 21 22 " ") (NAME 22 25 ui8))))))"""
     )
 

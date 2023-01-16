@@ -52,12 +52,15 @@ def _match_tokens (code) :
         ["PAR_CLOSE", "\)"],
         ["SPACE", " "],
         ["BREAKLINE", "\n"],
+        ["TAB", "\t"],
         ["QUOTE", "\""],
 
         ["NAME", "\w+"],
 
         ["INT", "[0-9]+"],
         ["FLOAT", "[0-9]+\.[0-9]+"],
+
+        ["NOP", "nop"],
 
         ["INCL", "incl"],
 
