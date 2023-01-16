@@ -79,6 +79,19 @@ def test_parser_rule_fn_decl_2 () :
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START) (EXPR_GROUP ((EXPR ((NOP 22 25 nop))) (EXPR ((NOP 28 31 nop))))) (BLOCK_END))))))))"""
     )
 
+def test_parser_rule_multiblock () :
+    basictest(
+            "TEST MULTIBLOCK - ",
+            """fn main  ui8 x  ui8\n
+\tnop\n
+\tif true\n
+\t\tif true\n
+\t\t\tnop\n
+\tnop\n""",
+            """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START) (EXPR_GROUP ((EXPR_GROUP ((EXPR ((NOP 22 25 nop))) (EXPR ((IF_DECL ((IF 28 30 if) (SPACE 30 31 " ") (NAME 31 35 true) (BLOCK ((BLOCK_START) (EXPR ((IF_DECL ((IF 39 41 if) (SPACE 41 42 " ") (NAME 42 46 true) (BLOCK ((BLOCK_START) (EXPR ((NOP 51 54 nop))) (BLOCK_END))))))) (BLOCK_END))))))))) (EXPR ((NOP 57 60 nop))))) (BLOCK_END))))))))"""
+            )
+
+
 def test_invalid_syntax () :
     print("TEST INVALID SYNTAX - ", end="")
 

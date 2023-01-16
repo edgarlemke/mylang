@@ -32,17 +32,6 @@ def tokenize (code):
 
     _sort_identation(token_list)
 
-    tlcopy = token_list.copy()
-    for t, token in enumerate(tlcopy):
-        if token[0] in ["TAB"]:
-            token_list.remove(token)
-
-    tlcopy = token_list.copy()
-    for t, token in enumerate(tlcopy):
-
-        if token[0] in ["BREAKLINE"]:
-            token_list.remove(token)
-
 
     return token_list
 
@@ -219,32 +208,7 @@ def _check_nontokenized (token_list, code) :
 
 
 def _sort_identation (token_list) :
-#    """
-#    Whenever a token in block_tokens list is found at the beginning of a line, it's assumed all following having increased identation are
-#    members of the block pertaining to the token. An increase in identation means one more TAB token from previous identation. Block ends
-#    are signaled by a return to the previous identation.
-#    """
-#    block_tokens = ["FN"]
-#
-#    for t, token in enumerate(token_list):
-#        new_line = (t == 0 or token_list[t-1][0] == "BREAKLINE")
-#        if not new_line:
-#            continue
-#
-#        if token not in block_tokens:
-#            continue
-#
-#        # ... only block tokens at the beginning of a line
-#
-#        # find breakline
-#        breakline_pos = None
-#        for t2, token2 in enumerate(token_list[t:]):
-#            if token2[0] == "BREAKLINE":
-#                breakline_pos = t2
-#
-#        if breakline_pos == None:
-#            raise Exception ("Block token not followed by a breakline")
-
+    # find contiguous TAB tokens
     found = []
     buf = []
     for t, token in enumerate(token_list):
@@ -255,7 +219,10 @@ def _sort_identation (token_list) :
             found.append([t-len(buf), t])
             buf = []
 
+    # add BLOCK_START and BLOCK_END tokens
     lvl = 0
+    last_flen = None
+    last_breakline = None
     for f in found:
         flen = f[1] - f[0]
 
@@ -273,14 +240,33 @@ def _sort_identation (token_list) :
                 next_breakline = t + f[1]
                 break
 
+        # if no next breakline found, raise exception
         if next_breakline == None:
             raise Exception ("No next breakline")
 
+        # check for end of expression to add BLOCK_END token
         expr_end = next_breakline == len(token_list) - 1
-
         if expr_end:
             token_list.pop(next_breakline)
             token_list.insert(next_breakline, ["BLOCK_END"])
+
+        # check for end of block on identation to add the needed BLOCK_END tokens
+        if last_flen != None:
+            if last_flen > flen:
+                token_list.pop(last_breakline)
+
+                for i in range(0, last_flen-flen):
+                    token_list.insert(last_breakline, ["BLOCK_END"])
+                    lvl -= 1
+
+        last_flen = flen
+        last_breakline = next_breakline
+
+    # remove now useless tokens
+    tlcopy = token_list.copy()
+    for t, token in enumerate(tlcopy):
+        if token[0] in ["TAB", "BREAKLINE"]:
+            token_list.remove(token)
 
     return token_list
 
