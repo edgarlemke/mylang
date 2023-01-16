@@ -83,16 +83,25 @@ def _match (buf_slice):
         [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
         [["PAR_GROUP"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
 
-        [["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
-        [["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
+        #[["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
+        #[["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
+
+        #[["EXPR_GROUP"], ["EXPR", "EXPR_SEP", "EXPR"]],
+        #[["EXPR_GROUP"], ["EXPR_GROUP", "EXPR_SEP", "EXPR"]],
+
+        [["EXPR_GROUP"], ["EXPR", "EXPR"]],
 
         # fn related
         [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
         [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "NAMEPAIR"]],
         [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "NAMEPAIR"]],
 
-        [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
-        [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME"]],
+        [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
+        [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
+
+        # block related
+        [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
+        [["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
     ]
 
     all_matches = []
