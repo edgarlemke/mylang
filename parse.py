@@ -67,7 +67,7 @@ def parse (token_list, root) :
 
 def _find_match (buf, lookahead):
     token_rule_prec = [
-        [ ["ELSE"], [["IF_DECL"],["IF", "SPACE", "NAME", "BLOCK"]] ],
+        [ ["ELSE"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
     ]
 
     match = None
@@ -131,6 +131,7 @@ def _match (buf_slice):
             [["EXPR"], ["FOR_DECL"]],
     
             [["EXPR"], ["STRUCT_DECL"]],
+            [["EXPR"], ["RES_STRUCT_DECL"]],
 
             [["EXPR"], ["INCL_DECL"]],
 
@@ -182,6 +183,7 @@ def _match (buf_slice):
 
             # structs
             [["STRUCT_DECL"], ["STRUCT", "SPACE", "NAME", "STRUCT_BLOCK"]],
+            [["RES_STRUCT_DECL"], ["RES", "SPACE", "STRUCT", "SPACE", "NAME", "STRUCT_BLOCK"]],
 
             [["STRUCT_BLOCK"], ["BLOCK_START", "NAMEPAIR", "BLOCK_END"]],
             [["STRUCT_BLOCK"], ["BLOCK_START", "STRUCT_DEF_GROUP", "BLOCK_END"]],
