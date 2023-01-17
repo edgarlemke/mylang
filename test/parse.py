@@ -90,6 +90,22 @@ def test_fn_decl_2 () :
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR_GROUP ((EXPR ((NOP 22 25 nop))) (EXPR ((NOP 28 31 nop))))) (BLOCK_END 0 expr_end))))))))"""
     )
 
+def test_call () :
+    basictest(
+        "TEST CALL - ",
+        """fn main  ui8 x  ui8\n
+\tcall somefn\n""",
+        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((CALL 22 26 call) (SPACE 26 27 " ") (NAME 27 33 somefn))))) (BLOCK_END 0 expr_end))))))))"""
+    )
+
+def test_ret () :
+    basictest(
+        "TEST RET - ",
+        """fn main  ui8 x  ui8\n
+\tret true\n""",
+        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((RET_DECL ((RET 22 25 ret) (SPACE 25 26 " ") (NAME 26 30 true))))) (BLOCK_END 0 expr_end))))))))"""
+    )
+
 
 def test_multiblock () :
     basictest(

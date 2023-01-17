@@ -114,7 +114,10 @@ def _match (buf_slice):
             [["EXPR"], ["NOP"]],
             [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
             [["EXPR"], ["PAR_GROUP"]],
+            
             [["EXPR"], ["FN_DECL"]],
+            [["EXPR"], ["CALL_DECL"]],
+            [["EXPR"], ["RET_DECL"]],
     
             [["EXPR"], ["SET_DECL"]],
             [["EXPR"], ["MUT_DECL"]],
@@ -136,27 +139,31 @@ def _match (buf_slice):
             [["EXPR_GROUP"], ["EXPR", "EXPR"]],
             [["EXPR_GROUP"], ["EXPR_GROUP", "EXPR"]],
     
-            # block related
+            # blocks
             [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
             [["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
     
-            # fn related
+            # functions
             [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
             [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "NAMEPAIR"]],
             [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "NAMEPAIR"]],
     
             [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
             [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
+
+            [["CALL_DECL"], ["CALL", "SPACE", "NAME"]],
+
+            [["RET_DECL"], ["RET", "SPACE", "NAME"]],
     
+            # variables and constants
             # set
             [["SET_DECL"], ["SET", "SPACE", "NAMEPAIR", "SPACE", "EXPR"]],
-
             # mut
             [["MUT_DECL"], ["MUT", "SPACE", "NAMEPAIR", "SPACE", "EXPR"]],
 
+            # control flux
             # if
             [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
-
             # while
             [["WHILE_DECL"], ["WHILE", "SPACE", "NAME", "BLOCK"]],
         ],
