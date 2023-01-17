@@ -45,7 +45,6 @@ def test_rule__expr__float () :
     basictest("TEST RULE  EXPR -> FLOAT - ", "3.14", """((EXPR ((FLOAT 0 4 3.14))))""")
 
 
-    
 def test_rule__par_group__par_open_par_close () :
     basictest("TEST RULE  PAR_GROUP -> PAR_OPEN PAR_CLOSE - ", "()", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (PAR_CLOSE 1 2 ")"))))))""")
 
@@ -71,6 +70,16 @@ def test_rule__par_group__par_open_expr_par_close () :
 #            "(\\\"abc\\\" \\\"jkl\\\" \\\"xyz\\\")",
 #            """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (EXPR_GROUP ((EXPR_GROUP ((EXPR ((QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\""))) (SPACE 6 7 " ") (EXPR ((QUOTE 7 8 "\\\"") (QVALUE 8 11 jkl) (QUOTE 11 12 "\\\""))))) (SPACE 12 13 " ") (EXPR ((QUOTE 13 14 "\\\"") (QVALUE 14 17 xyz) (QUOTE 17 18 "\\\""))))) (PAR_CLOSE 18 19 ")"))))))"""
 #    )
+
+def test_struct_0 () :
+    basictest("TEST STRUCT 0 - ", """struct MyStruct\n\tui8 i\n""", """((EXPR ((STRUCT_DECL ((STRUCT 0 6 struct) (SPACE 6 7 " ") (NAME 7 15 MyStruct) (STRUCT_BLOCK ((BLOCK_START 0) (NAMEPAIR ((NAME 17 20 ui8) (SPACE 20 21 " ") (NAME 21 22 i))) (BLOCK_END 0 expr_end))))))))""")
+
+def test_struct_1 () :
+    basictest(
+            "TEST STRUCT 1 - ",
+            """struct MyStruct\n\tui8 i\n\tui8 y\n""",
+            """((EXPR ((STRUCT_DECL ((STRUCT 0 6 struct) (SPACE 6 7 " ") (NAME 7 15 MyStruct) (STRUCT_BLOCK ((BLOCK_START 0) (STRUCT_DEF_GROUP ((NAMEPAIR ((NAME 17 20 ui8) (SPACE 20 21 " ") (NAME 21 22 i))) (NAMEPAIR ((NAME 24 27 ui8) (SPACE 27 28 " ") (NAME 28 29 y))))) (BLOCK_END 0 expr_end))))))))"""
+    )
 
 
 def test_fn_decl_0 () :

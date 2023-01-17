@@ -110,10 +110,14 @@ def _match (buf_slice):
             [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
         ],
         [
+            # expressions
             [["EXPR"], ["INT"]],
             [["EXPR"], ["FLOAT"]],
             [["EXPR"], ["NOP"]],
             [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
+
+            [["EXPR"], ["STRUCT_DECL"]],
+
             [["EXPR"], ["PAR_GROUP"]],
             
             [["EXPR"], ["FN_DECL"]],
@@ -144,6 +148,7 @@ def _match (buf_slice):
             # blocks
             [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
             [["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
+
     
             # functions
             [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
@@ -171,6 +176,15 @@ def _match (buf_slice):
             # for
             [["FOR_DECL"], ["FOR", "SPACE", "NAME", "SPACE", "SPACE", "NAME", "BLOCK"]],
             [["FOR_DECL"], ["FOR", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
+
+            # structs
+            [["STRUCT_DECL"], ["STRUCT", "SPACE", "NAME", "STRUCT_BLOCK"]],
+
+            [["STRUCT_BLOCK"], ["BLOCK_START", "NAMEPAIR", "BLOCK_END"]],
+            [["STRUCT_BLOCK"], ["BLOCK_START", "STRUCT_DEF_GROUP", "BLOCK_END"]],
+
+            [["STRUCT_DEF_GROUP"], ["NAMEPAIR", "NAMEPAIR"]],
+            [["STRUCT_DEF_GROUP"], ["STRUCT_DEF_GROUP", "NAMEPAIR"]],
 
         ],
     ]
