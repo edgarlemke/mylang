@@ -35,8 +35,16 @@ def justprint (msg, expr, expected) :
 #def test_rule__expr__value () :
 #    basictest("TEST RULE  EXPR -> VALUE - ", "anyvalue", """((EXPR ((VALUE 0 8 anyvalue))))""")
 
-def test_rule__expr__quote_value_quote () :
+def test_rule__expr__quote_qvalue_quote () :
     basictest("TEST RULE  EXPR -> QUOTE QVALUE QUOTE - ", "\\\" \\\"", """((EXPR ((QUOTE 0 1 "\\\"") (QVALUE 1 2 " ") (QUOTE 2 3 "\\\""))))""")
+
+def test_rule__expr__int () :
+    basictest("TEST RULE  EXPR -> INT - ", "1", """((EXPR ((INT 0 1 1))))""")
+
+def test_rule__expr__float () :
+    basictest("TEST RULE  EXPR -> FLOAT - ", "3.14", """((EXPR ((FLOAT 0 4 3.14))))""")
+
+
     
 def test_rule__par_group__par_open_par_close () :
     basictest("TEST RULE  PAR_GROUP -> PAR_OPEN PAR_CLOSE - ", "()", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (PAR_CLOSE 1 2 ")"))))))""")

@@ -111,6 +111,7 @@ def _match (buf_slice):
         ],
         [
             [["EXPR"], ["INT"]],
+            [["EXPR"], ["FLOAT"]],
             [["EXPR"], ["NOP"]],
             [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
             [["EXPR"], ["PAR_GROUP"]],
