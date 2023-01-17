@@ -112,6 +112,16 @@ def test_set () :
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((SET_DECL ((SET 22 25 set) (SPACE 25 26 " ") (NAMEPAIR ((NAME 26 27 x) (SPACE 27 28 " ") (NAME 28 31 ui8))) (SPACE 31 32 " ") (EXPR ((INT 32 33 1))))))) (BLOCK_END 0 expr_end))))))))""")
 
 
+def test_mut () :
+    basictest(
+            "TEST MUT - ",
+            """fn main  ui8 x  ui8\n
+\tmut x ui8 1\n""",
+            """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((MUT_DECL ((MUT 22 25 mut) (SPACE 25 26 " ") (NAMEPAIR ((NAME 26 27 x) (SPACE 27 28 " ") (NAME 28 31 ui8))) (SPACE 31 32 " ") (EXPR ((INT 32 33 1))))))) (BLOCK_END 0 expr_end))))))))""")
+
+
+
+
 def test_if () :
     basictest(
             "TEST IF - ",

@@ -117,6 +117,7 @@ def _match (buf_slice):
             [["EXPR"], ["FN_DECL"]],
     
             [["EXPR"], ["SET_DECL"]],
+            [["EXPR"], ["MUT_DECL"]],
 
             [["EXPR"], ["IF_DECL"]],
             [["EXPR"], ["IF_ELSE_DECL"]],
@@ -148,6 +149,9 @@ def _match (buf_slice):
     
             # set
             [["SET_DECL"], ["SET", "SPACE", "NAMEPAIR", "SPACE", "EXPR"]],
+
+            # mut
+            [["MUT_DECL"], ["MUT", "SPACE", "NAMEPAIR", "SPACE", "EXPR"]],
 
             # if
             [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
