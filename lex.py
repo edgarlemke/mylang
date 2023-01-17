@@ -219,18 +219,31 @@ def _sort_identation (token_list) :
             found.append([t-len(buf), t])
             buf = []
 
+    #print(f"f {found}")
+
     # add BLOCK_START and BLOCK_END tokens
     lvl = 0
     last_flen = None
     last_breakline = None
+
+    block_stack = []
+    block_counter = 0
     for f in found:
         flen = f[1] - f[0]
+        #print(f"f {f} flen {flen} last_flen {last_flen} lvl {lvl}")
 
         # if is starting a new block
         if flen == lvl + 1:
+            #print(f"START")
             token_list.pop(f[0]-1)
-            token_list.insert(f[0]-1, ["BLOCK_START"])
+            token_list.insert(f[0]-1, ["BLOCK_START", block_counter])
+
+            block_stack.append(block_counter)
+            block_counter += 1
+
             lvl += 1
+
+        #print(f"LVL {lvl}")
 
 
         # get next breakline
@@ -244,29 +257,44 @@ def _sort_identation (token_list) :
         if next_breakline == None:
             raise Exception ("No next breakline")
 
-        # check for end of expression to add BLOCK_END token
-        expr_end = next_breakline == len(token_list) - 1
-        if expr_end:
-            token_list.pop(next_breakline)
-            token_list.insert(next_breakline, ["BLOCK_END"])
+        #print(f"next_breakline: {next_breakline} {token_list[next_breakline]}")
 
         # check for end of block on identation to add the needed BLOCK_END tokens
+        #print(f"flen: {flen} - block_stack: {block_stack}")
+        #print(f"last_flen > flen: {last_flen} > {flen}")
         if last_flen != None:
             if last_flen > flen:
+                #print(f"pop last_breakline: {last_breakline}")
                 token_list.pop(last_breakline)
 
                 for i in range(0, last_flen-flen):
-                    token_list.insert(last_breakline, ["BLOCK_END"])
+                    #print(f"END i {i}")
+                    token_list.insert(last_breakline, ["BLOCK_END", block_stack.pop(), "return"])
                     lvl -= 1
+
+        # check for end of expression to add BLOCK_END token
+        expr_end = next_breakline == len(token_list) - 1
+        if expr_end:
+            #print(f"END expr_end: {next_breakline}")
+            token_list.pop(next_breakline)
+
+            pos = next_breakline
+            for i in range(0, len(block_stack)):
+                #print(f"END i2 {i}")
+                token_list.insert(pos, ["BLOCK_END", block_stack.pop(), "expr_end" ])
+                pos += 1
 
         last_flen = flen
         last_breakline = next_breakline
 
+        #print()
+
     # remove now useless tokens
-    tlcopy = token_list.copy()
-    for t, token in enumerate(tlcopy):
-        if token[0] in ["TAB", "BREAKLINE"]:
-            token_list.remove(token)
+    if bool(1):
+        tlcopy = token_list.copy()
+        for t, token in enumerate(tlcopy):
+            if token[0] in ["TAB", "BREAKLINE"]:
+                token_list.remove(token)
 
     return token_list
 

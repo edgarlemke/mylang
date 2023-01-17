@@ -3,14 +3,28 @@
 
 def parse (token_list, root) :
 
+    token_rule_prec = [
+            [ ["ELSE"], [["IF_DECL"],["IF", "SPACE", "NAME", "BLOCK"]] ],
+            ]
+
     buf = []
     token_ct = 0
 
     last_found_rule = None
+    lookahead = token_list[token_ct]
     while token_ct < len(token_list):
 
         # shift
-        buf.append(token_list[token_ct])
+        buf.append(lookahead)
+        print(f"buf {buf}")
+
+        # update lookahead
+        if token_ct+1 == len(token_list):
+            lookahead = None
+        else:
+            lookahead = token_list[token_ct+1]
+        
+        force_prec_shift = False
 
         # look for rule
         while True:
@@ -29,6 +43,24 @@ def parse (token_list, root) :
                 found_rule = True
                 #print(f"match - rule {rule} buf_slice {buf_slice}")
 
+                # find token rule prec
+                for precrule in token_rule_prec:
+                    precrule_token, precrule_target = precrule
+
+                    #print(f"precrule_target: {precrule_target}  rule: {rule}    {precrule_target == rule}")
+                    #print(f"precrule_token: {precrule_token} lookahead: {lookahead}     {precrule_token[0] == lookahead[0]}")
+                    if (precrule_target == rule) and (precrule_token[0] == lookahead[0]):
+                        #print("Bingo!")
+                        force_prec_shift = True
+                        found_rule = False
+                        #print()
+                        break
+                    #print()
+
+                if force_prec_shift:
+                    #print("break 1")
+                    break
+
                 # reduce
                 #
                 # pop matching slice from buffer
@@ -45,6 +77,10 @@ def parse (token_list, root) :
 
                 break
 
+            if force_prec_shift:
+                #print("break 2")
+                break
+
             # if found no rule in buffer slices break out of while loop that looks for rules
             if not found_rule:
 
@@ -57,7 +93,7 @@ def parse (token_list, root) :
                 buff_len_one = len(buf) == 1
                 buff_expr = buf[0][0] == root
                 if not (buff_len_one and buff_expr):
-                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\nbuf: {buf}")
+                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf: {buf}")
 
 
                 break
@@ -73,12 +109,18 @@ def parse (token_list, root) :
 
 def _match (buf_slice):
     rules = [
+            [
+        [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
+            ],
+            [
         [["EXPR"], ["INT"]],
         [["EXPR"], ["NOP"]],
         [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
         [["EXPR"], ["PAR_GROUP"]],
         [["EXPR"], ["FN_DECL"]],
+
         [["EXPR"], ["IF_DECL"]],
+        [["EXPR"], ["IF_ELSE_DECL"]],
 
         [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
         [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
@@ -93,6 +135,10 @@ def _match (buf_slice):
         [["EXPR_GROUP"], ["EXPR", "EXPR"]],
         [["EXPR_GROUP"], ["EXPR_GROUP", "EXPR"]],
 
+        # block related
+        [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
+        [["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
+
         # fn related
         [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
         [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "NAMEPAIR"]],
@@ -101,28 +147,28 @@ def _match (buf_slice):
         [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
         [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
 
-        # block related
-        [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
-        [["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
-
         # if
         [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
+        ],
     ]
 
     all_matches = []
-    for r in rules:
-        matches = []
-
-        for i, item in enumerate(buf_slice):
-            if i > len(r[1])-1:
-                break
-
-            if item[0] == r[1][i]:
-                matches.append(True)
-
-        if all(matches) and len(matches) == len(r[1]):
-            #return r
-            all_matches.append(r)
+    for order, ruleoder in enumerate(rules):
+        for r in ruleorder:
+            matches = []
+    
+            for i, item in enumerate(buf_slice):
+                if i > len(r[1])-1:
+                    break
+    
+                if item[0] == r[1][i]:
+                    matches.append(True)
+    
+            if all(matches) and len(matches) == len(r[1]):
+                all_matches.append(r)
+    
+    #if len(all_matches):
+    #    print(f"all_matches: {all_matches}")
 
 
     largest = None
