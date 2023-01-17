@@ -3,10 +3,6 @@
 
 def parse (token_list, root) :
 
-    token_rule_prec = [
-            [ ["ELSE"], [["IF_DECL"],["IF", "SPACE", "NAME", "BLOCK"]] ],
-            ]
-
     buf = []
     token_ct = 0
 
@@ -24,65 +20,34 @@ def parse (token_list, root) :
         else:
             lookahead = token_list[token_ct+1]
         
-        force_prec_shift = False
+#        force_prec_shift = False
 
-        # look for rule
         while True:
-            found_rule = False
+            found_rules = _Find(buf)
+            print(f"found_rules {found_rules}")
 
-            # iters over buffer slices looking for rule
-            for i in range(0, len(buf)):
-                buf_slice = buf[i:]
-                rule = _match(buf_slice)
-
-                # if didn't find matching rule, skip
-                if rule == False:
-                    continue
-
-                # ... found matching rule
-                found_rule = True
-                #print(f"match - rule {rule} buf_slice {buf_slice}")
-
-                # find token rule prec
-                for precrule in token_rule_prec:
-                    precrule_token, precrule_target = precrule
-
-                    #print(f"precrule_target: {precrule_target}  rule: {rule}    {precrule_target == rule}")
-                    #print(f"precrule_token: {precrule_token} lookahead: {lookahead}     {precrule_token[0] == lookahead[0]}")
-                    if (precrule_target == rule) and (precrule_token[0] == lookahead[0]):
-                        #print("Bingo!")
-                        force_prec_shift = True
-                        found_rule = False
-                        #print()
-                        break
-                    #print()
-
-                if force_prec_shift:
-                    #print("break 1")
-                    break
-
-                # reduce
-                #
-                # pop matching slice from buffer
-                popped = []
-                for j in range(i, i+len(rule[1])):
-                    #print(f"f {j} buf {buf}")
-                    popped.append( buf.pop(i) )
-                #
-                # substitute the slice with target
-                inplace = rule[0].copy()
-                inplace.append(popped)
-                buf.insert(i, inplace)
-                #
-
-                break
-
-            if force_prec_shift:
-                #print("break 2")
-                break
+#            # reduce
+#            #
+#            # pop matching slice from buffer
+#            popped = []
+#            for j in range(i, i+len(rule[1])):
+#                #print(f"f {j} buf {buf}")
+#                popped.append( buf.pop(i) )
+#            #
+#            # substitute the slice with target
+#            inplace = rule[0].copy()
+#            inplace.append(popped)
+#            buf.insert(i, inplace)
+#            #
+#
+#            break
+#
+#            #if force_prec_shift:
+#            #    #print("break 2")
+#            #    break
 
             # if found no rule in buffer slices break out of while loop that looks for rules
-            if not found_rule:
+            if len(found_rules) == 0:
 
                 all_tokens_buffered = token_ct + 1 == len(token_list)
                 if not all_tokens_buffered:
@@ -95,7 +60,6 @@ def parse (token_list, root) :
                 if not (buff_len_one and buff_expr):
                     raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf: {buf}")
 
-
                 break
             
             else:
@@ -105,6 +69,44 @@ def parse (token_list, root) :
 
     parsetree = buf
     return parsetree
+
+
+def _Find (buf):
+    token_rule_prec = [
+            [ ["ELSE"], [["IF_DECL"],["IF", "SPACE", "NAME", "BLOCK"]] ],
+            ]
+
+    found_rules = []
+
+    # iters over buffer slices looking for rule
+    for i in range(0, len(buf)):
+        buf_slice = buf[i:]
+        print(f"buf_slice {buf_slice}")
+        rule = _match(buf_slice)
+
+        # if didn't find matching rule, skip
+        if rule == False:
+            continue
+
+#        # find token rule prec
+#        for precrule in token_rule_prec:
+#            precrule_token, precrule_target = precrule
+#
+#            #print(f"precrule_target: {precrule_target}  rule: {rule}    {precrule_target == rule}")
+#            #print(f"precrule_token: {precrule_token} lookahead: {lookahead}     {precrule_token[0] == lookahead[0]}")
+#            if (precrule_target == rule) and ((precrule_token[0] == lookahead[0]) or (precrule_token[0] in [b[0] for b in buf_slice])):
+#                #print("Bingo!")
+#                force_prec_shift = True
+#                break
+#
+#        if force_prec_shift:
+#            #print("break 1")
+#            continue
+
+        #found_rule = True
+        found_rules.append(rule)
+
+    return found_rules
 
 
 def _match (buf_slice):
@@ -153,7 +155,7 @@ def _match (buf_slice):
     ]
 
     all_matches = []
-    for order, ruleoder in enumerate(rules):
+    for order, ruleorder in enumerate(rules):
         for r in ruleorder:
             matches = []
     
@@ -167,8 +169,8 @@ def _match (buf_slice):
             if all(matches) and len(matches) == len(r[1]):
                 all_matches.append(r)
     
-    #if len(all_matches):
-    #    print(f"all_matches: {all_matches}")
+    if len(all_matches):
+        print(f"all_matches: {all_matches}")
 
 
     largest = None
