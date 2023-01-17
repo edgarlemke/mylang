@@ -116,8 +116,6 @@ def _match (buf_slice):
             [["EXPR"], ["NOP"]],
             [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
 
-            [["EXPR"], ["STRUCT_DECL"]],
-
             [["EXPR"], ["PAR_GROUP"]],
             
             [["EXPR"], ["FN_DECL"]],
@@ -132,6 +130,11 @@ def _match (buf_slice):
             [["EXPR"], ["WHILE_DECL"]],
             [["EXPR"], ["FOR_DECL"]],
     
+            [["EXPR"], ["STRUCT_DECL"]],
+
+            [["EXPR"], ["INCL_DECL"]],
+
+
             [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
             [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
             [["PAR_GROUP"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
@@ -186,6 +189,9 @@ def _match (buf_slice):
             [["STRUCT_DEF_GROUP"], ["NAMEPAIR", "NAMEPAIR"]],
             [["STRUCT_DEF_GROUP"], ["STRUCT_DEF_GROUP", "NAMEPAIR"]],
 
+            # packages
+            [["INCL_DECL"], ["INCL", "SPACE", "NAME"]],
+            [["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
         ],
     ]
 

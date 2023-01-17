@@ -203,6 +203,22 @@ def test_for_2 () :
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((FOR_DECL ((FOR 22 25 for) (SPACE 25 26 " ") (NAMEPAIR ((NAME 26 27 i) (SPACE 27 28 " ") (NAME 28 32 item))) (SPACE 32 33 " ") (SPACE 33 34 " ") (NAME 34 39 array) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 43 46 nop))) (BLOCK_END 1 expr_end))))))) (BLOCK_END 0 expr_end))))))))"""
     )
 
+
+def test_incl_pkg () :
+    basictest(
+            "TEST INCL pkg - ",
+            """incl pkg""",
+            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 8 pkg))))))"""
+    )
+
+def test_incl_path () :
+    basictest(
+            "TEST INCL \"path\" - ",
+            "incl \\\"path\\\"",
+            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (EXPR ((QUOTE 5 6 "\\\"") (QVALUE 6 10 path) (QUOTE 10 11 "\\\""))))))))"""
+    )
+
+
 def test_invalid_syntax () :
     print("TEST INVALID SYNTAX - ", end="")
 
