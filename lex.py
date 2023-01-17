@@ -248,10 +248,16 @@ def _sort_identation (token_list) :
 
         # get next breakline
         next_breakline = None
-        for t, token in enumerate(token_list[f[1]:]) :
-            if token[0] == "BREAKLINE":
-                next_breakline = t + f[1]
-                break
+        def get_breakline () :
+            next_breakline = None
+            for t, token in enumerate(token_list[f[1]:]) :
+                if token[0] == "BREAKLINE":
+                    next_breakline = t + f[1]
+                    break
+
+            return next_breakline
+        next_breakline = get_breakline()
+
 
         # if no next breakline found, raise exception
         if next_breakline == None:
@@ -267,15 +273,19 @@ def _sort_identation (token_list) :
                 #print(f"pop last_breakline: {last_breakline}")
                 token_list.pop(last_breakline)
 
+                pos = last_breakline
                 for i in range(0, last_flen-flen):
                     #print(f"END i {i}")
-                    token_list.insert(last_breakline, ["BLOCK_END", block_stack.pop(), "return"])
+                    token_list.insert(pos, ["BLOCK_END", block_stack.pop(), "return"])
+                    pos += 1
                     lvl -= 1
+
+        next_breakline = get_breakline()
 
         # check for end of expression to add BLOCK_END token
         expr_end = next_breakline == len(token_list) - 1
+        #print(f"expr_end: next_breakline {next_breakline} len {len(token_list)-1}")
         if expr_end:
-            #print(f"END expr_end: {next_breakline}")
             token_list.pop(next_breakline)
 
             pos = next_breakline
@@ -283,6 +293,9 @@ def _sort_identation (token_list) :
                 #print(f"END i2 {i}")
                 token_list.insert(pos, ["BLOCK_END", block_stack.pop(), "expr_end" ])
                 pos += 1
+                lvl -= 1
+
+        next_breakline = get_breakline()
 
         last_flen = flen
         last_breakline = next_breakline
