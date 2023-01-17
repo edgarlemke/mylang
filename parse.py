@@ -126,6 +126,7 @@ def _match (buf_slice):
             [["EXPR"], ["IF_DECL"]],
             [["EXPR"], ["IF_ELSE_DECL"]],
             [["EXPR"], ["WHILE_DECL"]],
+            [["EXPR"], ["FOR_DECL"]],
     
             [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
             [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
@@ -167,6 +168,10 @@ def _match (buf_slice):
             [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
             # while
             [["WHILE_DECL"], ["WHILE", "SPACE", "NAME", "BLOCK"]],
+            # for
+            [["FOR_DECL"], ["FOR", "SPACE", "NAME", "SPACE", "SPACE", "NAME", "BLOCK"]],
+            [["FOR_DECL"], ["FOR", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
+
         ],
     ]
 
