@@ -66,11 +66,13 @@ def parse (token_list, root) :
 def _find_match (buf, lookahead):
     token_rule_prec = [
         [ ["ELSE"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
+        [ ["ELSE"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL"]] ],
+        [ ["ELSE"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+
         [ ["ELIF"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
-
         [ ["ELIF"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL"]] ],
-
         [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+
         [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
     ]
 
@@ -132,6 +134,8 @@ def _match (buf_slice):
             [["EXPR"], ["IF_ELSE_DECL"]],
             [["EXPR"], ["IF_ELIF_DECL"]],
             [["EXPR"], ["IF_ELIF_GROUP_DECL"]],
+            [["EXPR"], ["IF_ELIF_ELSE_DECL"]],
+            [["EXPR"], ["IF_ELIF_GROUP_ELSE_DECL"]],
 
             [["EXPR"], ["WHILE_DECL"]],
             [["EXPR"], ["FOR_DECL"]],
@@ -189,7 +193,9 @@ def _match (buf_slice):
             [["ELIF_DECL"], ["ELIF", "SPACE", "NAME", "BLOCK"]],
             [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]],
             [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
-
+            # if-elif-else
+            [["IF_ELIF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL", "ELSE", "BLOCK"]],
+            [["IF_ELIF_GROUP_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP", "ELSE", "BLOCK"]],
 
             # while
             [["WHILE_DECL"], ["WHILE", "SPACE", "NAME", "BLOCK"]],
