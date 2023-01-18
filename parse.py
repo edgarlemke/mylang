@@ -144,6 +144,7 @@ def _match (buf_slice):
             [["EXPR"], ["RES_STRUCT_DECL"]],
 
             [["EXPR"], ["INCL_DECL"]],
+            [["EXPR"], ["PKG_DECL"]],
 
 
             [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
@@ -216,7 +217,7 @@ def _match (buf_slice):
             # packages
             [["INCL_DECL"], ["INCL", "SPACE", "NAME"]],
             [["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
-            [["PKG_DECL"], ["PKG", "SPACE", "NAME"]],
+            [["PKG_DECL"], ["PKG", "SPACE", "NAME", "BLOCK"]],
         ],
     ]
 
