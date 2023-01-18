@@ -11,7 +11,6 @@ def parse (token_list, root) :
     while token_ct < len(token_list):
 
         # shift
-        print(f"SHIFT {lookahead}")
         buf.append(lookahead)
 
         # update lookahead
@@ -23,11 +22,8 @@ def parse (token_list, root) :
         # look for rules and reduce as long as needed
         while True:
             match = _find_match(buf, lookahead)
-            #print(f"match {match}")
 
             if match != None:
-                print(f"buf {buf}")
-                print(f"match {match}")
                 start, rule = match
 
                 # reduce
@@ -44,7 +40,6 @@ def parse (token_list, root) :
                 #
 
                 last_found_rule = inplace
-                print()
 
             else:
                 # if not all tokens have been buffered, get out of while loop and shift
@@ -74,10 +69,9 @@ def _find_match (buf, lookahead):
         [ ["ELIF"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
 
         [ ["ELIF"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL"]] ],
-        [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
 
-        #[ ["ELIF"], [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]] ],
-        #[ ["ELSE"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+        [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+        [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
     ]
 
     match = None
@@ -85,7 +79,6 @@ def _find_match (buf, lookahead):
     # iters over buffer slices looking for rule
     for i in range(0, len(buf)):
         buf_slice = buf[i:]
-        #print(f"buf_slice {buf_slice}")
         rule = _match(buf_slice)
 
         # if didn't find matching rule, skip
@@ -103,7 +96,7 @@ def _find_match (buf, lookahead):
             token_in_lookahead = (lookahead != None and prec_rule_token[0] == lookahead[0])
             token_in_buffer = (prec_rule_token[0] in [b[0] for b in buf_slice])
             if target_match and (token_in_lookahead or token_in_buffer):
-                print(f"    force_prec_shift {prec_rule_target} {prec_rule_token}")
+                #print(f"    force_prec_shift {prec_rule_target} {prec_rule_token}")
                 force_prec_shift = True
                 break
 
@@ -119,18 +112,6 @@ def _find_match (buf, lookahead):
 
 def _match (buf_slice):
     rules = [
-        [
-            [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
-        ],
-        [
-
-            [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
-
-            [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL" ]],# "SPACE", "NAME", "BLOCK"]],
-            [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]],
-
-            #[["IF_ELIF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
-        ],
         [
             # expressions
             [["EXPR"], ["INT"]],
@@ -200,10 +181,14 @@ def _match (buf_slice):
             # control flux
             # if
             [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
-            # elif
+            # if-else
+            [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
+            # if-elif
+            [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL" ]],
+            [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]],
             [["ELIF_DECL"], ["ELIF", "SPACE", "NAME", "BLOCK"]],
             [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]],
-            #[["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
+            [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
 
 
             # while
@@ -241,23 +226,12 @@ def _match (buf_slice):
     
                 if item[0] == r[1][i]:
                     matches.append(True)
-    
-            #if len(matches):
-            #    print(f"matches {matches} {r}")                
+              
+            some_match = len(matches) > 0
+            match_rule_same_size = len(matches) == len(r[1])
 
-            #if all(matches) and len(matches) == len(r[1]):
-            if len(matches) > 0 and all(matches):
-
-                if len(matches) == len(r[1]):
-                    all_matches[order].append(r)
-                    print(f"r {r} {matches}")
-
-    x = []
-    for i in all_matches:
-        if len(i) > 0:
-            x.append(i)
-    if len(x):
-        print(f"all_matches {x}")
+            if some_match and all(matches) and match_rule_same_size:
+                all_matches[order].append(r)
 
     
     largest = None
@@ -273,6 +247,10 @@ def _match (buf_slice):
     
             if len(largest[1]) == len(m[1]):
                 raise Exception(f"Rule mismatch: {largest} {m}")
+
+        # stop at the first order which found some rule
+        if largest != None:
+            break
 
     if largest != None:
         #print(f"buf_slice: {buf_slice}\nlargest: {largest}\n")
