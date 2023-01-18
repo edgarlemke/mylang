@@ -68,6 +68,7 @@ def parse (token_list, root) :
 def _find_match (buf, lookahead):
     token_rule_prec = [
         [ ["ELSE"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
+        [ ["ELIF"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
     ]
 
     match = None
@@ -108,6 +109,7 @@ def _match (buf_slice):
     rules = [
         [
             [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
+            [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF", "NAME", "BLOCK"]],
         ],
         [
             # expressions
