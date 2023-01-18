@@ -69,6 +69,12 @@ def _find_match (buf, lookahead):
     token_rule_prec = [
         [ ["ELSE"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
         [ ["ELIF"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
+
+        [ ["ELIF"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL"]] ],
+        [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+
+        #[ ["ELIF"], [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]] ],
+        #[ ["ELSE"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
     ]
 
     match = None
@@ -90,8 +96,11 @@ def _find_match (buf, lookahead):
 
             #print(f"prec_rule_target: {prec_rule_target}  rule: {rule}    {prec_rule_target == rule}")
             #print(f"prec_rule_token: {prec_rule_token} lookahead: {lookahead}     {prec_rule_token[0] == lookahead[0]}")
-            if (prec_rule_target == rule) and ((prec_rule_token[0] == lookahead[0]) or (prec_rule_token[0] in [b[0] for b in buf_slice])):
-                #print("Bingo!")
+            target_match = (prec_rule_target == rule) 
+            token_in_lookahead = (lookahead != None and prec_rule_token[0] == lookahead[0])
+            token_in_buffer = (prec_rule_token[0] in [b[0] for b in buf_slice])
+            if target_match and (token_in_lookahead or token_in_buffer):
+                print(f"force_prec_shift {prec_rule_target} {prec_rule_token}")
                 force_prec_shift = True
                 break
 
@@ -108,8 +117,14 @@ def _find_match (buf, lookahead):
 def _match (buf_slice):
     rules = [
         [
+        ],
+        [
             [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
-            [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF", "NAME", "BLOCK"]],
+
+            [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL" ]],# "SPACE", "NAME", "BLOCK"]],
+            [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]],
+
+            #[["IF_ELIF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
         ],
         [
             # expressions
@@ -129,6 +144,9 @@ def _match (buf_slice):
 
             [["EXPR"], ["IF_DECL"]],
             [["EXPR"], ["IF_ELSE_DECL"]],
+            [["EXPR"], ["IF_ELIF_DECL"]],
+            [["EXPR"], ["IF_ELIF_GROUP_DECL"]],
+
             [["EXPR"], ["WHILE_DECL"]],
             [["EXPR"], ["FOR_DECL"]],
     
@@ -177,6 +195,11 @@ def _match (buf_slice):
             # control flux
             # if
             [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
+            # elif
+            [["ELIF_DECL"], ["ELIF", "SPACE", "NAME", "BLOCK"]],
+            [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]],
+            [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
+
             # while
             [["WHILE_DECL"], ["WHILE", "SPACE", "NAME", "BLOCK"]],
             # for

@@ -192,8 +192,25 @@ def test_if_elif () :
 \t\tnop\n
 \telif test1\n
 \t\tnop\n""",
-        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((IF_ELSE_DECL ((IF 22 24 if) (SPACE 24 25 " ") (NAME 25 29 true) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 33 36 nop))) (BLOCK_END 1 return))) (ELSE 39 43 else) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 47 50 nop))) (BLOCK_END 2 expr_end))))))) (BLOCK_END 0 expr_end))))))))"""
+"""((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((IF_ELIF_DECL ((IF 22 24 if) (SPACE 24 25 " ") (NAME 25 30 test0) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 34 37 nop))) (BLOCK_END 1 return))) (ELIF_DECL ((ELIF 40 44 elif) (SPACE 44 45 " ") (NAME 45 50 test1) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 54 57 nop))) (BLOCK_END 2 expr_end))))))))) (BLOCK_END 0 expr_end))))))))"""
+#        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((IF_ELIF_DECL ((IF 22 24 if) (SPACE 24 25 " ") (NAME 25 30 test0) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 34 37 nop))) (BLOCK_END 1 return))) (ELIF 40 44 elif) (SPACE 44 45 " ") (NAME 45 50 test1) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 54 57 nop))) (BLOCK_END 2 expr_end))))))) (BLOCK_END 0 expr_end))))))))"""
     )
+
+def test_if_elif_elif_elif () :
+    basictest(
+        "TEST IF ELIF ELIF ELIF - ",
+        """fn main  ui8 x  ui8\n
+\tif test0\n
+\t\tnop\n
+\telif test1\n
+\t\tnop\n
+\telif test2\n
+\t\tnop\n
+\telif test3\n
+\t\tnop\n""",
+        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((IF_ELIF_DECL ((IF 22 24 if) (SPACE 24 25 " ") (NAME 25 30 test0) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 34 37 nop))) (BLOCK_END 1 return))) (ELIF 40 44 elif) (SPACE 44 45 " ") (NAME 45 50 test1) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 54 57 nop))) (BLOCK_END 2 expr_end))))))) (BLOCK_END 0 expr_end))))))))"""
+    )
+
 
 def test_while () :
     basictest(
