@@ -11,8 +11,8 @@ def parse (token_list, root) :
     while token_ct < len(token_list):
 
         # shift
+        print(f"SHIFT {lookahead}")
         buf.append(lookahead)
-        #print(f"buf {buf}")
 
         # update lookahead
         if token_ct+1 == len(token_list):
@@ -26,6 +26,8 @@ def parse (token_list, root) :
             #print(f"match {match}")
 
             if match != None:
+                print(f"buf {buf}")
+                print(f"match {match}")
                 start, rule = match
 
                 # reduce
@@ -42,6 +44,7 @@ def parse (token_list, root) :
                 #
 
                 last_found_rule = inplace
+                print()
 
             else:
                 # if not all tokens have been buffered, get out of while loop and shift
@@ -100,7 +103,7 @@ def _find_match (buf, lookahead):
             token_in_lookahead = (lookahead != None and prec_rule_token[0] == lookahead[0])
             token_in_buffer = (prec_rule_token[0] in [b[0] for b in buf_slice])
             if target_match and (token_in_lookahead or token_in_buffer):
-                print(f"force_prec_shift {prec_rule_target} {prec_rule_token}")
+                print(f"    force_prec_shift {prec_rule_target} {prec_rule_token}")
                 force_prec_shift = True
                 break
 
@@ -117,8 +120,10 @@ def _find_match (buf, lookahead):
 def _match (buf_slice):
     rules = [
         [
+            [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
         ],
         [
+
             [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
 
             [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL" ]],# "SPACE", "NAME", "BLOCK"]],
@@ -198,7 +203,8 @@ def _match (buf_slice):
             # elif
             [["ELIF_DECL"], ["ELIF", "SPACE", "NAME", "BLOCK"]],
             [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]],
-            [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
+            #[["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
+
 
             # while
             [["WHILE_DECL"], ["WHILE", "SPACE", "NAME", "BLOCK"]],
@@ -228,7 +234,7 @@ def _match (buf_slice):
 
         for r in ruleorder:
             matches = []
-    
+
             for i, item in enumerate(buf_slice):
                 if i > len(r[1])-1:
                     break
@@ -236,8 +242,23 @@ def _match (buf_slice):
                 if item[0] == r[1][i]:
                     matches.append(True)
     
-            if all(matches) and len(matches) == len(r[1]):
-                all_matches[order].append(r)
+            #if len(matches):
+            #    print(f"matches {matches} {r}")                
+
+            #if all(matches) and len(matches) == len(r[1]):
+            if len(matches) > 0 and all(matches):
+
+                if len(matches) == len(r[1]):
+                    all_matches[order].append(r)
+                    print(f"r {r} {matches}")
+
+    x = []
+    for i in all_matches:
+        if len(i) > 0:
+            x.append(i)
+    if len(x):
+        print(f"all_matches {x}")
+
     
     largest = None
     for order in all_matches:
