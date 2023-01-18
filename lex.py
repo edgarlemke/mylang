@@ -59,6 +59,7 @@ def _match_tokens (code) :
 
         ["NOP", "nop"],
 
+        ["PKG", "pkg"],
         ["INCL", "incl"],
 
         ["FN", "fn"],

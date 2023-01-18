@@ -216,6 +216,7 @@ def _match (buf_slice):
             # packages
             [["INCL_DECL"], ["INCL", "SPACE", "NAME"]],
             [["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
+            [["PKG_DECL"], ["PKG", "SPACE", "NAME"]],
         ],
     ]
 

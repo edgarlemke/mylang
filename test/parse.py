@@ -273,9 +273,9 @@ def test_for_2 () :
 
 def test_incl_pkg () :
     basictest(
-            "TEST INCL pkg - ",
-            """incl pkg""",
-            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 8 pkg))))))"""
+            "TEST INCL somepkg - ",
+            """incl somepkg""",
+            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 12 somepkg))))))"""
     )
 
 def test_incl_path () :
