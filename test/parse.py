@@ -334,7 +334,7 @@ def test_incl_path () :
             """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (EXPR ((QUOTE 5 6 "\\\"") (QVALUE 6 10 path) (QUOTE 10 11 "\\\""))))))))"""
     )
 
-def test_incl_pkg () :
+def test_pkg () :
     basictest(
             "TEST PKG somepkg - ",
             """pkg somepkg
