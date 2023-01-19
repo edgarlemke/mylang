@@ -66,14 +66,15 @@ def parse (token_list, root) :
 def _find_match (buf, lookahead):
     token_rule_prec = [
         [ ["ELSE"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
-        [ ["ELSE"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL"]] ],
-        [ ["ELSE"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+        [ ["ELSE"], [["EXPR"], ["IF_DECL"]] ],
+        [ ["ELSE"], [["IF_ELIF_DECL"], ["IF_DECL", "ELIF_DECL"]] ],
+        [ ["ELSE"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
         [ ["ELIF"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
-        [ ["ELIF"], [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL"]] ],
-        [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+        [ ["ELIF"], [["IF_ELIF_DECL"], ["IF_DECL", "ELIF_DECL"]] ],
+        [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
-        [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+        [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
         [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME"]] ],
         [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]] ],
@@ -127,8 +128,10 @@ def _match (buf_slice):
             # expressions
             [["EXPR"], ["INT"]],
             [["EXPR"], ["FLOAT"]],
-            [["EXPR"], ["NOP"]],
             [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
+            [["EXPR"], ["BOOL"]],
+
+            [["EXPR"], ["NOP"]],
 
             [["EXPR"], ["PAR_GROUP"]],
             
@@ -190,6 +193,7 @@ def _match (buf_slice):
             [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]],
 
             [["RET_DECL"], ["RET", "SPACE", "NAME"]],
+            [["RET_DECL"], ["RET", "SPACE", "EXPR"]],
     
             # variables and constants
             # set
@@ -200,20 +204,24 @@ def _match (buf_slice):
             # control flux
             # if
             [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]],
+            [["IF_DECL"], ["IF", "SPACE", "EXPR", "BLOCK"]],
             # if-else
-            [["IF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELSE", "BLOCK"]],
+            [["ELSE_DECL"], ["ELSE", "BLOCK"]],
+            [["IF_ELSE_DECL"], ["IF_DECL", "ELSE_DECL"]],
             # if-elif
-            [["IF_ELIF_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL" ]],
-            [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]],
             [["ELIF_DECL"], ["ELIF", "SPACE", "NAME", "BLOCK"]],
+            [["ELIF_DECL"], ["ELIF", "SPACE", "EXPR", "BLOCK"]],
+            [["IF_ELIF_DECL"], ["IF_DECL", "ELIF_DECL"]],
             [["ELIF_GROUP"], ["ELIF_DECL", "ELIF_DECL"]],
             [["ELIF_GROUP"], ["ELIF_GROUP", "ELIF_DECL"]],
+            [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]],
             # if-elif-else
-            [["IF_ELIF_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_DECL", "ELSE", "BLOCK"]],
-            [["IF_ELIF_GROUP_ELSE_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP", "ELSE", "BLOCK"]],
+            [["IF_ELIF_ELSE_DECL"], ["IF_DECL", "ELIF_DECL", "ELSE_DECL"]],
+            [["IF_ELIF_GROUP_ELSE_DECL"], ["IF_DECL", "ELIF_GROUP", "ELSE_DECL"]],
 
             # while
             [["WHILE_DECL"], ["WHILE", "SPACE", "NAME", "BLOCK"]],
+            [["WHILE_DECL"], ["WHILE", "SPACE", "EXPR", "BLOCK"]],
             # for
             [["FOR_DECL"], ["FOR", "SPACE", "NAME", "SPACE", "SPACE", "NAME", "BLOCK"]],
             [["FOR_DECL"], ["FOR", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],

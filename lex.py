@@ -55,6 +55,7 @@ def _match_tokens (code) :
 
         ["INT", "[0-9]+"],
         ["FLOAT", "[0-9]+\.[0-9]+"],
+        ["BOOL", "true|false"],
         ["STRUCT", "struct"],
 
         ["NOP", "nop"],
