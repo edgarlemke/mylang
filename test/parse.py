@@ -44,6 +44,12 @@ def test_rule__expr__int () :
 def test_rule__expr__float () :
     basictest("TEST RULE  EXPR -> FLOAT - ", "3.14", """((EXPR ((FLOAT 0 4 3.14))))""")
 
+def test_rule__expr__true () :
+    basictest("TEST RULE  EXPR -> BOOL true - ", "true", """((EXPR ((BOOL 0 4 true))))""")
+
+def test_rule__expr__false () :
+    basictest("TEST RULE  EXPR -> BOOL false - ", "false", """((EXPR ((BOOL 0 5 false))))""")
+
 
 def test_rule__par_group__par_open_par_close () :
     basictest("TEST RULE  PAR_GROUP -> PAR_OPEN PAR_CLOSE - ", "()", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (PAR_CLOSE 1 2 ")"))))))""")
