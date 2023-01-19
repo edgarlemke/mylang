@@ -57,6 +57,10 @@ if __name__ == "__main__":
     elif expr != None:
         expr = str(expr)
 
+    elif src == None and expr == None:
+        raise Exception("Either --src or --expr argument must be provided")
+        
+
     print_parse_tree = args.print_parse_tree
     print_ast = args.print_ast
 

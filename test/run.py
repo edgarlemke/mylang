@@ -54,8 +54,21 @@ def test_list_print_quoting_quote_value () :
     print("OK")
     
 
-def test_list_print_escaping () :
-    pass
+def test_check_no_argument () :
+    print("TEST CHECK NO ARGUMENT - ", end= "", flush= True)
+
+    p = Popen(split("/usr/bin/python3 ../run.py"), stdout= PIPE, stderr= PIPE, encoding= "utf-8")
+    stdout, stderr = p.communicate()
+
+    expected = "Either --src or --expr argument must be provided"
+
+    if not (expected in stderr):
+        print(f"""FAIL - stderr not correct: 
+        expected: {expected}
+        got: {stderr}""")
+        exit()
+
+    print("OK")
 
 
 
