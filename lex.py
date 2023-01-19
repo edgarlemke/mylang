@@ -8,6 +8,49 @@ import list as list_
 
 
 
+# rules list
+# structure of rules is a list: ["TOKEN_CAT", "REGEXP"]
+# TOKEN_CAT is the token category keyword
+# REGEXP is the regular expression for matching tokens
+rules_list = [
+    ["PAR_OPEN", "\("],
+    ["PAR_CLOSE", "\)"],
+    ["SPACE", " "],
+    ["BREAKLINE", "\n"],
+    ["TAB", "\t"],
+    ["QUOTE", "\""],
+
+    ["NAME", "\w+"],
+
+    ["INT", "[0-9]+"],
+    ["FLOAT", "[0-9]+\.[0-9]+"],
+    ["BOOL", "true|false"],
+    ["STRUCT", "struct"],
+
+    ["NOP", "nop"],
+
+    ["PKG", "pkg"],
+    ["INCL", "incl"],
+
+    ["FN", "fn"],
+    ["CALL", "call"],
+    ["RET", "ret"],
+
+    ["SET", "set"],
+    ["MUT", "mut"],
+
+    ["RES", "res"],
+
+    ["IF", "if"],
+    ["ELSE", "else"],
+    ["ELIF", "elif"],
+
+    ["WHILE", "while"],
+
+    ["FOR", "for"],
+]
+
+
 def tokenize (code):
     """
     Tokenize code according to rules.
@@ -39,47 +82,6 @@ def tokenize (code):
 def _match_tokens (code) :
     token_list = []
 
-    # rules list
-    # structure of rules is a list: ["TOKEN_CAT", "REGEXP"]
-    # TOKEN_CAT is the token category keyword
-    # REGEXP is the regular expression for matching tokens
-    rules_list = [
-        ["PAR_OPEN", "\("],
-        ["PAR_CLOSE", "\)"],
-        ["SPACE", " "],
-        ["BREAKLINE", "\n"],
-        ["TAB", "\t"],
-        ["QUOTE", "\""],
-
-        ["NAME", "\w+"],
-
-        ["INT", "[0-9]+"],
-        ["FLOAT", "[0-9]+\.[0-9]+"],
-        ["BOOL", "true|false"],
-        ["STRUCT", "struct"],
-
-        ["NOP", "nop"],
-
-        ["PKG", "pkg"],
-        ["INCL", "incl"],
-
-        ["FN", "fn"],
-        ["CALL", "call"],
-        ["RET", "ret"],
-
-        ["SET", "set"],
-        ["MUT", "mut"],
-
-        ["RES", "res"],
-
-        ["IF", "if"],
-        ["ELSE", "else"],
-        ["ELIF", "elif"],
-
-        ["WHILE", "while"],
-
-        ["FOR", "for"],
-    ]
 
     # iter over rules list matching tokens
     for rule in rules_list:

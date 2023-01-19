@@ -7,7 +7,7 @@ from shlex import split
 def basictest (msg, expr, expected) :
     print(msg, end="", flush= True)
 
-    stdout, stderr = _popen(expr)
+    stdout, stderr = _expr(expr)
 
     if stderr != "":
         print(f"FAIL - stderr not empty: {stderr}")
@@ -24,7 +24,7 @@ def basictest (msg, expr, expected) :
 def justprint (msg, expr, expected) :
     print(msg, end="", flush= True)
 
-    stdout, stderr = _popen(expr)
+    stdout, stderr = _expr(expr)
 
     print(f"stdout: {stdout}")
     print(f"stderr: {stderr}")
@@ -350,7 +350,7 @@ def test_pkg () :
 def test_invalid_syntax () :
     print("TEST INVALID SYNTAX - ", end="")
 
-    stdout, stderr = _popen("())")
+    stdout, stderr = _expr("())")
 
     expected = "Invalid syntax!"
     if not (expected in stderr):
@@ -361,11 +361,51 @@ def test_invalid_syntax () :
 
     print("OK")
 
+def test_abstract () :
+    print("TEST abstract - ", end="")
 
-def _popen (expr) :
-    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-parse-tree"
+    expr = """fn main  ui8 x  ui8
+\tif true
+\t\tnop
+\telif true
+\t\tnop
+\telse
+\t\tnop
+
+\twhile true
+\t\tnop
+
+\tfor i  array
+\t\tnop
+"""
+
+    expected = """((EXPR ((FN_DECL ((FN) (NAME main) (NAMEPAIR ((NAME ui8) (NAME x))) (NAME ui8) (BLOCK ((EXPR_GROUP ((EXPR_GROUP ((EXPR ((IF_ELIF_ELSE_DECL ((IF_DECL ((EXPR ((BOOL))) (BLOCK ((EXPR ((NOP))))))) (ELIF_DECL ((EXPR ((BOOL))) (BLOCK ((EXPR ((NOP))))))) (ELSE_DECL ((BLOCK ((EXPR ((NOP))))))))))) (EXPR ((WHILE_DECL ((EXPR ((BOOL))) (BLOCK ((EXPR ((NOP))))))))))) (EXPR ((FOR_DECL ((NAME i) (NAME array) (BLOCK ((EXPR ((NOP))))))))))))))))))"""
+
+    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-ast"
     sp = split(cmd)
 
+    stdout, stderr = _popen(sp)
+
+    if stderr != "":
+        print(f"FAIL - stderr not empty: {stderr}")
+        exit()
+
+    if stdout != expected:
+        print(f"""FAIL - stdout not corrent:
+            expected:   {expected}
+            got:        {stdout}""")
+        exit()
+
+    print("OK")
+
+
+
+def _expr (expr):
+    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-parse-tree"
+    sp = split(cmd)
+    return _popen(sp)
+
+def _popen (sp) :
     p = Popen(sp, stdout= PIPE, stderr= PIPE, encoding= "utf-8")
     return p.communicate()
 

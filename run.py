@@ -7,12 +7,18 @@ import parse
 import list as list_
 
 
-def run (expr, print_parse_tree= False) :
+def run (expr, print_parse_tree= False, print_ast= False) :
     token_list = lex.tokenize(expr) 
     parsetree = parse.parse(token_list, "EXPR")
 
     if print_parse_tree:
         print( list_.list_print(parsetree), end="" )
+        exit()
+
+    ast = parse.abstract(parsetree.copy())
+    if print_ast:
+        #print(ast)
+        print( list_.list_print(ast), end="" )
         exit()
 
 
@@ -25,7 +31,9 @@ if __name__ == "__main__":
     group.add_argument("--src")
     group.add_argument("--expr")
 
-    parser.add_argument("--print-parse-tree", action= "store_true")
+    print_group = parser.add_mutually_exclusive_group()
+    print_group.add_argument("--print-parse-tree", action= "store_true")
+    print_group.add_argument("--print-ast", action= "store_true")
 
     args = parser.parse_args()
 
@@ -50,5 +58,6 @@ if __name__ == "__main__":
         expr = str(expr)
 
     print_parse_tree = args.print_parse_tree
+    print_ast = args.print_ast
 
-    run(expr, print_parse_tree)
+    run(expr, print_parse_tree, print_ast)

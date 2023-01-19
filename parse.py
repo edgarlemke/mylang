@@ -68,11 +68,16 @@ def _find_match (buf, lookahead):
         [ ["ELSE"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
         [ ["ELSE"], [["EXPR"], ["IF_DECL"]] ],
         [ ["ELSE"], [["IF_ELIF_DECL"], ["IF_DECL", "ELIF_DECL"]] ],
+        [ ["ELSE"], [["EXPR"], ["IF_ELIF_DECL"]] ],
         [ ["ELSE"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
+        [ ["ELSE"], [["EXPR"], ["IF_ELIF_GROUP_DECL"]] ],
 
         [ ["ELIF"], [["IF_DECL"], ["IF", "SPACE", "NAME", "BLOCK"]] ],
+        [ ["ELIF"], [["EXPR"], ["IF_DECL"]] ],
         [ ["ELIF"], [["IF_ELIF_DECL"], ["IF_DECL", "ELIF_DECL"]] ],
+        [ ["ELIF"], [["EXPR"], ["IF_ELIF_DECL"]] ],
         [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
+        [ ["ELIF"], [["EXPR"], ["IF_ELIF_GROUP_DECL"]] ],
 
         [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
@@ -287,3 +292,48 @@ def _match (buf_slice):
         return largest
 
     return None
+
+
+def abstract (parsetree):
+    def _clean_nodes (list_):
+        to_remove = [
+                "SPACE",
+                "PAR_OPEN", "PAR_CLOSE",
+                "BLOCK_START", "BLOCK_END",
+                "IF", "ELIF", "ELSE",
+                "FOR",
+                "WHILE"
+        ]
+        for index, item in enumerate(list_.copy()):
+            if type(item) != list:
+                continue
+            if item[0] in to_remove:
+                list_.remove(item)
+            else:
+                _clean_nodes(item)
+
+    _clean_nodes(parsetree)
+
+    def _clean_token_data (list_):
+        import lex
+        lex_tokens = [ i[0] for i in lex.rules_list ]
+
+        for index, item in enumerate(list_.copy()):
+            if type(item) != list:
+                continue
+            if item[0] in lex_tokens:
+                if item[0] == "NAME":
+                    limit = 2
+                else:
+                    limit = 3
+                for i in range(0,limit):
+                    item.pop(1)
+            else:
+                _clean_token_data(item)
+
+    _clean_token_data (parsetree)
+
+    #print(f"parsetree {parsetree}")
+
+    ast = parsetree
+    return ast
