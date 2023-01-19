@@ -74,6 +74,15 @@ def _find_match (buf, lookahead):
         [ ["ELIF"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
 
         [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF", "SPACE", "NAME", "BLOCK", "ELIF_GROUP"]] ],
+
+        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]] ],
+
+        [ ["SPACE"], [["EXPR"], ["CALL_DECL"]] ],
     ]
 
     match = None
@@ -96,7 +105,7 @@ def _find_match (buf, lookahead):
             #print(f"prec_rule_token: {prec_rule_token} lookahead: {lookahead}     {prec_rule_token[0] == lookahead[0]}")
             target_match = (prec_rule_target == rule) 
             token_in_lookahead = (lookahead != None and prec_rule_token[0] == lookahead[0])
-            token_in_buffer = (prec_rule_token[0] in [b[0] for b in buf_slice])
+            token_in_buffer = (prec_rule_token[0] in [b[0] for b in buf_slice[ len(prec_rule_target[1]): ]])
             if target_match and (token_in_lookahead or token_in_buffer):
                 #print(f"    force_prec_shift {prec_rule_target} {prec_rule_token}")
                 force_prec_shift = True
@@ -174,6 +183,11 @@ def _match (buf_slice):
             [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
 
             [["CALL_DECL"], ["CALL", "SPACE", "NAME"]],
+            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
+            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR"]],
+            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]],
+            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]],
+            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]],
 
             [["RET_DECL"], ["RET", "SPACE", "NAME"]],
     
