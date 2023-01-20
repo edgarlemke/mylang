@@ -4,10 +4,11 @@ import argparse
 
 import lex
 import parse
+import seman
 import list as list_
 
 
-def run (expr, print_parse_tree= False, print_ast= False) :
+def run (expr, print_parse_tree= False, print_ast= False, print_symbol_table= False) :
     token_list = lex.tokenize(expr) 
     parsetree = parse.parse(token_list, "EXPR")
 
@@ -17,9 +18,17 @@ def run (expr, print_parse_tree= False, print_ast= False) :
 
     ast = parse.abstract(parsetree.copy())
     if print_ast:
-        #print(ast)
         print( list_.list_print(ast), end="" )
         exit()
+
+    symbol_table = seman.get_symbol_table(parsetree)
+    if print_symbol_table:
+        print( list_.list_print(symbol_table), end="" )
+        exit()
+
+    refs = seman.get_refs(parsetree, symbol_table)
+    print(refs)
+
 
 
 if __name__ == "__main__":
@@ -34,6 +43,7 @@ if __name__ == "__main__":
     print_group = parser.add_mutually_exclusive_group()
     print_group.add_argument("--print-parse-tree", action= "store_true")
     print_group.add_argument("--print-ast", action= "store_true")
+    print_group.add_argument("--print-symbol-table", action= "store_true")
 
     args = parser.parse_args()
 
@@ -63,5 +73,6 @@ if __name__ == "__main__":
 
     print_parse_tree = args.print_parse_tree
     print_ast = args.print_ast
+    print_symbol_table = args.print_symbol_table
 
-    run(expr, print_parse_tree, print_ast)
+    run(expr, print_parse_tree, print_ast, print_symbol_table)

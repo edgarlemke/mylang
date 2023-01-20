@@ -295,45 +295,87 @@ def _match (buf_slice):
 
 
 def abstract (parsetree):
-    def _clean_nodes (list_):
-        to_remove = [
-                "SPACE",
-                "PAR_OPEN", "PAR_CLOSE",
-                "BLOCK_START", "BLOCK_END",
-                "IF", "ELIF", "ELSE",
-                "FOR",
-                "WHILE"
-        ]
-        for index, item in enumerate(list_.copy()):
-            if type(item) != list:
-                continue
-            if item[0] in to_remove:
-                list_.remove(item)
-            else:
-                _clean_nodes(item)
 
     _clean_nodes(parsetree)
-
-    def _clean_token_data (list_):
-        import lex
-        lex_tokens = [ i[0] for i in lex.rules_list ]
-
-        for index, item in enumerate(list_.copy()):
-            if type(item) != list:
-                continue
-            if item[0] in lex_tokens:
-                if item[0] == "NAME":
-                    limit = 2
-                else:
-                    limit = 3
-                for i in range(0,limit):
-                    item.pop(1)
-            else:
-                _clean_token_data(item)
-
     _clean_token_data (parsetree)
+    _merge_groups(parsetree)
 
-    #print(f"parsetree {parsetree}")
+    parsetree = _merge_single_children(parsetree)
 
-    ast = parsetree
-    return ast
+    return parsetree
+
+
+def _clean_nodes (list_):
+    to_remove = [
+            "SPACE",
+            "PAR_OPEN", "PAR_CLOSE",
+            "BLOCK_START", "BLOCK_END",
+            "IF", "ELIF", "ELSE",
+            "FOR",
+            "WHILE",
+            "FN",
+            "SET",
+            "MUT",
+            "RET",
+            "PKG",
+            "INCL",
+    ]
+    for index, item in enumerate(list_.copy()):
+        if type(item) != list:
+            continue
+        if item[0] in to_remove:
+            list_.remove(item)
+        else:
+            _clean_nodes(item)
+
+
+def _clean_token_data (list_):
+    import lex
+    lex_tokens = [ i[0] for i in lex.rules_list ]
+
+    for index, item in enumerate(list_.copy()):
+        if type(item) != list:
+            continue
+        if item[0] == "NAME":
+            continue
+
+        if item[0] in lex_tokens:
+            if item[0] in ["INT", "FLOAT", "BOOL"]:
+                limit = 2
+            else:
+                limit = 3
+            for i in range(0,limit):
+                item.pop(1)
+        else:
+            _clean_token_data(item)
+
+
+group_tokens = ["NAMEPAIR", "NAMEPAIR_GROUP", "EXPR_GROUP", "BLOCK"]
+def _merge_groups (list_):
+    for i, item in enumerate(list_):
+        if type(item) != list:
+            continue
+
+        if item[0] in group_tokens:
+            item.pop(0)
+
+        _merge_groups(item)
+
+
+def _merge_single_children (list_):
+
+    if len(list_) == 1:
+        list_ = list_[0]
+
+    for i, item in enumerate(list_):
+        if type(item) != list:
+            continue
+
+        if len(item) == 1 and type(item[0]) == list:
+            #list_[i].append(item[0])
+            #list_[i].pop(0)
+            list_[i] = item[0]
+
+        _merge_single_children(item)
+
+    return list_

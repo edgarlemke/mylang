@@ -379,7 +379,7 @@ def test_abstract () :
 \t\tnop
 """
 
-    expected = """((EXPR ((FN_DECL ((FN) (NAME main) (NAMEPAIR ((NAME ui8) (NAME x))) (NAME ui8) (BLOCK ((EXPR_GROUP ((EXPR_GROUP ((EXPR ((IF_ELIF_ELSE_DECL ((IF_DECL ((EXPR ((BOOL))) (BLOCK ((EXPR ((NOP))))))) (ELIF_DECL ((EXPR ((BOOL))) (BLOCK ((EXPR ((NOP))))))) (ELSE_DECL ((BLOCK ((EXPR ((NOP))))))))))) (EXPR ((WHILE_DECL ((EXPR ((BOOL))) (BLOCK ((EXPR ((NOP))))))))))) (EXPR ((FOR_DECL ((NAME i) (NAME array) (BLOCK ((EXPR ((NOP))))))))))))))))))"""
+    expected = """(EXPR (FN_DECL ((NAME main) ((NAME ui8) (NAME x)) (NAME ui8) ((((EXPR (IF_ELIF_ELSE_DECL ((IF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELIF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELSE_DECL ((EXPR (NOP))))))) (EXPR (WHILE_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))))) (EXPR (FOR_DECL ((NAME i) (NAME array) ((EXPR (NOP)))))))))))"""
 
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-ast"
     sp = split(cmd)
