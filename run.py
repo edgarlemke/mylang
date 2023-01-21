@@ -21,14 +21,11 @@ def run (expr, print_parse_tree= False, print_ast= False, print_symbol_table= Fa
         print( list_.list_print(ast), end="" )
         exit()
 
-    symbol_table = seman.get_symbol_table(parsetree)
-    if print_symbol_table:
-        print( list_.list_print(symbol_table), end="" )
-        exit()
+    s_tree = parse.serialize_tree(ast)
 
-    refs = seman.get_refs(parsetree, symbol_table)
-    print(refs)
+    symtbl = seman.get_symtbl(s_tree)
 
+    seman.check(s_tree, symtbl)
 
 
 if __name__ == "__main__":

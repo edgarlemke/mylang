@@ -336,11 +336,11 @@ def _clean_token_data (list_):
     for index, item in enumerate(list_.copy()):
         if type(item) != list:
             continue
-        if item[0] == "NAME":
-            continue
+#        if item[0] == "NAME":
+#            continue
 
         if item[0] in lex_tokens:
-            if item[0] in ["INT", "FLOAT", "BOOL"]:
+            if item[0] in ["NAME", "INT", "FLOAT", "BOOL"]:
                 limit = 2
             else:
                 limit = 3
@@ -379,3 +379,36 @@ def _merge_single_children (list_):
         _merge_single_children(item)
 
     return list_
+
+
+def serialize_tree (tree):
+    s = [["EXPR", None, []]]
+
+    def _follow (li, s, parent):
+        new = []
+
+        for i, node in enumerate(li):
+            if type(node) != list:
+                continue
+
+            to_append = [child for child in node if type(child) != list]
+            #print(to_append)
+
+            if len(to_append) > 0:
+                to_append += [ parent ] + [[]]
+                s.append(to_append)
+                new_parent = len(s) - 1
+
+                s[parent][len(s[parent])-1].append(new_parent)
+
+            else:
+                new_parent = parent
+
+            _follow(node, s, new_parent)
+
+        s += new
+
+
+    _follow(tree, s, len(s)-1)
+
+    return s
