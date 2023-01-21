@@ -22,6 +22,9 @@ def get_symtbl (s_tree):
 
         # get node's parent node
         parent_node_index = node[1]
+        if parent_node_index == None:
+            return 0
+
         parent = s_tree[ parent_node_index ]
 
         # check if scope node matches parent node, if it does return scope index
