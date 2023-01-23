@@ -23,9 +23,11 @@ def run (expr, print_parse_tree= False, print_ast= False, print_symbol_table= Fa
 
     s_tree = parse.serialize_tree(ast)
 
-    symtbl = seman.get_symtbl(s_tree)
+    symtbl, scopes = seman.get_symtbl(s_tree)
+#    print(f"symtbl: {symtbl}")
+#    print(f"scopes: {scopes}")
 
-    seman.check(s_tree, symtbl)
+    seman.check(s_tree, symtbl, scopes)
 
 
 if __name__ == "__main__":

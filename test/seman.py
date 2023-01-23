@@ -35,13 +35,25 @@ def test_set_mut_conflict_1 () :
         "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict: a")
 
-def test_set_mut_higher_scopes () :
+def test_set_mut_higher_scopes_0 () :
     basictest(
-        "TEST set mut higher scopes - ",
+        "TEST set mut higher scopes 0 - ",
         """pkg somepkg
 \tset x ui8 1
 \tfn main  ui8 a  ui8
 \t\tset x ui8 2
+""",
+        "",
+        "SET/MUT conflict in higher scope: x")
+
+def test_set_mut_higher_scopes_1 () :
+    basictest(
+        "TEST set mut higher scopes 1 - ",
+        """pkg somepkg
+\tset x ui8 1
+\tfn main  ui8 a  ui8
+\t\tfn otherfn  ui8 b  ui8
+\t\t\tset x ui8 2
 """,
         "",
         "SET/MUT conflict in higher scope: x")
@@ -56,12 +68,14 @@ def basictest (msg, expr, expected_stdout, expected_stderr) :
     #print(stderr)
 
     if not(expected_stderr in stderr):
-        print(f"FAIL - stderr not correct: {stderr}")
+        print(f"""FAIL - stderr not correct:
+        expected:   {expected_stderr}
+        got:        {stderr}""")
         exit()
 
     if stdout != expected_stdout:
         print(f"""FAIL - stdout not correct:
-            expected:   {expected}
+            expected:   {expected_stdout}
             got:        {stdout}""")
         exit()
 

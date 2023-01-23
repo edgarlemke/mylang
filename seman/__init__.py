@@ -120,7 +120,7 @@ def get_symtbl (s_tree):
             new_scope = [i, cat, None]
             scopes.append(new_scope)
 
-    return symtbl
+    return (symtbl, scopes)
 
 
 def _get_refs (s_tree, symtbl) :
@@ -146,13 +146,13 @@ def _get_refs (s_tree, symtbl) :
     return name_indexes
 
 
-def check (s_tree, symtbl):
+def check (s_tree, symtbl, scopes):
     refs = _get_refs(s_tree, symtbl)
 
-    _check_set_mut(s_tree, symtbl)
+    _check_set_mut(s_tree, symtbl, scopes)
 
 # check single set per name at every scope
-def _check_set_mut(s_tree, symtbl):
+def _check_set_mut(s_tree, symtbl, scopes):
 
     for sym_name in symtbl:
         sym_list = symtbl[sym_name]
@@ -181,18 +181,41 @@ def _check_set_mut(s_tree, symtbl):
                     raise Exception(f"SET/MUT conflict: {sym_name}")
         
         # check for SETs and MUTs on name already set in function header or higher scopes
-        def iterup(i):
-            #parent = sys_tree[i[2]]
-            #print(parent)
-            pass
+        def iterup(scope):
+            if scope == None:
+                return False
 
+            scope_parent = scope[2]
+            if scope_parent == None:
+                return False
+
+            match = False
+            for li2 in sym_list:
+                if li[0][0] not in ["set", "mut"] or li == li2:
+                    continue
+
+                # set variables to ease understanding
+                target_sym_scope = li2[2]
+                if target_sym_scope == scope_parent:
+                    match = True
+
+            if match:
+                return match
+            else:
+                return iterup(scopes[scope_parent])
+
+
+        # for each symbol of the same name
         for li in sym_list:
-            print(li)
-            #if li[0][0] not in ["set", "mut"]:
-            #    continue
-            #print(li)
-            #iterup(li)
+            if li[0][0] not in ["set", "mut"]:
+                continue
 
+            # get each symbol's scope
+            sym_scope = li[2]
+            scope = scopes[sym_scope]
 
+            i = iterup(scope)
+            if i:
+                raise Exception(f"SET/MUT conflict in higher scope: {sym_name}")
 
     return True
