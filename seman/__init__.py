@@ -179,5 +179,20 @@ def _check_set_mut(s_tree, symtbl):
 
                 if li[2] == li2[2]:
                     raise Exception(f"SET/MUT conflict: {sym_name}")
+        
+        # check for SETs and MUTs on name already set in function header or higher scopes
+        def iterup(i):
+            #parent = sys_tree[i[2]]
+            #print(parent)
+            pass
+
+        for li in sym_list:
+            print(li)
+            #if li[0][0] not in ["set", "mut"]:
+            #    continue
+            #print(li)
+            #iterup(li)
+
+
 
     return True

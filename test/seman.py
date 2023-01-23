@@ -35,6 +35,17 @@ def test_set_mut_conflict_1 () :
         "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict: a")
 
+def test_set_mut_higher_scopes () :
+    basictest(
+        "TEST set mut higher scopes - ",
+        """pkg somepkg
+\tset x ui8 1
+\tfn main  ui8 a  ui8
+\t\tset x ui8 2
+""",
+        "",
+        "SET/MUT conflict in higher scope: x")
+
 
 
 def basictest (msg, expr, expected_stdout, expected_stderr) :
