@@ -149,7 +149,18 @@ def _get_refs (s_tree, symtbl) :
 def check (s_tree, symtbl, scopes):
     refs = _get_refs(s_tree, symtbl)
 
+    # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
+
+    # incl-ude packages
+    #_incl_pkgs()
+
+    #_check_types() ??
+
+    _check_call(s_tree, symtbl)
+
+    #_check_set_mut_types()
+    #_check_refs()
 
 
 # check single set per name at every scope
@@ -236,3 +247,26 @@ def _check_set_mut_2 (sym_list, scopes, sym_name) :
         if i:
             raise Exception(f"SET/MUT conflict in higher scope: {sym_name}")
 
+
+def _check_call (s_tree, symtbl):
+    for node in s_tree:
+        name = node[0]
+        if name != "CALL_DECL":
+            continue
+
+        fn_name = s_tree[ node[2][1] ][1]
+
+        match = False
+        for sym_name in symtbl:
+            sym_list = symtbl[ sym_name ]
+            if sym_list[0][0][0] != "fn":
+                continue
+            #print(sym_list[0][0][0] != "fn")
+            if sym_name == fn_name:
+                match = True
+                break
+
+        if match == True:
+            continue
+
+        raise Exception(f"Call to undefined function: {fn_name}")

@@ -70,6 +70,17 @@ def test_set_mut_higher_scopes_1 () :
         "SET/MUT conflict in higher scope: x")
 
 
+def test_call_refs () :
+    basictest(
+        "TEST call references - ",
+        """fn main  ui8 a  ui8
+\tcall somefn
+""",
+        "",
+        "Call to undefined function: somefn")
+
+
+
 
 def basictest (msg, expr, expected_stdout, expected_stderr) :
     print(msg, end="", flush= True)
