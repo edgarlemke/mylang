@@ -15,6 +15,17 @@ def test_single_set ():
         "Immutable name already set before: a"
     )
 
+def test_set_fn_arg_conflict ():
+    basictest(
+        "TEST set fn arg conflict - ",
+        """fn main  ui8 x  ui8
+\tset x ui8 1
+""",
+        "", # nothing to be tested, stderr is tested before
+        "Immutable name already set before: x"
+    )
+
+
 def test_set_mut_conflict_0 () :
     basictest(
         "TEST set mut conflict 0 - ",
