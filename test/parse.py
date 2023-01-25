@@ -119,7 +119,7 @@ def test_fn_decl_2 () :
             """fn main  ui8 x  ui8\n
 \tnop\n
 \tnop\n""",
-            """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR_GROUP ((EXPR ((NOP 22 25 nop))) (EXPR ((NOP 28 31 nop))))) (BLOCK_END 0 expr_end))))))))"""
+            """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((EXPR ((NOP 22 25 nop))) (EXPR ((NOP 28 31 nop))))) (BLOCK_END 0 expr_end))))))))"""
     )
 
 def test_call_0 () :
@@ -197,7 +197,7 @@ def test_multiblock () :
 \t\tif true\n
 \t\t\tnop\n
 \tnop\n""",
-            """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR_GROUP ((EXPR_GROUP ((EXPR ((NOP 22 25 nop))) (EXPR ((IF_DECL ((IF 28 30 if) (SPACE 30 31 " ") (EXPR ((BOOL 31 35 true))) (BLOCK ((BLOCK_START 1) (EXPR ((IF_DECL ((IF 39 41 if) (SPACE 41 42 " ") (EXPR ((BOOL 42 46 true))) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 51 54 nop))) (BLOCK_END 2 return))))))) (BLOCK_END 1 return))))))))) (EXPR ((NOP 57 60 nop))))) (BLOCK_END 0 expr_end))))))))"""
+            """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((EXPR ((EXPR ((NOP 22 25 nop))) (EXPR ((IF_DECL ((IF 28 30 if) (SPACE 30 31 " ") (EXPR ((BOOL 31 35 true))) (BLOCK ((BLOCK_START 1) (EXPR ((IF_DECL ((IF 39 41 if) (SPACE 41 42 " ") (EXPR ((BOOL 42 46 true))) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 51 54 nop))) (BLOCK_END 2 return))))))) (BLOCK_END 1 return))))))))) (EXPR ((NOP 57 60 nop))))) (BLOCK_END 0 expr_end))))))))"""
             )
 
 
@@ -276,7 +276,7 @@ def test_if_elif_else () :
 \t\tnop
 \telse
 \t\tnop\n""",
-    """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((IF_ELIF_ELSE_DECL ((IF_DECL ((IF 21 23 if) (SPACE 23 24 " ") (NAME 24 29 test0) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 32 35 nop))) (BLOCK_END 1 return))))) (ELIF_DECL ((ELIF 37 41 elif) (SPACE 41 42 " ") (NAME 42 47 test1) (BLOCK ((BLOCK_START 2) (EXPR_GROUP ((EXPR ((NOP 50 53 nop))) (EXPR ((NOP 56 59 nop))))) (BLOCK_END 2 return))))) (ELSE_DECL ((ELSE 61 65 else) (BLOCK ((BLOCK_START 3) (EXPR ((NOP 68 71 nop))) (BLOCK_END 3 expr_end))))))))) (BLOCK_END 0 expr_end))))))))"""
+"""((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (NAMEPAIR ((NAME 9 12 ui8) (SPACE 12 13 " ") (NAME 13 14 x))) (SPACE 14 15 " ") (SPACE 15 16 " ") (NAME 16 19 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((IF_ELIF_ELSE_DECL ((IF_DECL ((IF 21 23 if) (SPACE 23 24 " ") (NAME 24 29 test0) (BLOCK ((BLOCK_START 1) (EXPR ((NOP 32 35 nop))) (BLOCK_END 1 return))))) (ELIF_DECL ((ELIF 37 41 elif) (SPACE 41 42 " ") (NAME 42 47 test1) (BLOCK ((BLOCK_START 2) (EXPR ((EXPR ((NOP 50 53 nop))) (EXPR ((NOP 56 59 nop))))) (BLOCK_END 2 return))))) (ELSE_DECL ((ELSE 61 65 else) (BLOCK ((BLOCK_START 3) (EXPR ((NOP 68 71 nop))) (BLOCK_END 3 expr_end))))))))) (BLOCK_END 0 expr_end))))))))"""
     )
 
 def test_if_elif_elif_elif_else () :
@@ -332,6 +332,14 @@ def test_incl_pkg () :
             """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 12 somepkg))))))"""
     )
 
+def test_incl_pkg () :
+    basictest(
+            "TEST INCL somepkg somepkg - ",
+            """incl somepkg somepkg""",
+            """a"""
+    )
+
+
 def test_incl_path () :
     basictest(
             "TEST INCL \"path\" - ",
@@ -379,7 +387,7 @@ def test_abstract () :
 \t\tnop
 """
 
-    expected = """(EXPR (FN_DECL ((NAME main) ((NAME ui8) (NAME x)) (NAME ui8) ((((EXPR (IF_ELIF_ELSE_DECL ((IF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELIF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELSE_DECL ((EXPR (NOP))))))) (EXPR (WHILE_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))))) (EXPR (FOR_DECL ((NAME i) (NAME array) ((EXPR (NOP)))))))))))"""
+    expected = """(EXPR (FN_DECL ((NAME main) ((NAME ui8) (NAME x)) (NAME ui8) ((EXPR ((EXPR ((EXPR (IF_ELIF_ELSE_DECL ((IF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELIF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELSE_DECL ((EXPR (NOP))))))) (EXPR (WHILE_DECL ((EXPR (BOOL true)) ((EXPR (NOP)))))))) (EXPR (FOR_DECL ((NAME i) (NAME array) ((EXPR (NOP))))))))))))"""
 
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-ast"
     sp = split(cmd)

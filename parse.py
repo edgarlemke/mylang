@@ -53,7 +53,7 @@ def parse (token_list, root) :
                 buff_len_one = len(buf) == 1
                 buff_expr = buf[0][0] == root
                 if not (buff_len_one and buff_expr):
-                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf: {buf}")
+                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf:\n{[b for b in buf[0]]}")
 
                 break
 
@@ -89,6 +89,10 @@ def _find_match (buf, lookahead):
         [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]] ],
 
         [ ["SPACE"], [["EXPR"], ["CALL_DECL"]] ],
+
+        [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]] ],
+        [ ["SPACE"], [["EXPR"], ["INCL_DECL"]] ],
     ]
 
     match = None
@@ -166,7 +170,7 @@ def _match (buf_slice):
 
             [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
             [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
-            [["PAR_GROUP"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
+            #[["PAR_GROUP"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
     
             #[["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
             #[["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
@@ -174,12 +178,12 @@ def _match (buf_slice):
             #[["EXPR_GROUP"], ["EXPR", "EXPR_SEP", "EXPR"]],
             #[["EXPR_GROUP"], ["EXPR_GROUP", "EXPR_SEP", "EXPR"]],
     
-            [["EXPR_GROUP"], ["EXPR", "EXPR"]],
-            [["EXPR_GROUP"], ["EXPR_GROUP", "EXPR"]],
+            [["EXPR"], ["EXPR", "EXPR"]],
+            #[["EXPR_GROUP"], ["EXPR_GROUP", "EXPR"]],
     
             # blocks
             [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
-            [["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
+            #[["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
 
     
             # functions
@@ -242,8 +246,14 @@ def _match (buf_slice):
             [["STRUCT_DEF_GROUP"], ["STRUCT_DEF_GROUP", "NAMEPAIR"]],
 
             # packages
-            [["INCL_DECL"], ["INCL", "SPACE", "NAME"]],
-            [["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
+            #[["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
+            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAME"]],
+            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
+
+            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]],
+            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
+
+
             [["PKG_DECL"], ["PKG", "SPACE", "NAME", "BLOCK"]],
         ],
     ]

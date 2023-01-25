@@ -153,7 +153,7 @@ def check (s_tree, symtbl, scopes):
     _check_set_mut(s_tree, symtbl, scopes)
 
     # incl-ude packages
-    #_incl_pkgs()
+    _incl_pkgs(s_tree)
 
     #_check_types() ??
 
@@ -270,3 +270,24 @@ def _check_call (s_tree, symtbl):
             continue
 
         raise Exception(f"Call to undefined function: {fn_name}")
+
+
+def _incl_pkgs (s_tree) :
+
+    PATH = []
+
+    included_pkgs = []
+
+    for node in s_tree:
+
+        if node[0] != "INCL_DECL":
+            continue
+
+        pkg = s_tree[ node[2][0] ]
+        if pkg[0] == "NAME":
+            pkg_name = pkg[1]
+            included_pkgs.append( [pkg_name] )
+
+        else:
+            raise Exception("Invalid incl declaration: {pkg}")
+
