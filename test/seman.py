@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
+import inspect as i
 from subprocess import Popen, PIPE
 from shlex import split
 
 
 def test_single_set ():
-    basictest(
-        "TEST single set - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  ui8 x  ui8
 \tset a ui8 1
 \tset a ui8 1
@@ -16,8 +17,8 @@ def test_single_set ():
     )
 
 def test_set_fn_arg_conflict ():
-    basictest(
-        "TEST set fn arg conflict - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  ui8 x  ui8
 \tset x ui8 1
 """,
@@ -27,8 +28,8 @@ def test_set_fn_arg_conflict ():
 
 
 def test_set_mut_conflict_0 () :
-    basictest(
-        "TEST set mut conflict 0 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  ui8 x  ui8
 \tset a ui8 1
 \tmut a ui8 1
@@ -37,8 +38,8 @@ def test_set_mut_conflict_0 () :
         "SET/MUT conflict: a")
 
 def test_set_mut_conflict_1 () :
-    basictest(
-        "TEST set mut conflict 1 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  ui8 x  ui8
 \tmut a ui8 1
 \tset a ui8 1
@@ -47,42 +48,45 @@ def test_set_mut_conflict_1 () :
         "SET/MUT conflict: a")
 
 def test_set_mut_higher_scopes_0 () :
-    basictest(
-        "TEST set mut higher scopes 0 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """pkg somepkg
 \tset x ui8 1
 \tfn main  ui8 a  ui8
 \t\tset x ui8 2
 """,
-        "",
+        "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict in higher scope: x")
 
 def test_set_mut_higher_scopes_1 () :
-    basictest(
-        "TEST set mut higher scopes 1 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """pkg somepkg
 \tset x ui8 1
 \tfn main  ui8 a  ui8
 \t\tfn otherfn  ui8 b  ui8
 \t\t\tset x ui8 2
 """,
-        "",
+        "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict in higher scope: x")
 
 
 def test_call_refs () :
-    basictest(
-        "TEST call references - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  ui8 a  ui8
 \tcall somefn
 """,
-        "",
+        "", # nothing to be tested, stderr is tested before
         "Call to undefined function: somefn")
 
 
 
 
-def basictest (msg, expr, expected_stdout, expected_stderr) :
+def _test (fn_name, expr, expected_stdout, expected_stderr) :
+    x = " ".join( fn_name.split("_")[1:] )
+    msg = f"TEST {x} - "
+
     print(msg, end="", flush= True)
 
     stdout, stderr = _expr(expr)
@@ -93,15 +97,17 @@ def basictest (msg, expr, expected_stdout, expected_stderr) :
         print(f"""FAIL - stderr not correct:
         expected:   {expected_stderr}
         got:        {stderr}""")
-        exit()
+        return False
 
     if stdout != expected_stdout:
         print(f"""FAIL - stdout not correct:
             expected:   {expected_stdout}
             got:        {stdout}""")
-        exit()
+        return False
 
     print("OK")
+    return True
+
 
 def _expr (expr):
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\""

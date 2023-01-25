@@ -24,8 +24,8 @@ def run (expr, print_parse_tree= False, print_ast= False, print_symbol_table= Fa
     s_tree = parse.serialize_tree(ast)
 
     symtbl, scopes = seman.get_symtbl(s_tree)
-    print(f"symtbl: {symtbl}")
-    print(f"scopes: {scopes}")
+    #print(f"symtbl: {symtbl}")
+    #print(f"scopes: {scopes}")
 
     seman.check(s_tree, symtbl, scopes)
 

@@ -152,9 +152,6 @@ def check (s_tree, symtbl, scopes):
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
 
-    # incl-ude packages
-    _incl_pkgs(s_tree)
-
     #_check_types() ??
 
     _check_call(s_tree, symtbl)
