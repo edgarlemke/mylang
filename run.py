@@ -4,11 +4,12 @@ import argparse
 
 import lex
 import parse
+import pkg
 import seman
 import list as list_
 
 
-def run (expr, print_parse_tree= False, print_ast= False, print_symbol_table= False) :
+def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbol_table= False, loaded_pkg_files= None) :
     token_list = lex.tokenize(expr) 
     parsetree = parse.parse(token_list, "EXPR")
 
@@ -23,11 +24,29 @@ def run (expr, print_parse_tree= False, print_ast= False, print_symbol_table= Fa
 
     s_tree = parse.serialize_tree(ast)
 
+    pkg.load_pkgs(s_tree, src, loaded_pkg_files)
+
     symtbl, scopes = seman.get_symtbl(s_tree)
     #print(f"symtbl: {symtbl}")
     #print(f"scopes: {scopes}")
 
     seman.check(s_tree, symtbl, scopes)
+
+
+    return (s_tree, symtbl, scopes)
+
+
+def read_file (src):
+    # create a file descriptor for the src file
+    with open(src,"r") as fd:
+    
+        # read all content of the file into an variable
+        code = fd.readlines()
+        expr = "".join(code)
+
+        return expr
+
+
 
 
 if __name__ == "__main__":
@@ -56,12 +75,10 @@ if __name__ == "__main__":
     if src != None:
         src = str(src)
 
-        # create a file descriptor for the src file
-        with open(src,"r") as fd:
-        
-            # read all content of the file into an variable
-            code = fd.readlines()
-            expr = "".join(code)
+        import os
+        src = os.path.abspath(src)
+
+        expr = read_file(src)
 
     elif expr != None:
         expr = str(expr)
@@ -74,4 +91,4 @@ if __name__ == "__main__":
     print_ast = args.print_ast
     print_symbol_table = args.print_symbol_table
 
-    run(expr, print_parse_tree, print_ast, print_symbol_table)
+    run(expr, src, print_parse_tree, print_ast, print_symbol_table)

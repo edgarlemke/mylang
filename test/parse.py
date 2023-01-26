@@ -328,14 +328,14 @@ def test_for_2 () :
 def test_incl_pkg () :
     basictest(
             "TEST INCL somepkg - ",
-            """incl somepkg""",
+            """incl  somepkg""",
             """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 12 somepkg))))))"""
     )
 
-def test_incl_pkg () :
+def test_incl_pkg_2 () :
     basictest(
             "TEST INCL somepkg somepkg - ",
-            """incl somepkg somepkg""",
+            """incl  somepkg somepkg""",
             """a"""
     )
 

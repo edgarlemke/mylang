@@ -8,6 +8,10 @@ echo "Parser Tests"
 ./parse.py
 echo
 
+echo "Package Tests"
+./pkg.py
+echo
+
 echo "Semantic Analysis Tests"
 ./seman.py
 echo
