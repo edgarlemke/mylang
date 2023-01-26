@@ -24,7 +24,7 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
 
     s_tree = parse.serialize_tree(ast)
 
-    pkg.load_pkgs(s_tree, src, loaded_pkg_files)
+    loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
 
     symtbl, scopes = seman.get_symtbl(s_tree)
     #print(f"symtbl: {symtbl}")

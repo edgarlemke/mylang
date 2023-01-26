@@ -49,12 +49,18 @@ def load_pkgs ( s_tree, src = None , loaded_pkg_files = None):
 
     #print(l_pkgs)
     #print(pkgs_to_load)
+
+    loaded_pkgs = {}
     for pkg in pkgs_to_load:
         if pkg not in l_pkgs.keys():
             raise Exception(f"Package not found: {pkg}")
+        
+        path = l_pkgs[pkg]
+        loaded_pkg_files.append(path)
+        expr = run.read_file(path)
+        loaded_pkgs[pkg] = run.run(expr, src= path, loaded_pkg_files= loaded_pkg_files)
 
-
-                
+    return loaded_pkgs
 
 
 def _load_dir (path, all_files) :
