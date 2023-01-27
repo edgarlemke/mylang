@@ -48,6 +48,8 @@ rules_list = [
     ["WHILE", "while"],
 
     ["FOR", "for"],
+
+    ["TYPEDEF", "typedef"],
 ]
 
 

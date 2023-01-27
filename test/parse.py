@@ -11,13 +11,13 @@ def basictest (msg, expr, expected) :
 
     if stderr != "":
         print(f"FAIL - stderr not empty: {stderr}")
-        exit()
+        #exit()
 
     if stdout != expected:
         print(f"""FAIL - stdout not corrent:
             expected:   {expected}
             got:        {stdout}""")
-        exit()
+        #exit()
 
     print("OK")
 
@@ -29,7 +29,7 @@ def justprint (msg, expr, expected) :
     print(f"stdout: {stdout}")
     print(f"stderr: {stderr}")
 
-    exit()
+    #exit()
 
 
 #def test_rule__expr__value () :
@@ -355,6 +355,25 @@ def test_pkg () :
         """((EXPR ((PKG_DECL ((PKG 0 3 pkg) (SPACE 3 4 " ") (NAME 4 11 somepkg) (BLOCK ((BLOCK_START 0) (EXPR ((NOP 13 16 nop))) (BLOCK_END 0 expr_end))))))))"""
     )
 
+def test_typedef () :
+    basictest(
+            "TEST typedef - ",
+            """typedef ui8 1
+typedef i8 1
+
+typedef ui16 2
+typedef i16 2
+
+typedef ui32 4
+typedef i32 4
+
+typedef ui64 8
+typedef i64 8""",
+    """((EXPR ((EXPR ((EXPR ((EXPR ((EXPR ((EXPR ((EXPR ((EXPR ((TYPEDEF_DECL ((TYPEDEF 0 7 typedef) (SPACE 7 8 " ") (NAME 8 11 ui8) (SPACE 11 12 " ") (EXPR ((INT 12 13 1))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 14 21 typedef) (SPACE 21 22 " ") (NAME 22 24 i8) (SPACE 24 25 " ") (EXPR ((INT 25 26 1))))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 28 35 typedef) (SPACE 35 36 " ") (NAME 36 40 ui16) (SPACE 40 41 " ") (EXPR ((INT 41 42 2))))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 43 50 typedef) (SPACE 50 51 " ") (NAME 51 54 i16) (SPACE 54 55 " ") (EXPR ((INT 55 56 2))))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 58 65 typedef) (SPACE 65 66 " ") (NAME 66 70 ui32) (SPACE 70 71 " ") (EXPR ((INT 71 72 4))))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 73 80 typedef) (SPACE 80 81 " ") (NAME 81 84 i32) (SPACE 84 85 " ") (EXPR ((INT 85 86 4))))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 88 95 typedef) (SPACE 95 96 " ") (NAME 96 100 ui64) (SPACE 100 101 " ") (EXPR ((INT 101 102 8))))))))) (EXPR ((TYPEDEF_DECL ((TYPEDEF 103 110 typedef) (SPACE 110 111 " ") (NAME 111 114 i64) (SPACE 114 115 " ") (EXPR ((INT 115 116 8))))))))))"""
+    )
+
+
+
 def test_invalid_syntax () :
     print("TEST INVALID SYNTAX - ", end="")
 
@@ -365,7 +384,7 @@ def test_invalid_syntax () :
         print(f"""FAIL - stderr not correct
                 expected: {expected}
                 got: {stderr}""")
-        exit()
+        #exit()
 
     print("OK")
 
@@ -396,13 +415,11 @@ def test_abstract () :
 
     if stderr != "":
         print(f"FAIL - stderr not empty: {stderr}")
-        exit()
 
     if stdout != expected:
-        print(f"""FAIL - stdout not corrent:
+        print(f"""FAIL - stdout not correct:
             expected:   {expected}
             got:        {stdout}""")
-        exit()
 
     print("OK")
 

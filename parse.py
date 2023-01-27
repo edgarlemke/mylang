@@ -160,6 +160,8 @@ def _match (buf_slice):
 
             [["EXPR"], ["WHILE_DECL"]],
             [["EXPR"], ["FOR_DECL"]],
+
+            [["EXPR"], ["TYPEDEF_DECL"]],
     
             [["EXPR"], ["STRUCT_DECL"]],
             [["EXPR"], ["RES_STRUCT_DECL"]],
@@ -234,6 +236,9 @@ def _match (buf_slice):
             # for
             [["FOR_DECL"], ["FOR", "SPACE", "NAME", "SPACE", "SPACE", "NAME", "BLOCK"]],
             [["FOR_DECL"], ["FOR", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
+
+            # typedef
+            [["TYPEDEF_DECL"], ["TYPEDEF", "SPACE", "NAME", "SPACE", "EXPR"]],
 
             # structs
             [["STRUCT_DECL"], ["STRUCT", "SPACE", "NAME", "STRUCT_BLOCK"]],
