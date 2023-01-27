@@ -259,7 +259,7 @@ def _match (buf_slice):
             [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
 
 
-            [["PKG_DECL"], ["PKG", "SPACE", "NAME", "BLOCK"]],
+            #[["PKG_DECL"], ["PKG", "SPACE", "NAME", "BLOCK"]],
         ],
     ]
 

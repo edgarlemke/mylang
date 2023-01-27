@@ -107,18 +107,18 @@ def get_symtbl (s_tree):
             # insert symbol in symbol table
             symtbl_insert(symtbl, sym_name, sym_t, sym_pos, sym_scope)
 
-        elif cat == "PKG_DECL":
-            # extract symbol info
-            cat, parent, children = node
-            sym_name = s_tree[children[0]][1]
-            sym_t = ["pkg"]
-            sym_pos = children[0]
-            # insert symbol in symbol table
-            symtbl_insert(symtbl, sym_name, sym_t, sym_pos, None)
-
-            # setup scope
-            new_scope = [i, cat, None]
-            scopes.append(new_scope)
+#        elif cat == "PKG_DECL":
+#            # extract symbol info
+#            cat, parent, children = node
+#            sym_name = s_tree[children[0]][1]
+#            sym_t = ["pkg"]
+#            sym_pos = children[0]
+#            # insert symbol in symbol table
+#            symtbl_insert(symtbl, sym_name, sym_t, sym_pos, None)
+#
+#            # setup scope
+#            new_scope = [i, cat, None]
+#            scopes.append(new_scope)
 
     return (symtbl, scopes)
 

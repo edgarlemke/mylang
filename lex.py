@@ -29,7 +29,7 @@ rules_list = [
 
     ["NOP", "nop"],
 
-    ["PKG", "pkg"],
+    #["PKG", "pkg"],
     ["INCL", "incl"],
 
     ["FN", "fn"],
