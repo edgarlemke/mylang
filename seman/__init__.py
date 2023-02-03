@@ -344,23 +344,41 @@ def _typedef_in_global_scope (node, s_tree, scopes) :
 
 
 
-def subst_types (s_tree, expr_types, loaded_pkgs) :
+def tipefy_functions (s_tree):
+    for i, node in enumerate( s_tree ):
+        if node[0] != "FN_DECL":
+            continue
 
-    all_types = [t for t in expr_types]
+        # remove function name, return type and expr
+        children = node[2][1:-2]
 
-    # fill all_types with types from loaded packages
-    for pkg_name in loaded_pkgs:
-        pkg = loaded_pkgs[ pkg_name ]
-        pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg)
+        # tipefy function arguments
+        len_ch = len(children)
+        limit = int( len_ch / 2 )
+        for ch in range(0,limit):
+            type_i, value_i = children[ch*2:(ch*2)+2]
+            ch_node = s_tree[type_i]
 
-        all_types += pkg_types
+            if ch_node[0] != "NAME":
+                raise Exception("Bug on function arguments typefying.")
+
+            s_tree[type_i][0] = "TYPE"
+
+        # typefy function return type
+        all_children = node[2]
+        s_tree[ all_children[ len(all_children)-2 ] ][0] = "TYPE"
+        
+
+
+
+def subst_types (s_tree, types) :
 
     # substitute all NAMEs for TYPEs in tree
     for i, node in enumerate(s_tree):
         if node[0] != "NAME":
             continue
 
-        for t in all_types:
+        for t in types:
             if node[1] != t[0]:
                 continue
 

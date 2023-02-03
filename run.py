@@ -30,11 +30,28 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
     # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
 
+    # tipefy functions
+    seman.tipefy_functions(s_tree)
+
     # get loaded packages info
     loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
 
+
+    # get types to substitute
+    #
+    all_types = [t for t in expr_types]
+
+    # fill all_types with types from loaded packages
+    for pkg_name in loaded_pkgs:
+        pkg_ = loaded_pkgs[ pkg_name ]
+        pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
+
+        all_types += pkg_types
+    #
+    #
+
     # substitute types in tree
-    seman.subst_types(s_tree, expr_types, loaded_pkgs)
+    seman.subst_types(s_tree, all_types)
 
 
     seman.check(s_tree, symtbl, scopes, loaded_pkgs)
