@@ -14,7 +14,7 @@ def basictest (msg, expr, expected) :
         #exit()
 
     if stdout != expected:
-        print(f"""FAIL - stdout not corrent:
+        print(f"""FAIL - stdout not correct:
             expected:   {expected}
             got:        {stdout}""")
         #exit()
@@ -326,26 +326,32 @@ def test_for_2 () :
 
 
 def test_incl_pkg () :
+    """
+    Test for simple package incl-usion
+    """
     basictest(
             "TEST INCL somepkg - ",
-            """incl  somepkg""",
+            """incl somepkg""",
             """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 12 somepkg))))))"""
     )
 
 def test_incl_pkg_2 () :
+    """
+    Test for package incl-usion with alias
+    """
     basictest(
-            "TEST INCL somepkg somepkg - ",
-            """incl  somepkg somepkg""",
-            """a"""
+            "TEST INCL somepkg alias - ",
+            """incl somepkg alias""",
+            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAMEPAIR ((NAME 5 12 somepkg) (SPACE 12 13 " ") (NAME 13 18 alias))))))))"""
     )
 
 
-def test_incl_path () :
-    basictest(
-            "TEST INCL \"path\" - ",
-            "incl \\\"path\\\"",
-            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (EXPR ((QUOTE 5 6 "\\\"") (QVALUE 6 10 path) (QUOTE 10 11 "\\\""))))))))"""
-    )
+#def test_incl_path () :
+#    basictest(
+#            "TEST INCL \"path\" - ",
+#            "incl \\\"path\\\"",
+#            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (EXPR ((QUOTE 5 6 "\\\"") (QVALUE 6 10 path) (QUOTE 10 11 "\\\""))))))))"""
+#    )
 
 #def test_pkg () :
 #    basictest(

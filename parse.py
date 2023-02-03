@@ -90,8 +90,8 @@ def _find_match (buf, lookahead):
 
         [ ["SPACE"], [["EXPR"], ["CALL_DECL"]] ],
 
-        [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAME"]] ],
-        [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]] ],
+        [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "NAME"]] ],
+        #[ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]] ],
         [ ["SPACE"], [["EXPR"], ["INCL_DECL"]] ],
     ]
 
@@ -252,11 +252,11 @@ def _match (buf_slice):
 
             # packages
             #[["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
-            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAME"]],
-            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
+            [["INCL_DECL"], ["INCL", "SPACE", "NAME"]],
+            #[["INCL_DECL"], ["INCL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
 
-            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]],
-            [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
+            [["INCL_DECL"], ["INCL", "SPACE", "NAMEPAIR"]],
+            #[["INCL_DECL"], ["INCL", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
 
 
             #[["PKG_DECL"], ["PKG", "SPACE", "NAME", "BLOCK"]],

@@ -8,7 +8,7 @@ from subprocess import Popen, PIPE
 def test_package_not_found ():
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """incl  randompkg""",
+        """incl randompkg""",
         "", # nothing to be tested, stderr is tested before
         "Package not found: randompkg"
     )

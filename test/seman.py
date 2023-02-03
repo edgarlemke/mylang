@@ -50,10 +50,9 @@ def test_set_mut_conflict_1 () :
 def test_set_mut_higher_scopes_0 () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """pkg somepkg
-\tset x ui8 1
-\tfn main  ui8 a  ui8
-\t\tset x ui8 2
+        """set x ui8 1
+fn main  ui8 a  ui8
+\tset x ui8 2
 """,
         "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict in higher scope: x")
@@ -61,11 +60,11 @@ def test_set_mut_higher_scopes_0 () :
 def test_set_mut_higher_scopes_1 () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """pkg somepkg
-\tset x ui8 1
-\tfn main  ui8 a  ui8
-\t\tfn otherfn  ui8 b  ui8
-\t\t\tset x ui8 2
+        """
+set x ui8 1
+fn main  ui8 a  ui8
+\tfn otherfn  ui8 b  ui8
+\t\tset x ui8 2
 """,
         "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict in higher scope: x")

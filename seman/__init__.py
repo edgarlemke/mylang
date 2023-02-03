@@ -13,7 +13,7 @@ def get_symtbl (s_tree):
     #print(s_tree)
 
     symtbl = {}
-    scopes = []
+    scopes = [[None, "GLOBAL", None]]
 
 
     def iterup (i):
@@ -185,7 +185,12 @@ def _check_set_mut_0 (sym_list, arg, sym_name) :
         if li[0][0] not in ["fn_arg", arg]:
             continue
 
+        #print(f"li: {li}")
+        #print(f"found: {found}")
+
         scope_node_index = li[2]
+        #print(f"scope_node_index: {scope_node_index}")
+
         if scope_node_index in found:
             raise Exception(f"Immutable name already set before: {sym_name}")
         found.append(scope_node_index)
