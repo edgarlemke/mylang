@@ -288,3 +288,54 @@ def _incl_pkgs (s_tree) :
         else:
             raise Exception("Invalid incl declaration: {pkg}")
 
+
+
+
+def get_types (s_tree, scopes):
+    types = []
+
+    for node in s_tree:
+        if node[0] != "TYPEDEF_DECL":
+            continue
+
+        # Get type name
+        type_name = s_tree[ node[2][1] ][1]
+
+        # Get type size
+        size_expr = s_tree[ node[2][2] ]
+        size_node = s_tree[ size_expr[2][0] ]
+        if size_node[0] != "INT":
+            raise Exception("Invalid typedef size!")
+        type_size = size_node[1]
+
+        # Check if typedef is declared in global scope
+        if not _typedef_in_global_scope( node, s_tree, scopes ):
+            raise Exception("Typedef not declared in global scope")
+
+        types.append( [type_name, type_size] )
+
+    return types
+
+def _typedef_in_global_scope (node, s_tree, scopes) :
+
+    #print(f"scopes: {scopes}")
+
+    def x (node):
+        #print(node)
+        parent_index = node[1]
+
+        if parent_index == None:
+            return True
+
+        node_parent = s_tree[ parent_index ]
+
+        for s in scopes:
+            scope_node_index = s[0]
+            if scope_node_index == node[1]:
+                return False
+
+        return x(node_parent)
+
+    return x(node)
+
+    #return True

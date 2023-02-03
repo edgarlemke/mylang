@@ -81,6 +81,18 @@ def test_call_refs () :
         "Call to undefined function: somefn")
 
 
+def test_typedef () :
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
+        """typedef ui8 8
+
+fn main  ui8 x  ui8
+\ttypedef i8 8
+""",
+    "", # nothing to be tested, stderr is tested before
+    "Typedef not declared in global scope")
+
+
 
 
 def _test (fn_name, expr, expected_stdout, expected_stderr) :

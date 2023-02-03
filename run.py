@@ -24,11 +24,13 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
 
     s_tree = parse.serialize_tree(ast)
 
-    types = seman.get_types(s_tree)
-
     #loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
 
     symtbl, scopes = seman.get_symtbl(s_tree)
+
+    expr_types = seman.get_types(s_tree, scopes)
+    #print(expr_types)
+
     #print(f"symtbl: {symtbl}")
     #print(f"scopes: {scopes}")
 
