@@ -92,15 +92,29 @@ fn main  ui8 x  ui8
     "Typedef not declared in global scope")
 
 
+def test_subst_fn_tipefying () :
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
+        """fn main  mytype x  mytype
+	nop
+""",
+    "((EXPR None (1)) (FN_DECL 0 (2 3 4 5 6)) (NAME main 1 ()) (TYPE mytype 1 ()) (NAME x 1 ()) (TYPE mytype 1 ()) (EXPR 1 (7)) (NOP 6 ()))",
+    "",
+    popen_fn= _print_final_ast)
 
 
-def _test (fn_name, expr, expected_stdout, expected_stderr) :
+
+
+def _test (fn_name, expr, expected_stdout, expected_stderr, popen_fn= None) :
     x = " ".join( fn_name.split("_")[1:] )
     msg = f"TEST {x} - "
 
     print(msg, end="", flush= True)
 
-    stdout, stderr = _expr(expr)
+    if popen_fn == None:
+        popen_fn = _expr
+
+    stdout, stderr = popen_fn(expr)
     #print(stdout)
     #print(stderr)
 
@@ -119,6 +133,11 @@ def _test (fn_name, expr, expected_stdout, expected_stderr) :
     print("OK")
     return True
 
+
+def _print_final_ast (expr):
+    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-final-ast"
+    sp = split(cmd)
+    return _popen(sp)
 
 def _expr (expr):
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\""

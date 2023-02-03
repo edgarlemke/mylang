@@ -359,7 +359,10 @@ def tipefy_functions (s_tree):
             type_i, value_i = children[ch*2:(ch*2)+2]
             ch_node = s_tree[type_i]
 
-            if ch_node[0] != "NAME":
+            if ch_node[0] == "TYPE":
+                continue
+            
+            elif ch_node[0] != "NAME":
                 raise Exception("Bug on function arguments typefying.")
 
             s_tree[type_i][0] = "TYPE"
@@ -384,3 +387,14 @@ def subst_types (s_tree, types) :
 
             s_tree[i][0] = "TYPE"
             break
+
+    tipefy_functions(s_tree)
+    _tipefy_set_mut(s_tree)
+
+
+def _tipefy_set_mut(s_tree) :
+    for i, node in enumerate(s_tree):
+        if node[0] not in ["SET", "MUT"]:
+            continue
+
+        print(node)

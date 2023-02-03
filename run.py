@@ -9,7 +9,7 @@ import seman
 import list as list_
 
 
-def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbol_table= False, loaded_pkg_files= None) :
+def run (expr, src= None, print_parse_tree= False, print_raw_ast= False, print_final_ast= False, print_symbol_table= False, loaded_pkg_files= None) :
     token_list = lex.tokenize(expr) 
     parsetree = parse.parse(token_list, "EXPR")
 
@@ -18,7 +18,7 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
         exit()
 
     ast = parse.abstract(parsetree.copy())
-    if print_ast:
+    if print_raw_ast:
         print( list_.list_print(ast), end="" )
         exit()
 
@@ -30,12 +30,9 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
     # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
 
-    # tipefy functions
-    seman.tipefy_functions(s_tree)
 
     # get loaded packages info
     loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
-
 
     # get types to substitute
     #
@@ -55,6 +52,10 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
 
 
     seman.check(s_tree, symtbl, scopes, loaded_pkgs)
+
+    if print_final_ast:
+        print( list_.list_print(s_tree), end="" )
+        exit()
 
 
     return (s_tree, symtbl, scopes, expr_types)
@@ -84,7 +85,8 @@ if __name__ == "__main__":
 
     print_group = parser.add_mutually_exclusive_group()
     print_group.add_argument("--print-parse-tree", action= "store_true")
-    print_group.add_argument("--print-ast", action= "store_true")
+    print_group.add_argument("--print-raw-ast", action= "store_true")
+    print_group.add_argument("--print-final-ast", action= "store_true")
     print_group.add_argument("--print-symbol-table", action= "store_true")
 
     args = parser.parse_args()
@@ -112,7 +114,8 @@ if __name__ == "__main__":
         
 
     print_parse_tree = args.print_parse_tree
-    print_ast = args.print_ast
+    print_raw_ast = args.print_raw_ast
+    print_final_ast = args.print_final_ast
     print_symbol_table = args.print_symbol_table
 
-    run(expr, src, print_parse_tree, print_ast, print_symbol_table)
+    run(expr, src, print_parse_tree, print_raw_ast, print_final_ast, print_symbol_table)
