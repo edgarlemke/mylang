@@ -24,18 +24,23 @@ def run (expr, src= None, print_parse_tree= False, print_ast= False, print_symbo
 
     s_tree = parse.serialize_tree(ast)
 
-
+    # get symbol table and scopes
     symtbl, scopes = seman.get_symtbl(s_tree)
 
+    # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
 
+    # get loaded packages info
     loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
+
+    # substitute types in tree
+    seman.subst_types(s_tree, expr_types, loaded_pkgs)
 
 
     seman.check(s_tree, symtbl, scopes, loaded_pkgs)
 
 
-    return (s_tree, symtbl, scopes)
+    return (s_tree, symtbl, scopes, expr_types)
 
 
 def read_file (src):

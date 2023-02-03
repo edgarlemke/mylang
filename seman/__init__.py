@@ -147,13 +147,10 @@ def _get_refs (s_tree, symtbl) :
 
 
 def check (s_tree, symtbl, scopes, loaded_pkgs):
-    refs = _get_refs(s_tree, symtbl)
+    #refs = _get_refs(s_tree, symtbl)
 
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
-
-    #_check_types() ??
-
     _check_call(s_tree, symtbl, loaded_pkgs)
 
     #_check_set_mut_types()
@@ -344,3 +341,28 @@ def _typedef_in_global_scope (node, s_tree, scopes) :
     return x(node)
 
     #return True
+
+
+
+def subst_types (s_tree, expr_types, loaded_pkgs) :
+
+    all_types = [t for t in expr_types]
+
+    # fill all_types with types from loaded packages
+    for pkg_name in loaded_pkgs:
+        pkg = loaded_pkgs[ pkg_name ]
+        pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg)
+
+        all_types += pkg_types
+
+    # substitute all NAMEs for TYPEs in tree
+    for i, node in enumerate(s_tree):
+        if node[0] != "NAME":
+            continue
+
+        for t in all_types:
+            if node[1] != t[0]:
+                continue
+
+            s_tree[i][0] = "TYPE"
+            break
