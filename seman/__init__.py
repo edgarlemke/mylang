@@ -344,7 +344,7 @@ def _typedef_in_global_scope (node, s_tree, scopes) :
 
 
 
-def tipefy_functions (s_tree):
+def typefy_functions (s_tree):
     for i, node in enumerate( s_tree ):
         if node[0] != "FN_DECL":
             continue
@@ -352,7 +352,7 @@ def tipefy_functions (s_tree):
         # remove function name, return type and expr
         children = node[2][1:-2]
 
-        # tipefy function arguments
+        # typefy function arguments
         len_ch = len(children)
         limit = int( len_ch / 2 )
         for ch in range(0,limit):
@@ -388,13 +388,13 @@ def subst_types (s_tree, types) :
             s_tree[i][0] = "TYPE"
             break
 
-    tipefy_functions(s_tree)
-    _tipefy_set_mut(s_tree)
+    typefy_functions(s_tree)
+    _typefy_set_mut(s_tree)
 
 
-def _tipefy_set_mut(s_tree) :
+def _typefy_set_mut(s_tree) :
     for i, node in enumerate(s_tree):
-        if node[0] not in ["SET", "MUT"]:
+        if not( node[0] in ["SET_DECL", "MUT_DECL"] ):
             continue
 
-        print(node)
+        s_tree[ node[2][1] ][0] = "TYPE"

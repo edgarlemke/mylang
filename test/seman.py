@@ -92,13 +92,25 @@ fn main  ui8 x  ui8
     "Typedef not declared in global scope")
 
 
-def test_subst_fn_tipefying () :
+def test_subst_fn_typefying () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
         """fn main  mytype x  mytype
-	nop
+\tnop
 """,
     "((EXPR None (1)) (FN_DECL 0 (2 3 4 5 6)) (NAME main 1 ()) (TYPE mytype 1 ()) (NAME x 1 ()) (TYPE mytype 1 ()) (EXPR 1 (7)) (NOP 6 ()))",
+    "",
+    popen_fn= _print_final_ast)
+
+
+def test_subst_set_mut_typefying () :
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
+        """fn main  int a  int
+\tset x int 1
+\tmut y int 1
+""",
+    "((EXPR None (1)) (FN_DECL 0 (2 3 4 5 6)) (NAME main 1 ()) (TYPE int 1 ()) (NAME a 1 ()) (TYPE int 1 ()) (EXPR 1 (7 13)) (EXPR 6 (8)) (SET_DECL 7 (9 10 11)) (NAME x 8 ()) (TYPE int 8 ()) (EXPR 8 (12)) (INT 1 11 ()) (EXPR 6 (14)) (MUT_DECL 13 (15 16 17)) (NAME y 14 ()) (TYPE int 14 ()) (EXPR 14 (18)) (INT 1 17 ()))",
     "",
     popen_fn= _print_final_ast)
 
@@ -118,7 +130,7 @@ def _test (fn_name, expr, expected_stdout, expected_stderr, popen_fn= None) :
     #print(stdout)
     #print(stderr)
 
-    if not(expected_stderr in stderr):
+    if not(expected_stderr in stderr) or (expected_stderr == "" and expected_stderr != stderr):
         print(f"""FAIL - stderr not correct:
         expected:   {expected_stderr}
         got:        {stderr}""")
