@@ -5,11 +5,21 @@ import argparse
 import lex
 import parse
 import pkg
-import seman
+import seman, seman.fn
 import list as list_
 
 
-def run (expr, src= None, print_parse_tree= False, print_raw_ast= False, print_final_ast= False, print_symbol_table= False, loaded_pkg_files= None) :
+def run (
+    expr,
+    src= None,
+    print_parse_tree= False,
+    print_raw_ast= False,
+    print_final_ast= False,
+    print_symbol_table= False,
+    loaded_pkg_files= None
+    ) :
+
+
     token_list = lex.tokenize(expr) 
     parsetree = parse.parse(token_list, "EXPR")
 
@@ -49,6 +59,37 @@ def run (expr, src= None, print_parse_tree= False, print_raw_ast= False, print_f
 
     # substitute types in tree
     seman.subst_types(s_tree, all_types)
+
+
+    # extract function declarations from tree
+    pkg_name = pkg.get_pkg_name(src)
+
+    tree_fn_decls = seman.fn.extract_fn_decls(s_tree, symtbl, pkg_name)
+    #print(tree_fn_decls)
+
+
+    all_fn_decls = tree_fn_decls.copy()
+
+    # extract function declarations from packages
+    pkgs_fn_decls = {}
+    for pkg_name in loaded_pkgs:
+        pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
+        fn_decls = seman.fn.extract_fn_decls(pkg_s_tree, pkg_symtbl, pkg_name)
+
+        #print(fn_decls)
+        for k in fn_decls:
+            fn_decl_li = fn_decls[k]
+
+            for j in fn_decl_li:
+
+                if k not in all_fn_decls.keys():
+                    all_fn_decls[k] = []
+
+                all_fn_decls[k].append( j )
+
+
+    #print(all_fn_decls)
+ 
 
 
     seman.check(s_tree, symtbl, scopes, loaded_pkgs)

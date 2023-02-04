@@ -414,7 +414,7 @@ def test_abstract () :
 
     expected = """(EXPR (FN_DECL ((NAME main) ((NAME ui8) (NAME x)) (NAME ui8) ((EXPR ((EXPR ((EXPR (IF_ELIF_ELSE_DECL ((IF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELIF_DECL ((EXPR (BOOL true)) ((EXPR (NOP))))) (ELSE_DECL ((EXPR (NOP))))))) (EXPR (WHILE_DECL ((EXPR (BOOL true)) ((EXPR (NOP)))))))) (EXPR (FOR_DECL ((NAME i) (NAME array) ((EXPR (NOP))))))))))))"""
 
-    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-ast"
+    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\" --print-raw-ast"
     sp = split(cmd)
 
     stdout, stderr = _popen(sp)

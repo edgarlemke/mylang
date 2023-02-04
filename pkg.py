@@ -84,3 +84,46 @@ def _get_wd () :
     import os
     wd = os.getcwd()
     return wd
+
+
+def get_pkg_name (src) :
+    import os
+    from pathlib import Path
+
+    path = os.path.realpath(src)
+    dir_ = os.path.dirname(path)
+
+
+    mylang_pkg_dir = _get_mylang_dir()
+    is_local = False
+    if mylang_pkg_dir == dir_[0:len(mylang_pkg_dir)]:
+        project_dir = mylang_pkg_dir
+
+    else:
+        def _find_project_dir (dir_):
+            if os.path.isfile(f"{dir_}/pkg"):
+                return dir_
+    
+            parent = Path(dir_).parent
+    
+            # if found filesystem root return False
+            if dir_ == parent:
+                return False
+    
+            return _find_project_dir(parent)
+    
+        project_dir = _find_project_dir(dir_)
+        if project_dir == False:
+            raise Exception(f"No project file found going upwards in file tree: {src}")
+
+        is_local = True
+    
+    splited = [i for i in src[len(project_dir):].split("/") if len(i) > 0]
+    file_ = splited[ len(splited)-1 ][:-7]
+    splited[ len(splited)-1 ] = file_
+
+    pkg_name = " ".join(splited)
+    if is_local:
+        pkg_name = f".{pkg_name}"
+
+    return pkg_name
