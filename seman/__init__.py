@@ -146,12 +146,12 @@ def _get_refs (s_tree, symtbl) :
     return name_indexes
 
 
-def check (s_tree, symtbl, scopes, loaded_pkgs):
+def check (s_tree, symtbl, scopes, loaded_functions):
     #refs = _get_refs(s_tree, symtbl)
 
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
-    _check_call(s_tree, symtbl, loaded_pkgs)
+    _check_call(s_tree, symtbl, loaded_functions)
 
     #_check_set_mut_types()
     #_check_refs()
@@ -247,7 +247,9 @@ def _check_set_mut_2 (sym_list, scopes, sym_name) :
             raise Exception(f"SET/MUT conflict in higher scope: {sym_name}")
 
 
-def _check_call (s_tree, symtbl, loaded_pkgs):
+def _check_call (s_tree, symtbl, loaded_functions):
+    #print(f"loaded_functions: {loaded_functions}")
+
     for node in s_tree:
         name = node[0]
         if name != "CALL_DECL":

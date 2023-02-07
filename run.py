@@ -40,17 +40,19 @@ def run (
     # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
 
+    pkg_name = pkg.get_pkg_name(src)
 
     # get loaded packages info
     loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
+    #print(f"\npkg: {pkg_name}\n loaded_pkgs: {loaded_pkgs}\n")
 
     # get types to substitute
     #
     all_types = [t for t in expr_types]
 
     # fill all_types with types from loaded packages
-    for pkg_name in loaded_pkgs:
-        pkg_ = loaded_pkgs[ pkg_name ]
+    for pkg_name_ in loaded_pkgs:
+        pkg_ = loaded_pkgs[ pkg_name_ ]
         pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
 
         all_types += pkg_types
@@ -62,11 +64,9 @@ def run (
 
 
     # extract function declarations from tree
-    pkg_name = pkg.get_pkg_name(src)
-
+    #print(pkg_name)
     tree_fn_decls = seman.fn.extract_fn_decls(s_tree, symtbl, pkg_name)
-    #print(tree_fn_decls)
-
+    #print(f"tree_fn_decls: {tree_fn_decls}")
 
     all_fn_decls = tree_fn_decls.copy()
 
@@ -88,11 +88,10 @@ def run (
                 all_fn_decls[k].append( j )
 
 
-    #print(all_fn_decls)
+    #print(f"all_fn_decls: {all_fn_decls}")
  
 
-
-    seman.check(s_tree, symtbl, scopes, loaded_pkgs)
+    seman.check(s_tree, symtbl, scopes, all_fn_decls)
 
     if print_final_ast:
         print( list_.list_print(s_tree), end="" )
