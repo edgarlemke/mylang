@@ -2,6 +2,7 @@
 
 from .symboltable import symtbl_insert
 
+# dummy x86_64 type table
 types = [
     ["ui8", 1],
     ["i8", 1],
@@ -151,7 +152,7 @@ def check (s_tree, symtbl, scopes, loaded_functions):
 
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
-    _check_call(s_tree, symtbl, loaded_functions)
+    _check_call(s_tree, symtbl, scopes, loaded_functions)
 
     #_check_set_mut_types()
     #_check_refs()
@@ -247,8 +248,9 @@ def _check_set_mut_2 (sym_list, scopes, sym_name) :
             raise Exception(f"SET/MUT conflict in higher scope: {sym_name}")
 
 
-def _check_call (s_tree, symtbl, loaded_functions):
+def _check_call (s_tree, symtbl, scopes, loaded_functions):
     #print(f"loaded_functions: {loaded_functions}")
+    #print(symtbl)
 
     for node in s_tree:
         name = node[0]
@@ -256,18 +258,32 @@ def _check_call (s_tree, symtbl, loaded_functions):
             continue
 
         fn_name = s_tree[ node[2][1] ][1]
+        #print(f"fn_name: {fn_name}")
 
         match = False
-        for sym_name in symtbl:
-            sym_list = symtbl[ sym_name ]
-            if sym_list[0][0][0] != "fn":
-                continue
-            #print(sym_list[0][0][0] != "fn")
-            if sym_name == fn_name:
-                match = True
+        for pkg_name in symtbl:
+            #print(f"pkg_name: {pkg_name}")
+            pkg_syms = symtbl[pkg_name]
+
+            for sym_name in pkg_syms:
+                sym_list = pkg_syms[sym_name]
+
+                if sym_list[0][0][0] != "fn":
+                    continue
+
+                match = match_fn(node, scopes, symtbl, s_tree, sym_name, pkg_name, loaded_functions)
+                #print("match: %s" % match)
+
+                # if matches exit loop
+                if match != False:
+                    break
+
+            # if matches exit loop
+            if match != False:
                 break
 
-        if match == True:
+        # if matches, a function was found, so call is valid
+        if match != False:
             continue
 
         raise Exception(f"Call to undefined function: {fn_name}")
@@ -400,3 +416,119 @@ def _typefy_set_mut(s_tree) :
             continue
 
         s_tree[ node[2][1] ][0] = "TYPE"
+
+
+def match_fn(node, scopes, symtbl, s_tree, name, pkg_name, loaded_functions):
+    if name not in loaded_functions.keys():
+        return False
+
+    for fn_name in loaded_functions.keys():
+        fn_lf = loaded_functions[fn_name]
+
+        for fn in fn_lf:
+            fn_pkg_name, fn_arg_types, fn_ret_type = fn
+
+            node_fn_name = s_tree[ node[2][1] ][1]
+            
+            if node_fn_name != fn_name:
+                continue
+
+            # get call argument types
+            call_arg_types = _get_call_arg_types(node, pkg_name, s_tree, symtbl, scopes)
+
+            #print("call_arg_types: %s" % call_arg_types)
+            #print("fn_arg_types: %s" % fn_arg_types)
+
+            if call_arg_types == fn_arg_types:
+                return fn
+
+    return False
+
+def _get_call_arg_types(node, pkg_name, s_tree, symtbl, scopes):
+    call_args = node[2][2:]
+    arg_types = []
+
+    for i in call_args:
+        arg_type = False
+        arg_node = s_tree[i]
+        call_arg_name = arg_node[1]
+
+        for sym_pkg_name in symtbl:
+            # skip different packages
+            if sym_pkg_name != pkg_name: 
+                continue
+
+            sym_pkg = symtbl[sym_pkg_name]
+
+            for sym_key, sym_list in sym_pkg.items():
+                # check arg name
+                if call_arg_name != sym_key:
+                    continue
+
+                #print("k: %s" % sym_key)
+
+                # check arg scope
+                arg_scope = _get_scope(arg_node, pkg_name, s_tree, symtbl, scopes)
+
+                # sym_list scope
+                sym_node = s_tree[ sym_list[0][1] ]
+                sym_scope = _get_scope(sym_node, pkg_name, s_tree, symtbl, scopes)
+
+                #print("arg_scope: %s" % arg_scope)
+                #print("sym_scope: %s" % sym_scope)
+
+                if arg_scope != sym_scope:
+                    continue
+
+                # same name args, same scope args
+
+                #print("sym_list: %s" % sym_list[0][0])
+                all_arg_types = sym_list[0][0]
+
+                if all_arg_types[0] in ['set', 'mut']:
+                    arg_type = all_arg_types[1]
+                    #print("s arg_type: %s" % arg_type)
+
+                    arg_types.append(arg_type)
+                    break
+
+    #print("arg_types: %s" % arg_types)
+    return arg_types
+
+
+def _get_scope(node, pkg_name, s_tree, symtbl, scopes):
+    #print("node: %s" % node)
+    #print("s_tree: %s" % s_tree)
+    #print("symtbl: %s" % symtbl)
+    #print("scopes: %s" % scopes)
+
+    pkg_scope = scopes[pkg_name]
+    pkg_symtbl = symtbl[pkg_name]
+
+    parent_i = node[2]
+    parent = s_tree[parent_i]
+
+    def iterup(node):
+        #print("node: %s" % node)
+        parent_i = node[1]
+        #print("parent_i: %s" % parent_i)
+
+        for s in pkg_scope:
+            # global scope
+            if parent_i == None and s[2] == None:
+                return s
+
+            # some local scope
+            if parent_i == s[0]:
+                return s
+
+        if parent_i == None:
+            return False
+
+        parent = s_tree[parent_i]
+        return iterup(parent)
+
+    return iterup(parent)
+
+def _get_fn_arg_types(node, pkg_name, s_tree, symtbl, scopes):
+    pass

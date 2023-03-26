@@ -69,6 +69,8 @@ def run (
     #print(f"tree_fn_decls: {tree_fn_decls}")
 
     all_fn_decls = tree_fn_decls.copy()
+    all_symtbl = { pkg_name: symtbl.copy() }
+    all_scopes = { pkg_name: scopes.copy() }
 
     # extract function declarations from packages
     pkgs_fn_decls = {}
@@ -87,11 +89,20 @@ def run (
 
                 all_fn_decls[k].append( j )
 
+        if pkg_name not in all_symtbl.keys():
+            all_symtbl[pkg_name] = pkg_symtbl
 
-    #print(f"all_fn_decls: {all_fn_decls}")
- 
+        if pkg_name not in all_scopes.keys():
+            all_scopes[pkg_name] = pkg_scopes
 
-    seman.check(s_tree, symtbl, scopes, all_fn_decls)
+
+#    print(f"all_fn_decls: {all_fn_decls}")
+#    print(f"symtbl: {symtbl}")
+#    print(f"all_symtbl: {all_symtbl}")
+#    print(f"scopes: {scopes}")
+#    print(f"all_scopes: {all_scopes}")
+
+    seman.check(s_tree, all_symtbl, all_scopes, all_fn_decls)
 
     if print_final_ast:
         print( list_.list_print(s_tree), end="" )
