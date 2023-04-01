@@ -75,7 +75,7 @@ def tokenize (code):
     # check for non-tokenized ranges
     _check_nontokenized(token_list, code)
 
-    _sort_identation(token_list)
+    token_list = _sort_identation(token_list)
 
 
     return token_list
@@ -215,108 +215,46 @@ def _check_nontokenized (token_list, code) :
 
 
 def _sort_identation (token_list) :
-    # find contiguous TAB tokens
-    found = []
-    buf = []
-    for t, token in enumerate(token_list):
-        if token[0] == "TAB":
-            buf.append(t)
+    # add breaklines in the end, so the programmer doesn't need to do it ;)
+    for i in range(0,2):
+        token_list.append(["BREAKLINE"])
 
-        elif t > 0 and token_list[t-1][0] == "TAB":
-            found.append([t-len(buf), t])
-            buf = []
+    # split tokens in lines based on BREAKLINEs
+    lines = {}
+    line_ct = 0
+    for token in token_list:
+        if line_ct not in lines.keys():
+            lines[line_ct] = []
 
-    #print(f"f {found}")
+        if token[0] != "BREAKLINE":
+            lines[line_ct].append(token)
+        else:
+            line_ct += 1
 
-    # add BLOCK_START and BLOCK_END tokens
-    lvl = 0
-    last_flen = None
-    last_breakline = None
+    new_token_list = []
+    level = 0
+    for ln, ln_content in lines.items():
+        tabs_in_line = []
+        for token in ln_content:
+            if token[0] == "TAB":
+                tabs_in_line.append(token)
+                ln_content.remove(token)
 
-    block_stack = []
-    block_counter = 0
-    for f in found:
-        flen = f[1] - f[0]
-        #print(f"f {f} flen {flen} last_flen {last_flen} lvl {lvl}")
+        if len(tabs_in_line) == level+1:
+            ln_content.insert(0, ["BLOCK_START", level])
+            level += 1
 
-        # if is starting a new block
-        if flen == lvl + 1:
-            #print(f"START")
-            token_list.pop(f[0]-1)
-            token_list.insert(f[0]-1, ["BLOCK_START", block_counter])
+        elif len(tabs_in_line) < level:
+            diff = level-len(tabs_in_line)
 
-            block_stack.append(block_counter)
-            block_counter += 1
+            for i in range(0, diff):
+                ln_content.insert(0, ["BLOCK_END", level-diff-i])
+            
+            level -= diff
 
-            lvl += 1
+        new_token_list += ln_content
 
-        #print(f"LVL {lvl}")
-
-
-        # get next breakline
-        next_breakline = None
-        def get_breakline () :
-            next_breakline = None
-            for t, token in enumerate(token_list[f[1]:]) :
-                if token[0] == "BREAKLINE":
-                    next_breakline = t + f[1]
-                    break
-
-            return next_breakline
-        next_breakline = get_breakline()
-
-
-        # if no next breakline found, raise exception
-        if next_breakline == None:
-            raise Exception ("No next breakline")
-
-        #print(f"next_breakline: {next_breakline} {token_list[next_breakline]}")
-
-        # check for end of block on identation to add the needed BLOCK_END tokens
-        #print(f"flen: {flen} - block_stack: {block_stack}")
-        #print(f"last_flen > flen: {last_flen} > {flen}")
-        if last_flen != None:
-            if last_flen > flen:
-                #print(f"pop last_breakline: {last_breakline}")
-                token_list.pop(last_breakline)
-
-                pos = last_breakline
-                for i in range(0, last_flen-flen):
-                    #print(f"END i {i}")
-                    token_list.insert(pos, ["BLOCK_END", block_stack.pop(), "return"])
-                    pos += 1
-                    lvl -= 1
-
-        next_breakline = get_breakline()
-
-        # check for end of expression to add BLOCK_END token
-        expr_end = next_breakline == len(token_list) - 1
-        #print(f"expr_end: next_breakline {next_breakline} len {len(token_list)-1}")
-        if expr_end:
-            token_list.pop(next_breakline)
-
-            pos = next_breakline
-            for i in range(0, len(block_stack)):
-                #print(f"END i2 {i}")
-                token_list.insert(pos, ["BLOCK_END", block_stack.pop(), "expr_end" ])
-                pos += 1
-                lvl -= 1
-
-        next_breakline = get_breakline()
-
-        last_flen = flen
-        last_breakline = next_breakline
-
-        #print()
-
-    # remove now useless tokens
-    if bool(1):
-        tlcopy = token_list.copy()
-        for t, token in enumerate(tlcopy):
-            if token[0] in ["TAB", "BREAKLINE"]:
-                token_list.remove(token)
-
-    return token_list
+    return new_token_list
 
 
 if __name__ == "__main__":

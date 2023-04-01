@@ -21,6 +21,9 @@ def run (
 
 
     token_list = lex.tokenize(expr) 
+
+    #print("token_list: %s" % token_list)
+
     parsetree = parse.parse(token_list, "EXPR")
 
     if print_parse_tree:
