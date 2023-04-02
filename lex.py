@@ -75,7 +75,7 @@ def tokenize (code):
     # check for non-tokenized ranges
     _check_nontokenized(token_list, code)
 
-    token_list = _sort_identation(token_list)
+    token_list = _sort_indentation(token_list)
 
 
     return token_list
@@ -214,10 +214,12 @@ def _check_nontokenized (token_list, code) :
         raise Exception(f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
 
 
-def _sort_identation (token_list) :
+def _sort_indentation (token_list) :
     # add breaklines in the end, so the programmer doesn't need to do it ;)
     for i in range(0,2):
         token_list.append(["BREAKLINE"])
+
+    #print(f"token_list: {token_list}")
 
     # split tokens in lines based on BREAKLINEs
     lines = {}
@@ -234,23 +236,32 @@ def _sort_identation (token_list) :
     new_token_list = []
     level = 0
     for ln, ln_content in lines.items():
+        #empty_line = len(ln_content) == 0
+
         tabs_in_line = []
-        for token in ln_content:
+        for token in ln_content.copy():
             if token[0] == "TAB":
                 tabs_in_line.append(token)
                 ln_content.remove(token)
 
+        #print(f"previous level: {level}")
+        #print(f"tabs_in_line {ln}: {tabs_in_line}")
         if len(tabs_in_line) == level+1:
+            #print(f"ADD BLOCK_START {level}")
             ln_content.insert(0, ["BLOCK_START", level])
             level += 1
 
         elif len(tabs_in_line) < level:
             diff = level-len(tabs_in_line)
 
-            for i in range(0, diff):
-                ln_content.insert(0, ["BLOCK_END", level-diff-i])
+            for i in reversed(range(0, diff)):
+                sub = level - i - 1
+                #print(f"ADD BLOCK_END {sub}")
+                #print(f"level {level} diff {diff} i {i}")
+                ln_content.insert(0, ["BLOCK_END", sub])
             
             level -= diff
+        #print(f"current level: {level}\n")
 
         new_token_list += ln_content
 

@@ -21,10 +21,13 @@ def parse (token_list, root) :
         
         # look for rules and reduce as long as needed
         while True:
+            #print(f"loop start buf: {buf}")
             match = _find_match(buf, lookahead)
 
             if match != None:
                 start, rule = match
+                #print(f"start: {start}")
+                #print(f"rule: {rule}")
 
                 # reduce
                 #
@@ -53,7 +56,7 @@ def parse (token_list, root) :
                 buff_len_one = len(buf) == 1
                 buff_expr = buf[0][0] == root
                 if not (buff_len_one and buff_expr):
-                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf:\n{[b for b in buf[0]]}")
+                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf:{buf}")
 
                 break
 

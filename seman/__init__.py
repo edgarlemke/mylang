@@ -160,16 +160,21 @@ def check (s_tree, symtbl, scopes, loaded_functions):
 
 # check single set per name at every scope
 def _check_set_mut(s_tree, symtbl, scopes):
+#    print("_check_set_mut")
+#    print(f"s_tree: {s_tree}")
+#    print(f"symtbl: {symtbl}")
+#    print(f"scopes: {scopes}")
 
-    for sym_name in symtbl:
-        sym_list = symtbl[sym_name]
+    for pkg_name, pkg_symtbl in symtbl.items():
+        for sym_name in pkg_symtbl:
+            sym_list = pkg_symtbl[sym_name]
 
-        _check_set_mut_0(sym_list, "set", sym_name)
-        _check_set_mut_0(sym_list, "mut", sym_name)
+            _check_set_mut_0(sym_list, "set", sym_name)
+            _check_set_mut_0(sym_list, "mut", sym_name)
 
-        _check_set_mut_1(sym_list, sym_name)
+            _check_set_mut_1(sym_list, sym_name)
 
-        _check_set_mut_2(sym_list, scopes, sym_name)
+            _check_set_mut_2(sym_list, scopes[pkg_name], sym_name)
 
         
     return True
@@ -183,11 +188,7 @@ def _check_set_mut_0 (sym_list, arg, sym_name) :
         if li[0][0] not in ["fn_arg", arg]:
             continue
 
-        #print(f"li: {li}")
-        #print(f"found: {found}")
-
         scope_node_index = li[2]
-        #print(f"scope_node_index: {scope_node_index}")
 
         if scope_node_index in found:
             raise Exception(f"Immutable name already set before: {sym_name}")
@@ -241,6 +242,7 @@ def _check_set_mut_2 (sym_list, scopes, sym_name) :
 
         # get each symbol's scope
         sym_scope = li[2]
+
         scope = scopes[sym_scope]
 
         i = iterup(scope)

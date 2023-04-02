@@ -93,7 +93,6 @@ def get_pkg_name (src) :
     path = os.path.realpath(src)
     dir_ = os.path.dirname(path)
 
-
     mylang_pkg_dir = _get_mylang_dir()
     is_local = False
     if mylang_pkg_dir == dir_[0:len(mylang_pkg_dir)]:

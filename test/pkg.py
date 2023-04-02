@@ -79,16 +79,20 @@ def _test (fn_name, expr, expected_stdout, expected_stderr) :
     #print(stdout)
     #print(stderr)
 
+    err = False
     if not(expected_stderr in stderr):
         print(f"""FAIL - stderr not correct:
         expected:   {expected_stderr}
         got:        {stderr}""")
-        return False
+        err = True
 
     if stdout != expected_stdout:
         print(f"""FAIL - stdout not correct:
             expected:   {expected_stdout}
             got:        {stdout}""")
+        err = True
+
+    if err:
         return False
 
     print("OK")
@@ -105,6 +109,15 @@ def _popen (sp) :
 
 
 if __name__ == "__main__":
-    tests = [t for t in globals() if t[0:5] == "test_"]
-    for t in tests:
-        eval(f"{t}()")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f")
+    args = parser.parse_args()
+
+    if args.f is None:
+        tests = [t for t in globals() if t[0:5] == "test_"]
+        for t in tests:
+            eval(f"{t}()")
+
+    else:
+        eval(f"{args.f}()")

@@ -12,6 +12,7 @@ import list as list_
 def run (
     expr,
     src= None,
+    print_token_list= False,
     print_parse_tree= False,
     print_raw_ast= False,
     print_final_ast= False,
@@ -20,9 +21,10 @@ def run (
     ) :
 
 
-    token_list = lex.tokenize(expr) 
-
-    #print("token_list: %s" % token_list)
+    token_list = lex.tokenize(expr)
+    if print_token_list:
+        print( list_.list_print(token_list), end="" )
+        exit()
 
     parsetree = parse.parse(token_list, "EXPR")
 
@@ -43,7 +45,10 @@ def run (
     # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
 
-    pkg_name = pkg.get_pkg_name(src)
+    if src != None:
+        pkg_name = pkg.get_pkg_name(src)
+    else:
+        pkg_name = None
 
     # get loaded packages info
     loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
@@ -138,6 +143,7 @@ if __name__ == "__main__":
     group.add_argument("--expr")
 
     print_group = parser.add_mutually_exclusive_group()
+    print_group.add_argument("--print-token-list", action="store_true")
     print_group.add_argument("--print-parse-tree", action= "store_true")
     print_group.add_argument("--print-raw-ast", action= "store_true")
     print_group.add_argument("--print-final-ast", action= "store_true")
@@ -166,10 +172,12 @@ if __name__ == "__main__":
     elif src == None and expr == None:
         raise Exception("Either --src or --expr argument must be provided")
         
-
-    print_parse_tree = args.print_parse_tree
-    print_raw_ast = args.print_raw_ast
-    print_final_ast = args.print_final_ast
-    print_symbol_table = args.print_symbol_table
-
-    run(expr, src, print_parse_tree, print_raw_ast, print_final_ast, print_symbol_table)
+    run(
+            expr,
+            src,
+            args.print_token_list,
+            args.print_parse_tree,
+            args.print_raw_ast,
+            args.print_final_ast,
+            args.print_symbol_table
+    )
