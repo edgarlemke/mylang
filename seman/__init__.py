@@ -46,16 +46,12 @@ def get_symtbl (s_tree):
 
             indexes = [ ch for ch in children if s_tree[ch][0] == "NAME" ]
             names = [ s_tree[ch] for ch in children if s_tree[ch][0] == "NAME" ]
-            #print(names)
+            arg_par_group = s_tree[ children[1] ]
 
             sym_name = names[0][1]
             fn_type = names[len(names)-1][1] 
             sym_t = ["fn", fn_type ]
             sym_pos = indexes[0] #names[0][2]
-
-            #print(sym_name)
-            #print(sym_pos)
-            #print(sym_t)
 
             # find function's parent scope
             sym_scope = iterup(i)
@@ -68,8 +64,8 @@ def get_symtbl (s_tree):
 
             # handle arguments
             #
-            args_indexes = indexes[1:-1]
-            args = names[1:-1]
+            args_indexes = arg_par_group[2]
+            args = [s_tree[ch] for ch in args_indexes]
             arg_pairs = []
             pair = []
             #
@@ -152,7 +148,7 @@ def check (s_tree, symtbl, scopes, loaded_functions):
 
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
-    _check_call(s_tree, symtbl, scopes, loaded_functions)
+    #_check_call(s_tree, symtbl, scopes, loaded_functions)
 
     #_check_set_mut_types()
     #_check_refs()

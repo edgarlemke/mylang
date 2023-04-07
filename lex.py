@@ -33,7 +33,6 @@ rules_list = [
     ["INCL", "incl"],
 
     ["FN", "fn"],
-    ["CALL", "call"],
     ["RET", "ret"],
 
     ["SET", "set"],

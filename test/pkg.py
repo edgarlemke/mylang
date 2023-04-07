@@ -39,7 +39,7 @@ def test_get_pkg_name () :
 
     # create dummy pkg
     with open(f"{path}/test.mylang", "w+") as fd:
-        fd.write("""fn main  int x  int
+        fd.write("""fn main  (int x)  int
 \tnop
 """)
 

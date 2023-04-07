@@ -41,6 +41,10 @@ def run (
 
     # get symbol table and scopes
     symtbl, scopes = seman.get_symtbl(s_tree)
+    if print_symbol_table:
+        for sym_name in symtbl:
+            print( list_.list_print( symtbl[name] ), end="" )
+        exit()
 
     # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
@@ -103,12 +107,6 @@ def run (
         if pkg_name not in all_scopes.keys():
             all_scopes[pkg_name] = pkg_scopes
 
-
-#    print(f"all_fn_decls: {all_fn_decls}")
-#    print(f"symtbl: {symtbl}")
-#    print(f"all_symtbl: {all_symtbl}")
-#    print(f"scopes: {scopes}")
-#    print(f"all_scopes: {all_scopes}")
 
     seman.check(s_tree, all_symtbl, all_scopes, all_fn_decls)
 

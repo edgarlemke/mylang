@@ -218,8 +218,8 @@ def test_incl () :
 def test_fn () :
     basictest("TEST FN - ", "((FN 0 2 fn))\n", "fn")
 
-def test_call () :
-    basictest("TEST CALL - ", "((CALL 0 4 call))\n", "call")
+#def test_call () :
+#    basictest("TEST CALL - ", "((CALL 0 4 call))\n", "call")
 
 def test_ret () :
     basictest("TEST RET - ", "((RET 0 3 ret))\n", "ret")

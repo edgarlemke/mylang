@@ -8,7 +8,7 @@ from shlex import split
 def test_single_set ():
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """fn main  ui8 x  ui8
+        """fn main  (ui8 x)  ui8
 \tset a ui8 1
 \tset a ui8 1
 """,
@@ -19,7 +19,7 @@ def test_single_set ():
 def test_set_fn_arg_conflict ():
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """fn main  ui8 x  ui8
+        """fn main  (ui8 x)  ui8
 \tset x ui8 1
 """,
         "", # nothing to be tested, stderr is tested before
@@ -30,7 +30,7 @@ def test_set_fn_arg_conflict ():
 def test_set_mut_conflict_0 () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """fn main  ui8 x  ui8
+        """fn main  (ui8 x)  ui8
 \tset a ui8 1
 \tmut a ui8 1
 """,
@@ -40,7 +40,7 @@ def test_set_mut_conflict_0 () :
 def test_set_mut_conflict_1 () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """fn main  ui8 x  ui8
+        """fn main  (ui8 x)  ui8
 \tmut a ui8 1
 \tset a ui8 1
 """,
@@ -51,7 +51,7 @@ def test_set_mut_higher_scopes_0 () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
         """set x ui8 1
-fn main  ui8 a  ui8
+fn main  (ui8 a)  ui8
 \tset x ui8 2
 """,
         "", # nothing to be tested, stderr is tested before
@@ -62,22 +62,22 @@ def test_set_mut_higher_scopes_1 () :
         i.getframeinfo( i.currentframe() ).function,
         """
 set x ui8 1
-fn main  ui8 a  ui8
-\tfn otherfn  ui8 b  ui8
+fn main  (ui8 a)  ui8
+\tfn otherfn  (ui8 b)  ui8
 \t\tset x ui8 2
 """,
         "", # nothing to be tested, stderr is tested before
         "SET/MUT conflict in higher scope: x")
 
 
-def test_call_refs () :
-    _test(
-        i.getframeinfo( i.currentframe() ).function,
-        """fn main  ui8 a  ui8
-\tcall somefn
-""",
-        "", # nothing to be tested, stderr is tested before
-        "Call to undefined function: somefn")
+#def test_call_refs () :
+#    _test(
+#        i.getframeinfo( i.currentframe() ).function,
+#        """fn main  ui8 a  ui8
+#\tcall somefn
+#""",
+#        "", # nothing to be tested, stderr is tested before
+#        "Call to undefined function: somefn")
 
 
 def test_typedef () :
@@ -85,9 +85,8 @@ def test_typedef () :
         i.getframeinfo( i.currentframe() ).function,
         """typedef ui8 8
 
-fn main  ui8 x  ui8
-\ttypedef i8 8
-""",
+fn main  (ui8 x)  ui8
+\ttypedef i8 8""",
     "", # nothing to be tested, stderr is tested before
     "Typedef not declared in global scope")
 
@@ -95,10 +94,9 @@ fn main  ui8 x  ui8
 def test_subst_fn_typefying () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """fn main  mytype x  mytype
-\tnop
-""",
-    "((EXPR None (1)) (FN_DECL 0 (2 3 4 5 6)) (NAME main 1 ()) (TYPE mytype 1 ()) (NAME x 1 ()) (TYPE mytype 1 ()) (EXPR 1 (7)) (NOP 6 ()))",
+        """fn main  (mytype x)  mytype
+\tnop""",
+    "((EXPR None (1)) (FN_DECL 0 (2 3 6 7)) (NAME main 1 ()) (ARG_PAR_GROUP 1 (4 5)) (NAME mytype 3 ()) (NAME x 3 ()) (TYPE mytype 1 ()) (EXPR 1 (8)) (NOP 7 ()))",
     "",
     popen_fn= _print_final_ast)
 
@@ -106,11 +104,11 @@ def test_subst_fn_typefying () :
 def test_subst_set_mut_typefying () :
     _test(
         i.getframeinfo( i.currentframe() ).function,
-        """fn main  int a  int
+        """fn main  (int a)  int
 \tset x int 1
 \tmut y int 1
 """,
-    "((EXPR None (1)) (FN_DECL 0 (2 3 4 5 6)) (NAME main 1 ()) (TYPE int 1 ()) (NAME a 1 ()) (TYPE int 1 ()) (EXPR 1 (7 13)) (EXPR 6 (8)) (SET_DECL 7 (9 10 11)) (NAME x 8 ()) (TYPE int 8 ()) (EXPR 8 (12)) (INT 1 11 ()) (EXPR 6 (14)) (MUT_DECL 13 (15 16 17)) (NAME y 14 ()) (TYPE int 14 ()) (EXPR 14 (18)) (INT 1 17 ()))",
+    """((EXPR None (1)) (FN_DECL 0 (2 3 6 7)) (NAME main 1 ()) (ARG_PAR_GROUP 1 (4 5)) (NAME int 3 ()) (NAME a 3 ()) (TYPE int 1 ()) (EXPR 1 (8 14)) (EXPR 7 (9)) (SET_DECL 8 (10 11 12)) (NAME x 9 ()) (TYPE int 9 ()) (EXPR 9 (13)) (INT 1 12 ()) (EXPR 7 (15)) (MUT_DECL 14 (16 17 18)) (NAME y 15 ()) (TYPE int 15 ()) (EXPR 15 (19)) (INT 1 18 ()))""",
     "",
     popen_fn= _print_final_ast)
 

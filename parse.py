@@ -1,12 +1,23 @@
 #!/usr/bin/python3
 
 
-def parse (token_list, root) :
+def parse (token_list, root):
+
+    result = _parse(token_list, root)
+    status, parsetree, last_found_buf = result
+
+    if status == "NOTR":
+        raise Exception("Invalid syntax!\n\nlast_found_buf: {last_found_buf}\n\nparsetree: {parsetree}")
+
+    return parsetree
+
+def _parse (token_list, root) :
 
     buf = []
     token_ct = 0
 
     last_found_rule = None
+    last_buf = None
     lookahead = token_list[token_ct]
     while token_ct < len(token_list):
 
@@ -43,6 +54,7 @@ def parse (token_list, root) :
                 #
 
                 last_found_rule = inplace
+                last_buf = buf.copy()
 
             else:
                 # if not all tokens have been buffered, get out of while loop and shift
@@ -56,14 +68,14 @@ def parse (token_list, root) :
                 buff_len_one = len(buf) == 1
                 buff_expr = buf[0][0] == root
                 if not (buff_len_one and buff_expr):
-                    raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf:{buf}")
+                    #raise Exception(f"Invalid syntax!\nlast_found_rule: {last_found_rule}\n\nbuf:{buf}")
+                    return("NOTR", buf, last_buf)
 
                 break
 
         token_ct += 1
 
-    parsetree = buf
-    return parsetree
+    return ("OK", buf, last_buf)
 
 
 def _find_match (buf, lookahead):
@@ -84,14 +96,7 @@ def _find_match (buf, lookahead):
 
         [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
-        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME"]] ],
-        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]] ],
-        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR"]] ],
-        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]] ],
-        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]] ],
-        [ ["SPACE"], [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]] ],
-
-        [ ["SPACE"], [["EXPR"], ["CALL_DECL"]] ],
+        [ ["BLOCK_START"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]] ],
 
         [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "NAME"]] ],
         #[ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]] ],
@@ -138,6 +143,8 @@ def _match (buf_slice):
     rules = [
         [
             # expressions
+            [["EXPR"], ["EXPR", "EXPR"]],
+
             [["EXPR"], ["INT"]],
             [["EXPR"], ["FLOAT"]],
             [["EXPR"], ["QUOTE", "QVALUE", "QUOTE"]],
@@ -172,42 +179,43 @@ def _match (buf_slice):
             [["EXPR"], ["INCL_DECL"]],
             [["EXPR"], ["PKG_DECL"]],
 
-
+            # parenthesis groups
             [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
             [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
-            #[["PAR_GROUP"], ["PAR_OPEN", "EXPR_GROUP", "PAR_CLOSE"]],
-    
-            #[["EXPR_GROUP"], ["EXPR", "SPACE", "EXPR"]],
-            #[["EXPR_GROUP"], ["EXPR_GROUP", "SPACE", "EXPR"]],
-    
-            #[["EXPR_GROUP"], ["EXPR", "EXPR_SEP", "EXPR"]],
-            #[["EXPR_GROUP"], ["EXPR_GROUP", "EXPR_SEP", "EXPR"]],
-    
-            [["EXPR"], ["EXPR", "EXPR"]],
-            #[["EXPR_GROUP"], ["EXPR_GROUP", "EXPR"]],
     
             # blocks
             [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
-            #[["BLOCK"], ["BLOCK_START", "EXPR_GROUP", "BLOCK_END"]],
-
     
-            # functions
+            # function related
+            # function arguments
             [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
-            [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "NAMEPAIR"]],
-            [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "NAMEPAIR"]],
-    
-            [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME", "BLOCK"]],
-            [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
+            [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "SPACE", "NAMEPAIR"]],
+            [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "SPACE", "NAMEPAIR"]],
 
-            [["CALL_DECL"], ["CALL", "SPACE", "NAME"]],
-            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
-            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR"]],
-            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]],
-            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]],
-            [["CALL_DECL"], ["CALL", "SPACE", "NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]],
+            [["ARG_PAR_GROUP"], ["PAR_OPEN", "NAMEPAIR", "PAR_CLOSE"]],
+            [["ARG_PAR_GROUP"], ["PAR_OPEN", "NAMEPAIR_GROUP", "PAR_CLOSE"]],
 
+            # function declarations
+            #   functions without argument and without return type
+            [["FN_DECL"], ["FN", "SPACE", "NAME", "BLOCK"]], 
+            #   functions with arguments and without return type
+            [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "ARG_PAR_GROUP", "BLOCK"]],
+            #   functions with or without arguments and with return type
+            [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "ARG_PAR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
+
+            # function calls
+            [["CALL_DECL"], ["NAME", "PAR_GROUP"]],
+            [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "PAR_GROUP"]],
+            [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]],
+            [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR"]],
+            [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]],
+            [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]],
+            [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]],
+
+            # function return
             [["RET_DECL"], ["RET", "SPACE", "NAME"]],
             [["RET_DECL"], ["RET", "SPACE", "EXPR"]],
+            #
     
             # variables and constants
             # set
