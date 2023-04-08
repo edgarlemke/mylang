@@ -97,6 +97,11 @@ def _find_match (buf, lookahead):
         [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
         [ ["BLOCK_START"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]] ],
 
         [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "NAME"]] ],
         #[ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]] ],
@@ -182,6 +187,8 @@ def _match (buf_slice):
             # parenthesis groups
             [["PAR_GROUP"], ["PAR_OPEN", "PAR_CLOSE"]],
             [["PAR_GROUP"], ["PAR_OPEN", "EXPR", "PAR_CLOSE"]],
+
+            [["PAR_GROUP"], ["PAR_OPEN", "NAME", "PAR_CLOSE"]],
     
             # blocks
             [["BLOCK"], ["BLOCK_START", "EXPR", "BLOCK_END"]],
@@ -190,10 +197,14 @@ def _match (buf_slice):
             # function arguments
             [["NAMEPAIR"], ["NAME", "SPACE", "NAME"]],
             [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "SPACE", "NAMEPAIR"]],
+            [["NAMEPAIR_GROUP"], ["NAMEPAIR", "SPACE", "NAMEPAIR"]],
             [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "SPACE", "NAMEPAIR"]],
+            [["NAMEPAIR_GROUP"], ["NAMEPAIR_GROUP", "SPACE", "NAMEPAIR"]],
 
             [["ARG_PAR_GROUP"], ["PAR_OPEN", "NAMEPAIR", "PAR_CLOSE"]],
+            [["ARG_PAR_GROUP"], ["PAR_OPEN", "NAMEPAIR", "SPACE", "NAME", "PAR_CLOSE"]],
             [["ARG_PAR_GROUP"], ["PAR_OPEN", "NAMEPAIR_GROUP", "PAR_CLOSE"]],
+            [["ARG_PAR_GROUP"], ["PAR_OPEN", "NAMEPAIR_GROUP", "SPACE", "NAME", "PAR_CLOSE"]],
 
             # function declarations
             #   functions without argument and without return type
@@ -204,7 +215,9 @@ def _match (buf_slice):
             [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "ARG_PAR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
 
             # function calls
-            [["CALL_DECL"], ["NAME", "PAR_GROUP"]],
+            [["CALL_DECL"], ["NAME", "PAR_GROUP"]], # for empty par_group
+            [["CALL_DECL"], ["NAME", "ARG_PAR_GROUP"]],
+
             [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "PAR_GROUP"]],
             [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]],
             [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR"]],
