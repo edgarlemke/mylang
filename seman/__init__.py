@@ -92,12 +92,12 @@ def get_symtbl (s_tree):
         elif cat in ["SET_DECL", "MUT_DECL"]:
             # extract symbol info
             cat, parent, children = node
-            sym_name = s_tree[children[0]][1]
+            sym_name = s_tree[children[1]][1]
             if cat == "MUT_DECL":
                 sym_t = ["mut"]
             else:
                 sym_t = ["set"]
-            sym_t.append( s_tree[children[1]][1] )
+            sym_t.append( s_tree[children[0]][1] )
             sym_pos = children[0]
             # find parent scope
             sym_scope = iterup(i)
@@ -413,7 +413,7 @@ def _typefy_set_mut(s_tree) :
         if not( node[0] in ["SET_DECL", "MUT_DECL"] ):
             continue
 
-        s_tree[ node[2][1] ][0] = "TYPE"
+        s_tree[ node[2][0] ][0] = "TYPE"
 
 
 def match_fn(node, scopes, symtbl, s_tree, name, pkg_name, loaded_functions):

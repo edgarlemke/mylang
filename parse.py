@@ -7,7 +7,7 @@ def parse (token_list, root):
     status, parsetree, last_found_buf = result
 
     if status == "NOTR":
-        raise Exception("Invalid syntax!\n\nlast_found_buf: {last_found_buf}\n\nparsetree: {parsetree}")
+        raise Exception(f"Invalid syntax!\n\nlast_found_buf: {last_found_buf}\n\nparsetree: {parsetree}")
 
     return parsetree
 
