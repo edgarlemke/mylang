@@ -143,12 +143,13 @@ def _get_refs (s_tree, symtbl) :
     return name_indexes
 
 
-def check (s_tree, symtbl, scopes, loaded_functions):
+def check (s_tree, symtbl, scopes, loaded_functions, pkg_name):
     #refs = _get_refs(s_tree, symtbl)
 
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
-    #_check_call(s_tree, symtbl, scopes, loaded_functions)
+    _check_call(s_tree, symtbl, scopes, loaded_functions)
+    _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name)
 
     #_check_set_mut_types()
     #_check_refs()
@@ -287,6 +288,55 @@ def _check_call (s_tree, symtbl, scopes, loaded_functions):
         raise Exception(f"Call to undefined function: {fn_name}")
 
 
+def _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name) :
+
+    parent_nodes = []
+    for node in s_tree:
+        name = node[0]
+        if name != "RET_DECL":
+            continue
+
+        # recursive function to check if RET_DECL is child of some FN_DECL
+        def iterup(node):
+            if node[0] == "FN_DECL":
+                return node
+            if node[1] != None:
+                return iterup(s_tree[node[1]])
+            else:
+                return False
+
+        parent_fn = iterup(node)
+        if parent_fn == False or parent_fn in parent_nodes:
+            raise Exception(f"Ret outside of fn: {node}")
+
+        parent_fn_name = s_tree[parent_fn[2][0]][1]
+        parent_fn_ret_type = loaded_functions[parent_fn_name][0][2]
+
+        ret_value_type = s_tree[ node[2][0] ][0]
+
+        if ret_value_type == "NAME":
+            ret_index = node[2][0]
+            ret_value = s_tree[ret_index][1]
+    
+            pkg_symtbl = symtbl[pkg_name]
+    
+            if ret_value not in pkg_symtbl.keys():
+                raise Exception(f"Undefined return value: {node}")
+    
+            ret_value_types = pkg_symtbl[ret_value][0][0]
+    
+            if parent_fn_ret_type not in ret_value_types:
+                raise Exception(f"Returning value of wrong type: {node}")
+
+        elif ret_value_type == "EXPR":
+            raise Exception("Unsupported!")
+
+        parent_nodes.append(parent_fn)
+
+
+    return True
+
+
 def _incl_pkgs (s_tree) :
 
     PATH = []
@@ -365,29 +415,41 @@ def typefy_functions (s_tree):
         if node[0] != "FN_DECL":
             continue
 
-        # remove function name, return type and expr
-        children = node[2][1:-2]
+        # 2 children -> name, expr
+        # 3 children -> name, args, expr
+        # 4 children -> name, args, return type, expr
+        #print(f"node[2]: {node[2]}")
 
-        # typefy function arguments
-        len_ch = len(children)
-        limit = int( len_ch / 2 )
-        for ch in range(0,limit):
-            type_i, value_i = children[ch*2:(ch*2)+2]
-            ch_node = s_tree[type_i]
-
-            if ch_node[0] == "TYPE":
-                continue
-            
-            elif ch_node[0] != "NAME":
-                raise Exception("Bug on function arguments typefying.")
-
-            s_tree[type_i][0] = "TYPE"
-
-        # typefy function return type
-        all_children = node[2]
-        s_tree[ all_children[ len(all_children)-2 ] ][0] = "TYPE"
+        if len(node[2]) >= 3:
+            # remove function name, return type and expr
+            children = node[2][1:-2]
+            #print(f"children: {children}")
+    
+            # typefy function arguments
+            len_ch = len(children)
+            limit = int( len_ch / 2 )
+            for ch in range(0,limit):
+                type_i, value_i = children[ch*2:(ch*2)+2]
+                ch_node = s_tree[type_i]
+    
+                if ch_node[0] == "TYPE":
+                    continue
+                
+                elif ch_node[0] != "NAME":
+                    raise Exception("Bug on function arguments typefying.")
+    
+                s_tree[type_i][0] = "TYPE"
+    
+            if len(node[2]) == 4:
+                #print(f"y0: {s_tree}")
+                # typefy function return type
+                all_children = node[2]
+                #print(f"all_children: {all_children}")
+                #for ch in all_children:
+                #    print(f"ch: {s_tree[ch]}")
         
-
+                s_tree[ all_children[ len(all_children)-2 ] ][0] = "TYPE"
+                #print(f"y1: {s_tree}")
 
 
 def subst_types (s_tree, types) :

@@ -71,8 +71,10 @@ def run (
     #
     #
 
+    #print(f"t0: {s_tree}")
     # substitute types in tree
     seman.subst_types(s_tree, all_types)
+    #print(f"t1: {s_tree}")
 
 
     # extract function declarations from tree
@@ -108,7 +110,7 @@ def run (
             all_scopes[pkg_name] = pkg_scopes
 
 
-    seman.check(s_tree, all_symtbl, all_scopes, all_fn_decls)
+    seman.check(s_tree, all_symtbl, all_scopes, all_fn_decls, pkg_name)
 
     if print_final_ast:
         print( list_.list_print(s_tree), end="" )

@@ -112,6 +112,33 @@ def test_subst_set_mut_typefying () :
         popen_fn= _print_final_ast)
 
 
+def test_ret_outside_fn () :
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
+        """ret 0""",
+        "",
+        "Ret outside of fn"
+    )
+
+def test_ret_undefined_value () :
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
+        """fn main
+\tret stuff""",
+        "",
+        "Undefined return value"
+    )
+
+def test_ret_wrong_type_name () :
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
+        """fn main  ()  i8
+\tset ui8 retv 0
+\tret retv""",
+        "",
+        "Returning value of wrong type"
+    )
+
 
 
 def _test (fn_name, expr, expected_stdout, expected_stderr, popen_fn= None) :

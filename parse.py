@@ -97,6 +97,11 @@ def _find_match (buf, lookahead):
         [ ["ELIF_DECL"], [["IF_ELIF_GROUP_DECL"], ["IF_DECL", "ELIF_GROUP"]] ],
 
         [ ["BLOCK_START"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]] ],
+        [ ["BLOCK_START"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "PAR_GROUP"]] ],
+        [ ["BLOCK_START"], [["EXPR"], ["PAR_GROUP"]] ],
+
+        [ ["SPACE"], [["EXPR"], ["PAR_GROUP"]] ],
+        [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "PAR_GROUP"]] ],
         [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAME"]] ],
         [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR"]] ],
         [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR", "SPACE", "NAME"]] ],
@@ -106,6 +111,8 @@ def _find_match (buf, lookahead):
         [ ["SPACE"], [["USE_DECL"], ["USE", "SPACE", "NAME"]] ],
         #[ ["SPACE"], [["USE_DECL"], ["USE", "SPACE", "SPACE", "NAMEPAIR"]] ],
         [ ["SPACE"], [["EXPR"], ["USE_DECL"]] ],
+
+        [ ["SPACE"], [["RET_DECL"], ["RET"]] ],
     ]
 
     match = None
@@ -212,6 +219,8 @@ def _match (buf_slice):
             #   functions with arguments and without return type
             [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "ARG_PAR_GROUP", "BLOCK"]],
             #   functions with or without arguments and with return type
+            [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "PAR_GROUP", "BLOCK"]],
+            [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "PAR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
             [["FN_DECL"], ["FN", "SPACE", "NAME", "SPACE", "SPACE", "ARG_PAR_GROUP", "SPACE", "SPACE", "NAME", "BLOCK"]],
 
             # function calls
@@ -226,6 +235,7 @@ def _match (buf_slice):
             [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]],
 
             # function return
+            [["RET_DECL"], ["RET"]],
             [["RET_DECL"], ["RET", "SPACE", "NAME"]],
             [["RET_DECL"], ["RET", "SPACE", "EXPR"]],
             #
@@ -375,10 +385,8 @@ def _clean_token_data (list_):
     for index, item in enumerate(list_.copy()):
         if type(item) != list:
             continue
-#        if item[0] == "NAME":
-#            continue
 
-        if item[0] in lex_tokens:
+        if len(item) >= 1 and item[0] in lex_tokens:
             if item[0] in ["NAME", "INT", "FLOAT", "BOOL"]:
                 limit = 2
             else:
@@ -395,7 +403,7 @@ def _merge_groups (list_):
         if type(item) != list:
             continue
 
-        if item[0] in group_tokens:
+        if len(item) >= 1 and item[0] in group_tokens:
             item.pop(0)
 
         _merge_groups(item)
