@@ -2,13 +2,14 @@
 # coding: utf-8
 
 import argparse
+import inspect as i
 from subprocess import Popen, PIPE
 from shlex import split
 import unicodedata
 
 
-def basictest (msg, expected, expr):
-    print(msg, end="")
+def _test (fn_name, expected, expr):
+    print(f"TEST {fn_name} - ", end="")
 
     p = Popen(split(f"/usr/bin/python3 ../lex.py --expr \"{expr}\""), stdout= PIPE, stderr= PIPE)
     stdout, stderr = p.communicate()
@@ -33,21 +34,21 @@ def test_par_open () :
     """
     `(` expresssion should return only one PAR_OPEN token
     """
-    basictest("TEST PAR_OPEN - ", "((PAR_OPEN 0 1 \"(\"))\n", "(")
+    _test(i.getframeinfo( i.currentframe() ).function, "((PAR_OPEN 0 1 \"(\"))\n", "(")
 
 
 def test_par_close () :
     """
     `)` expression should return only one PAR_CLOSE token
     """
-    basictest("TEST PAR_CLOSE - ", "((PAR_CLOSE 0 1 \")\"))\n", ")")
+    _test(i.getframeinfo( i.currentframe() ).function, "((PAR_CLOSE 0 1 \")\"))\n", ")")
 
 
 def test_space () :
     """
     ` ` expression should return only one SPACE token
     """
-    basictest("TEST SPACE - ", "((SPACE 0 1 \" \"))\n", " ")
+    _test(i.getframeinfo( i.currentframe() ).function, "((SPACE 0 1 \" \"))\n", " ")
 
 
 def test_par_open_space_par_close () :
@@ -57,8 +58,8 @@ def test_par_open_space_par_close () :
     list_print() is tested for absence of spaces between lists inside a list
     tokenize() is tested for ordering of tokens
     """
-    basictest(
-            "TEST PAR_OPEN SPACE PAR_CLOSE - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """((PAR_OPEN 0 1 "(") (SPACE 1 2 " ") (PAR_CLOSE 2 3 ")"))\n""",
             "( )"
     )
@@ -69,19 +70,19 @@ def test_quote () :
     `"` expression should return only one QUOTE token
     """
     expr = "\\\""
-    basictest("TEST QUOTE - ", """((QUOTE 0 1 "\\\""))\n""", expr)
+    _test(i.getframeinfo( i.currentframe() ).function, """((QUOTE 0 1 "\\\""))\n""", expr)
 
 #def test_value () :
 #    """
 #    `mynametoken` expression should return only one VALUE token
 #    """
-#    basictest("TEST VALUE - ", """((VALUE 0 11 mynametoken))\n""", "mynametoken")
+#    _test(i.getframeinfo( i.currentframe() ).function, """((VALUE 0 11 mynametoken))\n""", "mynametoken")
 
 def test_int () :
-    basictest("TEST INT - ", """((INT 0 3 123))\n""", "123")
+    _test(i.getframeinfo( i.currentframe() ).function, """((INT 0 3 123))\n""", "123")
 
 def test_float () :
-    basictest("TEST FLOAT - ", """((FLOAT 0 4 3.14))\n""", "3.14")
+    _test(i.getframeinfo( i.currentframe() ).function, """((FLOAT 0 4 3.14))\n""", "3.14")
 
 
 def test_abc_xyz () :
@@ -97,8 +98,8 @@ def test_abc_xyz () :
         one QUOTE token
         one PAR_CLOSE token
     """ 
-    basictest(
-            "TEST (\"abc\" \"xyz\") - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """((PAR_OPEN 0 1 "(") (QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\"") (SPACE 6 7 " ") (QUOTE 7 8 "\\\"") (QVALUE 8 11 xyz) (QUOTE 11 12 "\\\"") (PAR_CLOSE 12 13 ")"))\n""",
             "(\\\"abc\\\" \\\"xyz\\\")"
     )
@@ -189,7 +190,7 @@ def test_quoted_unicode () :
     All valid Unicode chars between QUOTE tokens should return a VALUE token
     " char should be escaped
     """
-    print("TEST QUOTED UNICODE - ", end="", flush= True)
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="", flush= True)
 
     from multiprocessing import Pool
 
@@ -213,45 +214,45 @@ def test_quoted_unicode () :
 
 
 def test_incl () :
-    basictest("TEST INCL - ", "((INCL 0 4 incl))\n", "incl")
+    _test(i.getframeinfo( i.currentframe() ).function, "((INCL 0 4 incl))\n", "incl")
 
 def test_fn () :
-    basictest("TEST FN - ", "((FN 0 2 fn))\n", "fn")
+    _test(i.getframeinfo( i.currentframe() ).function, "((FN 0 2 fn))\n", "fn")
 
 #def test_call () :
-#    basictest("TEST CALL - ", "((CALL 0 4 call))\n", "call")
+#    _test(i.getframeinfo( i.currentframe() ).function, "((CALL 0 4 call))\n", "call")
 
 def test_ret () :
-    basictest("TEST RET - ", "((RET 0 3 ret))\n", "ret")
+    _test(i.getframeinfo( i.currentframe() ).function, "((RET 0 3 ret))\n", "ret")
 
 def test_set () :
-    basictest("TEST SET - ", "((SET 0 3 set))\n", "set")
+    _test(i.getframeinfo( i.currentframe() ).function, "((SET 0 3 set))\n", "set")
 
 def test_mut () :
-    basictest("TEST MUT - ", "((MUT 0 3 mut))\n", "mut")
+    _test(i.getframeinfo( i.currentframe() ).function, "((MUT 0 3 mut))\n", "mut")
 
 def test_res () :
-    basictest("TEST RES - ", "((RES 0 3 res))\n", "res")
+    _test(i.getframeinfo( i.currentframe() ).function, "((RES 0 3 res))\n", "res")
 
 def test_if () :
-    basictest("TEST IF - ", "((IF 0 2 if))\n", "if")
+    _test(i.getframeinfo( i.currentframe() ).function, "((IF 0 2 if))\n", "if")
 
 def test_else () :
-    basictest("TEST ELSE - ", "((ELSE 0 4 else))\n", "else")
+    _test(i.getframeinfo( i.currentframe() ).function, "((ELSE 0 4 else))\n", "else")
 
 def test_elif () :
-    basictest("TEST ELIF - ", "((ELIF 0 4 elif))\n", "elif")
+    _test(i.getframeinfo( i.currentframe() ).function, "((ELIF 0 4 elif))\n", "elif")
 
 def test_while () :
-    basictest("TEST WHILE - ", "((WHILE 0 5 while))\n", "while")
+    _test(i.getframeinfo( i.currentframe() ).function, "((WHILE 0 5 while))\n", "while")
 
 def test_for () :
-    basictest("TEST FOR - ", "((FOR 0 3 for))\n", "for")
+    _test(i.getframeinfo( i.currentframe() ).function, "((FOR 0 3 for))\n", "for")
 
 
 
 def test_no_token_match () :
-    print("TEST NO TOKEN MATCH - ", end= "")
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end= "")
 
     p = Popen(split("/usr/bin/python3 ../lex.py --expr \"\""), stdout= PIPE, stderr= PIPE, encoding= "utf-8")
     stdout, stderr = p.communicate()
@@ -268,7 +269,7 @@ def test_no_token_match () :
 
 
 def test_check_nontokenized_start () :
-    print("TEST CHECK NONTOKENIZED START - ", end="", flush= True)
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="", flush= True)
 
     stdout, stderr = _popen("!@#()")
     msg = "Exception: Non-tokenized range at start: 0 3  \"!@#\""
@@ -280,7 +281,7 @@ def test_check_nontokenized_start () :
     print("OK")
 
 def test_check_nontokenized_middle () :
-    print("TEST CHECK NONTOKENIZED MIDDLE - ", end="", flush= True)
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="", flush= True)
 
     stdout, stderr = _popen("(!@#)")
     msg = "Exception: Non-tokenized range at middle: 1 4  \"!@#\"" 
@@ -292,7 +293,7 @@ def test_check_nontokenized_middle () :
     print("OK")
 
 def test_check_nontokenized_end () :
-    print("TEST CHECK NONTOKENIZED END - ", end="", flush= True)
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="", flush= True)
 
     stdout, stderr = _popen("()!@#")
     msg = "Exception: Non-tokenized range at end: 2 5  \"!@#\"" 
@@ -306,7 +307,7 @@ def test_check_nontokenized_end () :
 
 
 def test_check_no_argument () :
-    print("TEST CHECK NO ARGUMENT - ", end= "", flush= True)
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end= "", flush= True)
 
     p = Popen(split("/usr/bin/python3 ../lex.py"), stdout= PIPE, stderr= PIPE, encoding= "utf-8")
     stdout, stderr = p.communicate()
@@ -334,18 +335,21 @@ def _popen (expr) :
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fast", action= "store_true")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--fast", action= "store_true")
+    group.add_argument("-f")
     args = parser.parse_args()
 
-    fast = args.fast
+    if args.f is None:
+        fast = args.fast
+        slow = ["test_quoted_unicode"]
+        tests = [t for t in globals() if t[0:5] == "test_"]
+        for t in tests:
 
+            if fast and t in slow:
+                continue
 
-    slow = ["test_quoted_unicode"]
-
-    tests = [t for t in globals() if t[0:5] == "test_"]
-    for t in tests:
-
-        if fast and t in slow:
-            continue
-
-        eval(f"{t}()")
+            eval(f"{t}()")
+    else:
+        eval(f"{args.f}()")

@@ -17,7 +17,7 @@ def test_get_pkg_name () :
     import os
     import random
 
-    print("TEST get_pkg_name() - ", end= "")
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end= "")
 
     # create dummy pkg dir at /tmp
     rand = int( str( random.random() )[2:] )
@@ -70,9 +70,7 @@ def test_get_pkg_name () :
 
 
 def _test (fn_name, expr, expected_stdout, expected_stderr) :
-    x = " ".join( fn_name.split("_")[1:] )
-    msg = f"TEST {x} - "
-
+    msg = f"TEST {fn_name} - "
     print(msg, end="", flush= True)
 
     stdout, stderr = _expr(expr)

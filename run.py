@@ -43,7 +43,7 @@ def run (
     symtbl, scopes = seman.get_symtbl(s_tree)
     if print_symbol_table:
         for sym_name in symtbl:
-            print( list_.list_print( symtbl[name] ), end="" )
+            print( list_.list_print( symtbl[sym_name] ), end="" )
         exit()
 
     # get types from expr typedef declarations

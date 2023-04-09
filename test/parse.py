@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 
+import inspect as i
 from subprocess import Popen, PIPE
 from shlex import split
 
 
-def basictest (msg, expr, expected) :
-    print(msg, end="", flush= True)
+def _test (fn_name, expr, expected) :
+    print(f"TEST {fn_name} - ", end="", flush= True)
 
     stdout, stderr = _expr(expr)
 
@@ -33,29 +34,29 @@ def justprint (msg, expr, expected) :
 
 
 #def test_rule__expr__value () :
-#    basictest("TEST RULE  EXPR -> VALUE - ", "anyvalue", """((EXPR ((VALUE 0 8 anyvalue))))""")
+#    _test(i.getframeinfo( i.currentframe() ).function, "anyvalue", """((EXPR ((VALUE 0 8 anyvalue))))""")
 
 def test_rule__expr__quote_qvalue_quote () :
-    basictest("TEST RULE  EXPR -> QUOTE QVALUE QUOTE - ", "\\\" \\\"", """((EXPR ((QUOTE 0 1 "\\\"") (QVALUE 1 2 " ") (QUOTE 2 3 "\\\""))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "\\\" \\\"", """((EXPR ((QUOTE 0 1 "\\\"") (QVALUE 1 2 " ") (QUOTE 2 3 "\\\""))))""")
 
 def test_rule__expr__int () :
-    basictest("TEST RULE  EXPR -> INT - ", "1", """((EXPR ((INT 0 1 1))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "1", """((EXPR ((INT 0 1 1))))""")
 
 def test_rule__expr__float () :
-    basictest("TEST RULE  EXPR -> FLOAT - ", "3.14", """((EXPR ((FLOAT 0 4 3.14))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "3.14", """((EXPR ((FLOAT 0 4 3.14))))""")
 
 def test_rule__expr__true () :
-    basictest("TEST RULE  EXPR -> BOOL true - ", "true", """((EXPR ((BOOL 0 4 true))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "true", """((EXPR ((BOOL 0 4 true))))""")
 
 def test_rule__expr__false () :
-    basictest("TEST RULE  EXPR -> BOOL false - ", "false", """((EXPR ((BOOL 0 5 false))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "false", """((EXPR ((BOOL 0 5 false))))""")
 
 
 def test_rule__par_group__par_open_par_close () :
-    basictest("TEST RULE  PAR_GROUP -> PAR_OPEN PAR_CLOSE - ", "()", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (PAR_CLOSE 1 2 ")"))))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "()", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (PAR_CLOSE 1 2 ")"))))))""")
 
 def test_rule__par_group__par_open_expr_par_close () :
-    basictest("TEST RULE  PAR_GROUP -> PAR_OPEN EXPR PAR_CLOSE - ", "(\\\"abc\\\")", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (EXPR ((QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\""))) (PAR_CLOSE 6 7 ")"))))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, "(\\\"abc\\\")", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (EXPR ((QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\""))) (PAR_CLOSE 6 7 ")"))))))""")
 
 #def test_rule__expr_group__expr_space_expr () :
 #    """
@@ -63,7 +64,7 @@ def test_rule__par_group__par_open_expr_par_close () :
 #        EXPR_GROUP -> EXPR SPACE EXPR
 #        PAR_GROUP -> PAR_OPEN EXPR_GROUP PAR_CLOSE
 #    """
-#    basictest("TEST RULE  EXPR_GROUP -> EXPR SPACE EXPR - ", "(\\\"abc\\\" \\\"xyz\\\")", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (EXPR_GROUP ((EXPR ((QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\""))) (SPACE 6 7 " ") (EXPR ((QUOTE 7 8 "\\\"") (QVALUE 8 11 xyz) (QUOTE 11 12 "\\\""))))) (PAR_CLOSE 12 13 ")"))))))""")
+#    _test(i.getframeinfo( i.currentframe() ).function, "(\\\"abc\\\" \\\"xyz\\\")", """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (EXPR_GROUP ((EXPR ((QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\""))) (SPACE 6 7 " ") (EXPR ((QUOTE 7 8 "\\\"") (QVALUE 8 11 xyz) (QUOTE 11 12 "\\\""))))) (PAR_CLOSE 12 13 ")"))))))""")
 
 #def test_rule__expr_group__expr_group_space_expr () :
 #    """
@@ -71,25 +72,25 @@ def test_rule__par_group__par_open_expr_par_close () :
 #        EXPR_GROUP -> EXPR_GROUP SPACE EXPR
 #        PAR_GROUP -> PAR_OPEN EXPR_GROUP PAR_CLOSE
 #    """
-#    basictest(
+#    _test(
 #            "TEST RULE  EXPR_GROUP -> EXPR_GROUP SPACE EXPR - ",
 #            "(\\\"abc\\\" \\\"jkl\\\" \\\"xyz\\\")",
 #            """((EXPR ((PAR_GROUP ((PAR_OPEN 0 1 "(") (EXPR_GROUP ((EXPR_GROUP ((EXPR ((QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\""))) (SPACE 6 7 " ") (EXPR ((QUOTE 7 8 "\\\"") (QVALUE 8 11 jkl) (QUOTE 11 12 "\\\""))))) (SPACE 12 13 " ") (EXPR ((QUOTE 13 14 "\\\"") (QVALUE 14 17 xyz) (QUOTE 17 18 "\\\""))))) (PAR_CLOSE 18 19 ")"))))))"""
 #    )
 
 def test_struct_0 () :
-    basictest("TEST STRUCT 0 - ", """struct MyStruct\n\tui8 i\n""", """((EXPR ((STRUCT_DECL ((STRUCT 0 6 struct) (SPACE 6 7 " ") (NAME 7 15 MyStruct) (STRUCT_BLOCK ((BLOCK_START 0) (NAMEPAIR ((NAME 17 20 ui8) (SPACE 20 21 " ") (NAME 21 22 i))) (BLOCK_END 0))))))))""")
+    _test(i.getframeinfo( i.currentframe() ).function, """struct MyStruct\n\tui8 i\n""", """((EXPR ((STRUCT_DECL ((STRUCT 0 6 struct) (SPACE 6 7 " ") (NAME 7 15 MyStruct) (STRUCT_BLOCK ((BLOCK_START 0) (NAMEPAIR ((NAME 17 20 ui8) (SPACE 20 21 " ") (NAME 21 22 i))) (BLOCK_END 0))))))))""")
 
 def test_struct_1 () :
-    basictest(
-            "TEST STRUCT 1 - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """struct MyStruct\n\tui8 i\n\tui8 y\n""",
             """((EXPR ((STRUCT_DECL ((STRUCT 0 6 struct) (SPACE 6 7 " ") (NAME 7 15 MyStruct) (STRUCT_BLOCK ((BLOCK_START 0) (STRUCT_DEF_GROUP ((NAMEPAIR ((NAME 17 20 ui8) (SPACE 20 21 " ") (NAME 21 22 i))) (NAMEPAIR ((NAME 24 27 ui8) (SPACE 27 28 " ") (NAME 28 29 y))))) (BLOCK_END 0))))))))"""
     )
 
 def test_res_struct () :
-    basictest(
-            "TEST RES STRUCT - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """res struct MyStruct\n\tui8 i\n\tui8 y\n""",
             """((EXPR ((RES_STRUCT_DECL ((RES 0 3 res) (SPACE 3 4 " ") (STRUCT 4 10 struct) (SPACE 10 11 " ") (NAME 11 19 MyStruct) (STRUCT_BLOCK ((BLOCK_START 0) (STRUCT_DEF_GROUP ((NAMEPAIR ((NAME 21 24 ui8) (SPACE 24 25 " ") (NAME 25 26 i))) (NAMEPAIR ((NAME 28 31 ui8) (SPACE 31 32 " ") (NAME 32 33 y))))) (BLOCK_END 0))))))))"""
     )
@@ -98,24 +99,24 @@ def test_res_struct () :
 
 
 def test_fn_decl_0 () :
-    basictest(
-            "TEST FN_DECL 0 - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x)  ui8
 \tnop""",
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((NOP 23 26 nop))) (BLOCK_END 0))))))))"""
     )
 
 def test_fn_decl_1 () :
-    basictest(
-            "TEST FN_DECL 1 - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x  ui8 y)  ui8
 \tnop""",
 """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR_GROUP ((NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (SPACE 15 16 " ") (SPACE 16 17 " ") (NAMEPAIR ((NAME 17 20 ui8) (SPACE 20 21 " ") (NAME 21 22 y))))) (PAR_CLOSE 22 23 ")"))) (SPACE 23 24 " ") (SPACE 24 25 " ") (NAME 25 28 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((NOP 30 33 nop))) (BLOCK_END 0))))))))"""
     )
 
 def test_fn_decl_2 () :
-    basictest(
-            "TEST FN_DECL 2 - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x)  ui8
 \tnop
 \tnop""",
@@ -123,112 +124,112 @@ def test_fn_decl_2 () :
     )
 
 def test_call_0 () :
-    basictest(
-        "TEST CALL 0 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn  ()""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (SPACE 29 30 " ") (SPACE 30 31 " ") (PAR_GROUP ((PAR_OPEN 31 32 "(") (PAR_CLOSE 32 33 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_1 () :
-    basictest(
-        "TEST CALL 1 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn  x""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (SPACE 29 30 " ") (SPACE 30 31 " ") (NAME 31 32 x))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_2() :
-    basictest(
-        "TEST CALL 2 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn  x y""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (SPACE 29 30 " ") (SPACE 30 31 " ") (NAMEPAIR ((NAME 31 32 x) (SPACE 32 33 " ") (NAME 33 34 y))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_3() :
-    basictest(
-        "TEST CALL 3 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8\n
 \tsomefn  x y z""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 24 30 somefn) (SPACE 30 31 " ") (SPACE 31 32 " ") (NAMEPAIR ((NAME 32 33 x) (SPACE 33 34 " ") (NAME 34 35 y))) (SPACE 35 36 " ") (NAME 36 37 z))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_4() :
-    basictest(
-        "TEST CALL 4 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn  x y z a""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (SPACE 29 30 " ") (SPACE 30 31 " ") (NAMEPAIR_GROUP ((NAMEPAIR ((NAME 31 32 x) (SPACE 32 33 " ") (NAME 33 34 y))) (SPACE 34 35 " ") (NAMEPAIR ((NAME 35 36 z) (SPACE 36 37 " ") (NAME 37 38 a))))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_5() :
-    basictest(
-        "TEST CALL 5 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn  x y z a b""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (SPACE 29 30 " ") (SPACE 30 31 " ") (NAMEPAIR_GROUP ((NAMEPAIR ((NAME 31 32 x) (SPACE 32 33 " ") (NAME 33 34 y))) (SPACE 34 35 " ") (NAMEPAIR ((NAME 35 36 z) (SPACE 36 37 " ") (NAME 37 38 a))))) (SPACE 38 39 " ") (NAME 39 40 b))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_6() :
-    basictest(
-        "TEST CALL 6 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn  x y z a b c""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (SPACE 29 30 " ") (SPACE 30 31 " ") (NAMEPAIR_GROUP ((NAMEPAIR_GROUP ((NAMEPAIR ((NAME 31 32 x) (SPACE 32 33 " ") (NAME 33 34 y))) (SPACE 34 35 " ") (NAMEPAIR ((NAME 35 36 z) (SPACE 36 37 " ") (NAME 37 38 a))))) (SPACE 38 39 " ") (NAMEPAIR ((NAME 39 40 b) (SPACE 40 41 " ") (NAME 41 42 c))))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_7() :
-    basictest(
-        "TEST CALL 7 -",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn(a)""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (PAR_GROUP ((PAR_OPEN 29 30 "(") (NAME 30 31 a) (PAR_CLOSE 31 32 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_8() :
-    basictest(
-        "TEST CALL 8 -",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn(a b)""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (ARG_PAR_GROUP ((PAR_OPEN 29 30 "(") (NAMEPAIR ((NAME 30 31 a) (SPACE 31 32 " ") (NAME 32 33 b))) (PAR_CLOSE 33 34 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_9() :
-    basictest(
-        "TEST CALL 9 -",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn(a b c)""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (ARG_PAR_GROUP ((PAR_OPEN 29 30 "(") (NAMEPAIR ((NAME 30 31 a) (SPACE 31 32 " ") (NAME 32 33 b))) (SPACE 33 34 " ") (NAME 34 35 c) (PAR_CLOSE 35 36 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_10() :
-    basictest(
-        "TEST CALL 10 -",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn(a b c d)""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (ARG_PAR_GROUP ((PAR_OPEN 29 30 "(") (NAMEPAIR_GROUP ((NAMEPAIR ((NAME 30 31 a) (SPACE 31 32 " ") (NAME 32 33 b))) (SPACE 33 34 " ") (NAMEPAIR ((NAME 34 35 c) (SPACE 35 36 " ") (NAME 36 37 d))))) (PAR_CLOSE 37 38 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_11() :
-    basictest(
-        "TEST CALL 11 -",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn(a b c d e)""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (ARG_PAR_GROUP ((PAR_OPEN 29 30 "(") (NAMEPAIR_GROUP ((NAMEPAIR ((NAME 30 31 a) (SPACE 31 32 " ") (NAME 32 33 b))) (SPACE 33 34 " ") (NAMEPAIR ((NAME 34 35 c) (SPACE 35 36 " ") (NAME 36 37 d))))) (SPACE 37 38 " ") (NAME 38 39 e) (PAR_CLOSE 39 40 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_call_12() :
-    basictest(
-        "TEST CALL 12 -",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tsomefn(a b c d e f)""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((CALL_DECL ((NAME 23 29 somefn) (ARG_PAR_GROUP ((PAR_OPEN 29 30 "(") (NAMEPAIR_GROUP ((NAMEPAIR_GROUP ((NAMEPAIR ((NAME 30 31 a) (SPACE 31 32 " ") (NAME 32 33 b))) (SPACE 33 34 " ") (NAMEPAIR ((NAME 34 35 c) (SPACE 35 36 " ") (NAME 36 37 d))))) (SPACE 37 38 " ") (NAMEPAIR ((NAME 38 39 e) (SPACE 39 40 " ") (NAME 40 41 f))))) (PAR_CLOSE 41 42 ")"))))))) (BLOCK_END 0))))))))"""
     )
 
 def test_ret () :
-    basictest(
-        "TEST RET - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tret true""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((RET_DECL ((RET 23 26 ret) (SPACE 26 27 " ") (EXPR ((BOOL 27 31 true))))))) (BLOCK_END 0))))))))"""
@@ -236,8 +237,8 @@ def test_ret () :
 
 
 def test_multiblock () :
-    basictest(
-            "TEST MULTIBLOCK - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x)  ui8
 \tnop
 \tif true
@@ -250,8 +251,8 @@ def test_multiblock () :
 
 
 def test_set () :
-    basictest(
-            "TEST SET - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x)  ui8\n
 \tset x ui8 1\n""",
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((SET_DECL ((SET 24 27 set) (SPACE 27 28 " ") (NAMEPAIR ((NAME 28 29 x) (SPACE 29 30 " ") (NAME 30 33 ui8))) (SPACE 33 34 " ") (EXPR ((INT 34 35 1))))))) (BLOCK_END 0))))))))"""
@@ -259,8 +260,8 @@ def test_set () :
 
 
 def test_mut () :
-    basictest(
-            "TEST MUT - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x)  ui8\n
 \tmut x ui8 1\n""",
             """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((MUT_DECL ((MUT 24 27 mut) (SPACE 27 28 " ") (NAMEPAIR ((NAME 28 29 x) (SPACE 29 30 " ") (NAME 30 33 ui8))) (SPACE 33 34 " ") (EXPR ((INT 34 35 1))))))) (BLOCK_END 0))))))))"""
@@ -268,8 +269,8 @@ def test_mut () :
 
 
 def test_if () :
-    basictest(
-            "TEST IF - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """fn main  (ui8 x)  ui8
 \tif true
 \t\tnop""",
@@ -277,8 +278,8 @@ def test_if () :
     )
 
 def test_if_else () :
-    basictest(
-        "TEST IF ELSE - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tif true
 \t\tnop
@@ -288,8 +289,8 @@ def test_if_else () :
     )
 
 def test_if_elif () :
-    basictest(
-        "TEST IF ELIF - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tif test0
 \t\tnop
@@ -299,8 +300,8 @@ def test_if_elif () :
     )
 
 def test_if_elif_elif_elif () :
-    basictest(
-        "TEST IF ELIF ELIF ELIF - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tif test0
 \t\tnop
@@ -314,8 +315,8 @@ def test_if_elif_elif_elif () :
     )
 
 def test_if_elif_else () :
-    basictest(
-        "TEST IF ELIF ELSE - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tif test0
 \t\tnop
@@ -328,8 +329,8 @@ def test_if_elif_else () :
     )
 
 def test_if_elif_elif_elif_else () :
-    basictest(
-        "TEST IF ELIF ELIF ELIF ELSE - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tif test0
 \t\tnop
@@ -346,8 +347,8 @@ def test_if_elif_elif_elif_else () :
 
 
 def test_while () :
-    basictest(
-        "TEST WHILE - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \twhile true
 \t\tnop""",
@@ -355,8 +356,8 @@ def test_while () :
     )
 
 def test_for () :
-    basictest(
-        "TEST FOR - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tfor i  array
 \t\tnop""",
@@ -364,8 +365,8 @@ def test_for () :
     )
 
 def test_for_2 () :
-    basictest(
-        "TEST FOR 2 - ",
+    _test(
+        i.getframeinfo( i.currentframe() ).function,
         """fn main  (ui8 x)  ui8
 \tfor i item  array
 \t\tnop""",
@@ -377,8 +378,8 @@ def test_incl_pkg () :
     """
     Test for simple package incl-usion
     """
-    basictest(
-            "TEST INCL somepkg - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """incl somepkg""",
             """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 12 somepkg))))))"""
     )
@@ -387,22 +388,22 @@ def test_incl_pkg_2 () :
     """
     Test for package incl-usion with alias
     """
-    basictest(
-            "TEST INCL somepkg alias - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """incl somepkg alias""",
             """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAMEPAIR ((NAME 5 12 somepkg) (SPACE 12 13 " ") (NAME 13 18 alias))))))))"""
     )
 
 
 #def test_incl_path () :
-#    basictest(
+#    _test(
 #            "TEST INCL \"path\" - ",
 #            "incl \\\"path\\\"",
 #            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (EXPR ((QUOTE 5 6 "\\\"") (QVALUE 6 10 path) (QUOTE 10 11 "\\\""))))))))"""
 #    )
 
 #def test_pkg () :
-#    basictest(
+#    _test(
 #            "TEST PKG somepkg - ",
 #            """pkg somepkg
 #\tnop\n""",
@@ -410,8 +411,8 @@ def test_incl_pkg_2 () :
 #    )
 
 def test_typedef () :
-    basictest(
-            "TEST typedef - ",
+    _test(
+            i.getframeinfo( i.currentframe() ).function,
             """typedef ui8 1
 typedef i8 1
 
@@ -429,7 +430,7 @@ typedef i64 8""",
 
 
 def test_invalid_syntax () :
-    print("TEST INVALID SYNTAX - ", end="")
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="")
 
     stdout, stderr = _expr("())")
 
@@ -444,7 +445,7 @@ def test_invalid_syntax () :
     print("OK")
 
 def test_abstract () :
-    print("TEST abstract - ", end="")
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="")
 
     expr = """fn main  (ui8 x)  ui8
 \tif true

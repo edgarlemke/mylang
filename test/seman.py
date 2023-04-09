@@ -115,8 +115,7 @@ def test_subst_set_mut_typefying () :
 
 
 def _test (fn_name, expr, expected_stdout, expected_stderr, popen_fn= None) :
-    x = " ".join( fn_name.split("_")[1:] )
-    msg = f"TEST {x} - "
+    msg = f"TEST {fn_name} - "
 
     print(msg, end="", flush= True)
 
