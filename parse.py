@@ -103,9 +103,9 @@ def _find_match (buf, lookahead):
         [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP"]] ],
         [ ["SPACE"], [["CALL_DECL"], ["NAME", "SPACE", "SPACE", "NAMEPAIR_GROUP", "SPACE", "NAME"]] ],
 
-        [ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "NAME"]] ],
-        #[ ["SPACE"], [["INCL_DECL"], ["INCL", "SPACE", "SPACE", "NAMEPAIR"]] ],
-        [ ["SPACE"], [["EXPR"], ["INCL_DECL"]] ],
+        [ ["SPACE"], [["USE_DECL"], ["USE", "SPACE", "NAME"]] ],
+        #[ ["SPACE"], [["USE_DECL"], ["USE", "SPACE", "SPACE", "NAMEPAIR"]] ],
+        [ ["SPACE"], [["EXPR"], ["USE_DECL"]] ],
     ]
 
     match = None
@@ -181,7 +181,7 @@ def _match (buf_slice):
             [["EXPR"], ["STRUCT_DECL"]],
             [["EXPR"], ["RES_STRUCT_DECL"]],
 
-            [["EXPR"], ["INCL_DECL"]],
+            [["EXPR"], ["USE_DECL"]],
             [["EXPR"], ["PKG_DECL"]],
 
             # parenthesis groups
@@ -275,12 +275,12 @@ def _match (buf_slice):
             [["STRUCT_DEF_GROUP"], ["STRUCT_DEF_GROUP", "NAMEPAIR"]],
 
             # packages
-            #[["INCL_DECL"], ["INCL", "SPACE", "EXPR"]],
-            [["INCL_DECL"], ["INCL", "SPACE", "NAME"]],
-            #[["INCL_DECL"], ["INCL", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
+            #[["USE_DECL"], ["USE", "SPACE", "EXPR"]],
+            [["USE_DECL"], ["USE", "SPACE", "NAME"]],
+            #[["USE_DECL"], ["USE", "SPACE", "NAME", "SPACE", "SPACE", "NAME"]],
 
-            [["INCL_DECL"], ["INCL", "SPACE", "NAMEPAIR"]],
-            #[["INCL_DECL"], ["INCL", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
+            [["USE_DECL"], ["USE", "SPACE", "NAMEPAIR"]],
+            #[["USE_DECL"], ["USE", "SPACE", "NAMEPAIR", "SPACE", "SPACE", "NAME"]],
 
 
             #[["PKG_DECL"], ["PKG", "SPACE", "NAME", "BLOCK"]],
@@ -357,7 +357,7 @@ def _clean_nodes (list_):
             "MUT",
             "RET",
             "PKG",
-            "INCL",
+            "USE",
     ]
     for index, item in enumerate(list_.copy()):
         if type(item) != list:

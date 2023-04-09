@@ -5,11 +5,11 @@ def load_pkgs ( s_tree, src = None , loaded_pkg_files = None):
     import run
 
 
-    incl_decls = [ node for node in s_tree if node[0] == "INCL_DECL" ]
-    #print(incl_decls)
+    use_decls = [ node for node in s_tree if node[0] == "USE_DECL" ]
+    #print(use_decls)
 
     pkgs_to_load = []
-    for i in incl_decls:
+    for i in use_decls:
         children = i[2]
         for ch in children:
             pkg_name = s_tree[ch][1]

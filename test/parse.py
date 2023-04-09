@@ -374,24 +374,24 @@ def test_for_2 () :
     )
 
 
-def test_incl_pkg () :
+def test_use () :
     """
-    Test for simple package incl-usion
+    Test for simple package use
     """
     _test(
             i.getframeinfo( i.currentframe() ).function,
-            """incl somepkg""",
-            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAME 5 12 somepkg))))))"""
+            """use somepkg""",
+            """((EXPR ((USE_DECL ((USE 0 3 use) (SPACE 3 4 " ") (NAME 4 11 somepkg))))))"""
     )
 
-def test_incl_pkg_2 () :
+def test_use_pkg_2 () :
     """
-    Test for package incl-usion with alias
+    Test for package use with alias
     """
     _test(
             i.getframeinfo( i.currentframe() ).function,
-            """incl somepkg alias""",
-            """((EXPR ((INCL_DECL ((INCL 0 4 incl) (SPACE 4 5 " ") (NAMEPAIR ((NAME 5 12 somepkg) (SPACE 12 13 " ") (NAME 13 18 alias))))))))"""
+            """use somepkg alias""",
+            """((EXPR ((USE_DECL ((USE 0 3 use) (SPACE 3 4 " ") (NAMEPAIR ((NAME 4 11 somepkg) (SPACE 11 12 " ") (NAME 12 17 alias))))))))"""
     )
 
 

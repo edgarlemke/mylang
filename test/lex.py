@@ -213,8 +213,8 @@ def test_quoted_unicode () :
     print("OK")
 
 
-def test_incl () :
-    _test(i.getframeinfo( i.currentframe() ).function, "((INCL 0 4 incl))\n", "incl")
+def test_use () :
+    _test(i.getframeinfo( i.currentframe() ).function, "((USE 0 3 use))\n", "use")
 
 def test_fn () :
     _test(i.getframeinfo( i.currentframe() ).function, "((FN 0 2 fn))\n", "fn")
