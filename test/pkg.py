@@ -5,22 +5,23 @@ from shlex import split
 from subprocess import Popen, PIPE
 
 
-def test_package_not_found ():
+def test_package_not_found():
     _test(
-        i.getframeinfo( i.currentframe() ).function,
+        i.getframeinfo(i.currentframe()).function,
         """use randompkg""",
-        "", # nothing to be tested, stderr is tested before
+        "",  # nothing to be tested, stderr is tested before
         "Package not found: randompkg"
     )
 
-def test_get_pkg_name () :
+
+def test_get_pkg_name():
     import os
     import random
 
-    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end= "")
+    print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="")
 
     # create dummy pkg dir at /tmp
-    rand = int( str( random.random() )[2:] )
+    rand = int(str(random.random())[2:])
 
     path = f"/tmp/mylang-test_get_pkg_name-{rand}"
 
@@ -67,18 +68,16 @@ def test_get_pkg_name () :
     return True
 
 
-
-
-def _test (fn_name, expr, expected_stdout, expected_stderr) :
+def _test(fn_name, expr, expected_stdout, expected_stderr):
     msg = f"TEST {fn_name} - "
-    print(msg, end="", flush= True)
+    print(msg, end="", flush=True)
 
     stdout, stderr = _expr(expr)
-    #print(stdout)
-    #print(stderr)
+    # print(stdout)
+    # print(stderr)
 
     err = False
-    if not(expected_stderr in stderr):
+    if not (expected_stderr in stderr):
         print(f"""FAIL - stderr not correct:
         expected:   {expected_stderr}
         got:        {stderr}""")
@@ -96,13 +95,15 @@ def _test (fn_name, expr, expected_stdout, expected_stderr) :
     print("OK")
     return True
 
-def _expr (expr):
+
+def _expr(expr):
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\""
     sp = split(cmd)
     return _popen(sp)
 
-def _popen (sp) :
-    p = Popen(sp, stdout= PIPE, stderr= PIPE, encoding= "utf-8")
+
+def _popen(sp):
+    p = Popen(sp, stdout=PIPE, stderr=PIPE, encoding="utf-8")
     return p.communicate()
 
 

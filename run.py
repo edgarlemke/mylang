@@ -5,36 +5,36 @@ import argparse
 import lex
 import parse
 import pkg
-import seman, seman.fn
+import seman
+import seman.fn
 import list as list_
 
 
-def run (
+def run(
     expr,
-    src= None,
-    print_token_list= False,
-    print_parse_tree= False,
-    print_raw_ast= False,
-    print_final_ast= False,
-    print_symbol_table= False,
-    loaded_pkg_files= None
-    ) :
-
+    src=None,
+    print_token_list=False,
+    print_parse_tree=False,
+    print_raw_ast=False,
+    print_final_ast=False,
+    print_symbol_table=False,
+    loaded_pkg_files=None
+):
 
     token_list = lex.tokenize(expr)
     if print_token_list:
-        print( list_.list_print(token_list), end="" )
+        print(list_.list_print(token_list), end="")
         exit()
 
     parsetree = parse.parse(token_list, "EXPR")
 
     if print_parse_tree:
-        print( list_.list_print(parsetree), end="" )
+        print(list_.list_print(parsetree), end="")
         exit()
 
     ast = parse.abstract(parsetree.copy())
     if print_raw_ast:
-        print( list_.list_print(ast), end="" )
+        print(list_.list_print(ast), end="")
         exit()
 
     s_tree = parse.serialize_tree(ast)
@@ -43,20 +43,20 @@ def run (
     symtbl, scopes = seman.get_symtbl(s_tree)
     if print_symbol_table:
         for sym_name in symtbl:
-            print( list_.list_print( symtbl[sym_name] ), end="" )
+            print(list_.list_print(symtbl[sym_name]), end="")
         exit()
 
     # get types from expr typedef declarations
     expr_types = seman.get_types(s_tree, scopes)
 
-    if src != None:
+    if src is not None:
         pkg_name = pkg.get_pkg_name(src)
     else:
         pkg_name = None
 
     # get loaded packages info
     loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
-    #print(f"\npkg: {pkg_name}\n loaded_pkgs: {loaded_pkgs}\n")
+    # print(f"\npkg: {pkg_name}\n loaded_pkgs: {loaded_pkgs}\n")
 
     # get types to substitute
     #
@@ -64,27 +64,26 @@ def run (
 
     # fill all_types with types from loaded packages
     for pkg_name_ in loaded_pkgs:
-        pkg_ = loaded_pkgs[ pkg_name_ ]
+        pkg_ = loaded_pkgs[pkg_name_]
         pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
 
         all_types += pkg_types
     #
     #
 
-    #print(f"t0: {s_tree}")
+    # print(f"t0: {s_tree}")
     # substitute types in tree
     seman.subst_types(s_tree, all_types)
-    #print(f"t1: {s_tree}")
-
+    # print(f"t1: {s_tree}")
 
     # extract function declarations from tree
-    #print(pkg_name)
+    # print(pkg_name)
     tree_fn_decls = seman.fn.extract_fn_decls(s_tree, symtbl, pkg_name)
-    #print(f"tree_fn_decls: {tree_fn_decls}")
+    # print(f"tree_fn_decls: {tree_fn_decls}")
 
     all_fn_decls = tree_fn_decls.copy()
-    all_symtbl = { pkg_name: symtbl.copy() }
-    all_scopes = { pkg_name: scopes.copy() }
+    all_symtbl = {pkg_name: symtbl.copy()}
+    all_scopes = {pkg_name: scopes.copy()}
 
     # extract function declarations from packages
     pkgs_fn_decls = {}
@@ -92,7 +91,7 @@ def run (
         pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
         fn_decls = seman.fn.extract_fn_decls(pkg_s_tree, pkg_symtbl, pkg_name)
 
-        #print(fn_decls)
+        # print(fn_decls)
         for k in fn_decls:
             fn_decl_li = fn_decls[k]
 
@@ -101,7 +100,7 @@ def run (
                 if k not in all_fn_decls.keys():
                     all_fn_decls[k] = []
 
-                all_fn_decls[k].append( j )
+                all_fn_decls[k].append(j)
 
         if pkg_name not in all_symtbl.keys():
             all_symtbl[pkg_name] = pkg_symtbl
@@ -109,28 +108,24 @@ def run (
         if pkg_name not in all_scopes.keys():
             all_scopes[pkg_name] = pkg_scopes
 
-
     seman.check(s_tree, all_symtbl, all_scopes, all_fn_decls, pkg_name)
 
     if print_final_ast:
-        print( list_.list_print(s_tree), end="" )
+        print(list_.list_print(s_tree), end="")
         exit()
-
 
     return (s_tree, symtbl, scopes, expr_types)
 
 
-def read_file (src):
+def read_file(src):
     # create a file descriptor for the src file
-    with open(src,"r") as fd:
-    
+    with open(src, "r") as fd:
+
         # read all content of the file into an variable
         code = fd.readlines()
         expr = "".join(code)
 
         return expr
-
-
 
 
 if __name__ == "__main__":
@@ -144,10 +139,10 @@ if __name__ == "__main__":
 
     print_group = parser.add_mutually_exclusive_group()
     print_group.add_argument("--print-token-list", action="store_true")
-    print_group.add_argument("--print-parse-tree", action= "store_true")
-    print_group.add_argument("--print-raw-ast", action= "store_true")
-    print_group.add_argument("--print-final-ast", action= "store_true")
-    print_group.add_argument("--print-symbol-table", action= "store_true")
+    print_group.add_argument("--print-parse-tree", action="store_true")
+    print_group.add_argument("--print-raw-ast", action="store_true")
+    print_group.add_argument("--print-final-ast", action="store_true")
+    print_group.add_argument("--print-symbol-table", action="store_true")
 
     args = parser.parse_args()
 
@@ -158,7 +153,7 @@ if __name__ == "__main__":
     expr = args.expr
 
     # extract expr from src file
-    if src != None:
+    if src is not None:
         src = str(src)
 
         import os
@@ -166,18 +161,18 @@ if __name__ == "__main__":
 
         expr = read_file(src)
 
-    elif expr != None:
+    elif expr is not None:
         expr = str(expr)
 
-    elif src == None and expr == None:
+    elif src is None and expr is None:
         raise Exception("Either --src or --expr argument must be provided")
-        
+
     run(
-            expr,
-            src,
-            args.print_token_list,
-            args.print_parse_tree,
-            args.print_raw_ast,
-            args.print_final_ast,
-            args.print_symbol_table
+        expr,
+        src,
+        args.print_token_list,
+        args.print_parse_tree,
+        args.print_raw_ast,
+        args.print_final_ast,
+        args.print_symbol_table
     )

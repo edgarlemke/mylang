@@ -10,25 +10,25 @@ types = [
 ]
 
 
-def get_symtbl (s_tree):
-    #print(s_tree)
+def get_symtbl(s_tree):
+    # print(s_tree)
 
     symtbl = {}
     scopes = [[None, "GLOBAL", None]]
 
-
-    def iterup (i):
+    def iterup(i):
         # get node
         node = s_tree[i]
 
         # get node's parent node
         parent_node_index = node[1]
-        if parent_node_index == None:
+        if parent_node_index is None:
             return 0
 
-        parent = s_tree[ parent_node_index ]
+        parent = s_tree[parent_node_index]
 
-        # check if scope node matches parent node, if it does return scope index
+        # check if scope node matches parent node, if it does return scope
+        # index
         for si, s in enumerate(scopes):
             scope_node_index = s[0]
             if parent_node_index == scope_node_index:
@@ -36,22 +36,21 @@ def get_symtbl (s_tree):
 
         return iterup(parent_node_index)
 
-
     for i, node in enumerate(s_tree):
-        #print(f"{i} - {node}")
+        # print(f"{i} - {node}")
 
         cat = node[0]
         if cat == "FN_DECL":
             cat, parent, children = node
 
-            indexes = [ ch for ch in children if s_tree[ch][0] == "NAME" ]
-            names = [ s_tree[ch] for ch in children if s_tree[ch][0] == "NAME" ]
-            arg_par_group = s_tree[ children[1] ]
+            indexes = [ch for ch in children if s_tree[ch][0] == "NAME"]
+            names = [s_tree[ch] for ch in children if s_tree[ch][0] == "NAME"]
+            arg_par_group = s_tree[children[1]]
 
             sym_name = names[0][1]
-            fn_type = names[len(names)-1][1] 
-            sym_t = ["fn", fn_type ]
-            sym_pos = indexes[0] #names[0][2]
+            fn_type = names[len(names) - 1][1]
+            sym_t = ["fn", fn_type]
+            sym_pos = indexes[0]  # names[0][2]
 
             # find function's parent scope
             sym_scope = iterup(i)
@@ -72,21 +71,26 @@ def get_symtbl (s_tree):
             # get names back into pairs
             j = 0
             while j < len(args):
-                pair.append( args[j] )
+                pair.append(args[j])
 
                 if len(pair) == 2:
-                    arg_pairs.append( [pair, args_indexes[j]] )
+                    arg_pairs.append([pair, args_indexes[j]])
                     pair = []
 
-                j+= 1
+                j += 1
             for pair_index in arg_pairs:
                 arg, arg_index = pair_index
-                
+
                 arg_sym_name = arg[1][1]
-                arg_sym_t = [ "fn_arg", arg[0][1] ]
+                arg_sym_t = ["fn_arg", arg[0][1]]
                 arg_sym_pos = arg_index
 
-                symtbl_insert(symtbl, arg_sym_name, arg_sym_t, arg_sym_pos, len(scopes)-1)
+                symtbl_insert(
+                    symtbl,
+                    arg_sym_name,
+                    arg_sym_t,
+                    arg_sym_pos,
+                    len(scopes) - 1)
             #
 
         elif cat in ["SET_DECL", "MUT_DECL"]:
@@ -97,7 +101,7 @@ def get_symtbl (s_tree):
                 sym_t = ["mut"]
             else:
                 sym_t = ["set"]
-            sym_t.append( s_tree[children[0]][1] )
+            sym_t.append(s_tree[children[0]][1])
             sym_pos = children[0]
             # find parent scope
             sym_scope = iterup(i)
@@ -120,7 +124,7 @@ def get_symtbl (s_tree):
     return (symtbl, scopes)
 
 
-def _get_refs (s_tree, symtbl) :
+def _get_refs(s_tree, symtbl):
     name_indexes = [i for i, node in enumerate(s_tree) if node[0] == "NAME"]
 
     # remove references that match symbols in symbol table
@@ -143,24 +147,24 @@ def _get_refs (s_tree, symtbl) :
     return name_indexes
 
 
-def check (s_tree, symtbl, scopes, loaded_functions, pkg_name):
-    #refs = _get_refs(s_tree, symtbl)
+def check(s_tree, symtbl, scopes, loaded_functions, pkg_name):
+    # refs = _get_refs(s_tree, symtbl)
 
     # check package-independent SET and MUT rules
     _check_set_mut(s_tree, symtbl, scopes)
     _check_call(s_tree, symtbl, scopes, loaded_functions)
     _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name)
 
-    #_check_set_mut_types()
-    #_check_refs()
+    # _check_set_mut_types()
+    # _check_refs()
 
 
 # check single set per name at every scope
 def _check_set_mut(s_tree, symtbl, scopes):
-#    print("_check_set_mut")
-#    print(f"s_tree: {s_tree}")
-#    print(f"symtbl: {symtbl}")
-#    print(f"scopes: {scopes}")
+    #    print("_check_set_mut")
+    #    print(f"s_tree: {s_tree}")
+    #    print(f"symtbl: {symtbl}")
+    #    print(f"scopes: {scopes}")
 
     for pkg_name, pkg_symtbl in symtbl.items():
         for sym_name in pkg_symtbl:
@@ -173,11 +177,10 @@ def _check_set_mut(s_tree, symtbl, scopes):
 
             _check_set_mut_2(sym_list, scopes[pkg_name], sym_name)
 
-        
     return True
 
 
-def _check_set_mut_0 (sym_list, arg, sym_name) :
+def _check_set_mut_0(sym_list, arg, sym_name):
     # check for ARG (mut/set) on a name already set in a function argument
     # or a name already set previously in the scope
     found = []
@@ -192,8 +195,9 @@ def _check_set_mut_0 (sym_list, arg, sym_name) :
         found.append(scope_node_index)
 
 
-def _check_set_mut_1 (sym_list, sym_name) :
-    # check for SETs on a name already set by MUT, and vice-versa, in the same scope
+def _check_set_mut_1(sym_list, sym_name):
+    # check for SETs on a name already set by MUT, and vice-versa, in the same
+    # scope
     for li in sym_list:
         if li[0][0] != "set":
             continue
@@ -206,14 +210,15 @@ def _check_set_mut_1 (sym_list, sym_name) :
                 raise Exception(f"SET/MUT conflict: {sym_name}")
 
 
-def _check_set_mut_2 (sym_list, scopes, sym_name) :
-    # check for SETs and MUTs on name already set in function header or higher scopes
+def _check_set_mut_2(sym_list, scopes, sym_name):
+    # check for SETs and MUTs on name already set in function header or higher
+    # scopes
     def iterup(scope):
-        if scope == None:
+        if scope is None:
             return False
 
         scope_parent = scope[2]
-        if scope_parent == None:
+        if scope_parent is None:
             return False
 
         match = False
@@ -231,7 +236,6 @@ def _check_set_mut_2 (sym_list, scopes, sym_name) :
         else:
             return iterup(scopes[scope_parent])
 
-
     # for each symbol of the same name
     for li in sym_list:
         if li[0][0] not in ["set", "mut"]:
@@ -247,21 +251,21 @@ def _check_set_mut_2 (sym_list, scopes, sym_name) :
             raise Exception(f"SET/MUT conflict in higher scope: {sym_name}")
 
 
-def _check_call (s_tree, symtbl, scopes, loaded_functions):
-    #print(f"loaded_functions: {loaded_functions}")
-    #print(symtbl)
+def _check_call(s_tree, symtbl, scopes, loaded_functions):
+    # print(f"loaded_functions: {loaded_functions}")
+    # print(symtbl)
 
     for node in s_tree:
         name = node[0]
         if name != "CALL_DECL":
             continue
 
-        fn_name = s_tree[ node[2][1] ][1]
-        #print(f"fn_name: {fn_name}")
+        fn_name = s_tree[node[2][1]][1]
+        # print(f"fn_name: {fn_name}")
 
         match = False
         for pkg_name in symtbl:
-            #print(f"pkg_name: {pkg_name}")
+            # print(f"pkg_name: {pkg_name}")
             pkg_syms = symtbl[pkg_name]
 
             for sym_name in pkg_syms:
@@ -270,8 +274,15 @@ def _check_call (s_tree, symtbl, scopes, loaded_functions):
                 if sym_list[0][0][0] != "fn":
                     continue
 
-                match = match_fn(node, scopes, symtbl, s_tree, sym_name, pkg_name, loaded_functions)
-                #print("match: %s" % match)
+                match = match_fn(
+                    node,
+                    scopes,
+                    symtbl,
+                    s_tree,
+                    sym_name,
+                    pkg_name,
+                    loaded_functions)
+                # print("match: %s" % match)
 
                 # if matches exit loop
                 if match != False:
@@ -288,7 +299,7 @@ def _check_call (s_tree, symtbl, scopes, loaded_functions):
         raise Exception(f"Call to undefined function: {fn_name}")
 
 
-def _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name) :
+def _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name):
 
     parent_nodes = []
     for node in s_tree:
@@ -300,7 +311,7 @@ def _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name) :
         def iterup(node):
             if node[0] == "FN_DECL":
                 return node
-            if node[1] != None:
+            if node[1] is not None:
                 return iterup(s_tree[node[1]])
             else:
                 return False
@@ -312,19 +323,19 @@ def _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name) :
         parent_fn_name = s_tree[parent_fn[2][0]][1]
         parent_fn_ret_type = loaded_functions[parent_fn_name][0][2]
 
-        ret_value_type = s_tree[ node[2][0] ][0]
+        ret_value_type = s_tree[node[2][0]][0]
 
         if ret_value_type == "NAME":
             ret_index = node[2][0]
             ret_value = s_tree[ret_index][1]
-    
+
             pkg_symtbl = symtbl[pkg_name]
-    
+
             if ret_value not in pkg_symtbl.keys():
                 raise Exception(f"Undefined return value: {node}")
-    
+
             ret_value_types = pkg_symtbl[ret_value][0][0]
-    
+
             if parent_fn_ret_type not in ret_value_types:
                 raise Exception(f"Returning value of wrong type: {node}")
 
@@ -333,11 +344,10 @@ def _check_ret(s_tree, symtbl, scopes, loaded_functions, pkg_name) :
 
         parent_nodes.append(parent_fn)
 
-
     return True
 
 
-def _incl_pkgs (s_tree) :
+def _incl_pkgs(s_tree):
 
     PATH = []
 
@@ -348,18 +358,16 @@ def _incl_pkgs (s_tree) :
         if node[0] != "INCL_DECL":
             continue
 
-        pkg = s_tree[ node[2][0] ]
+        pkg = s_tree[node[2][0]]
         if pkg[0] == "NAME":
             pkg_name = pkg[1]
-            included_pkgs.append( [pkg_name] )
+            included_pkgs.append([pkg_name])
 
         else:
             raise Exception("Invalid incl declaration: {pkg}")
 
 
-
-
-def get_types (s_tree, scopes):
+def get_types(s_tree, scopes):
     types = []
 
     for node in s_tree:
@@ -367,35 +375,36 @@ def get_types (s_tree, scopes):
             continue
 
         # Get type name
-        type_name = s_tree[ node[2][1] ][1]
+        type_name = s_tree[node[2][1]][1]
 
         # Get type size
-        size_expr = s_tree[ node[2][2] ]
-        size_node = s_tree[ size_expr[2][0] ]
+        size_expr = s_tree[node[2][2]]
+        size_node = s_tree[size_expr[2][0]]
         if size_node[0] != "INT":
             raise Exception("Invalid typedef size!")
         type_size = size_node[1]
 
         # Check if typedef is declared in global scope
-        if not _typedef_in_global_scope( node, s_tree, scopes ):
+        if not _typedef_in_global_scope(node, s_tree, scopes):
             raise Exception("Typedef not declared in global scope")
 
-        types.append( [type_name, type_size] )
+        types.append([type_name, type_size])
 
     return types
 
-def _typedef_in_global_scope (node, s_tree, scopes) :
 
-    #print(f"scopes: {scopes}")
+def _typedef_in_global_scope(node, s_tree, scopes):
 
-    def x (node):
-        #print(node)
+    # print(f"scopes: {scopes}")
+
+    def x(node):
+        # print(node)
         parent_index = node[1]
 
-        if parent_index == None:
+        if parent_index is None:
             return True
 
-        node_parent = s_tree[ parent_index ]
+        node_parent = s_tree[parent_index]
 
         for s in scopes:
             scope_node_index = s[0]
@@ -406,53 +415,52 @@ def _typedef_in_global_scope (node, s_tree, scopes) :
 
     return x(node)
 
-    #return True
+    # return True
 
 
-
-def typefy_functions (s_tree):
-    for i, node in enumerate( s_tree ):
+def typefy_functions(s_tree):
+    for i, node in enumerate(s_tree):
         if node[0] != "FN_DECL":
             continue
 
         # 2 children -> name, expr
         # 3 children -> name, args, expr
         # 4 children -> name, args, return type, expr
-        #print(f"node[2]: {node[2]}")
+        # print(f"node[2]: {node[2]}")
 
         if len(node[2]) >= 3:
             # remove function name, return type and expr
             children = node[2][1:-2]
-            #print(f"children: {children}")
-    
+            # print(f"children: {children}")
+
             # typefy function arguments
             len_ch = len(children)
-            limit = int( len_ch / 2 )
-            for ch in range(0,limit):
-                type_i, value_i = children[ch*2:(ch*2)+2]
+            limit = int(len_ch / 2)
+            for ch in range(0, limit):
+                type_i, value_i = children[ch * 2:(ch * 2) + 2]
                 ch_node = s_tree[type_i]
-    
+
                 if ch_node[0] == "TYPE":
                     continue
-                
+
                 elif ch_node[0] != "NAME":
                     raise Exception("Bug on function arguments typefying.")
-    
+
                 s_tree[type_i][0] = "TYPE"
-    
+
             if len(node[2]) == 4:
-                #print(f"y0: {s_tree}")
+                # print(f"y0: {s_tree}")
                 # typefy function return type
                 all_children = node[2]
-                #print(f"all_children: {all_children}")
-                #for ch in all_children:
+                # print(f"all_children: {all_children}")
+                # for ch in all_children:
                 #    print(f"ch: {s_tree[ch]}")
-        
-                s_tree[ all_children[ len(all_children)-2 ] ][0] = "TYPE"
-                #print(f"y1: {s_tree}")
+
+                s_tree[all_children[len(all_children) - 2]][0] = "TYPE"
+                # print(f"y1: {s_tree}")
 
 
-def subst_types (s_tree, types) :
+def subst_types(s_tree, types):
 
     # substitute all NAMEs for TYPEs in tree
     for i, node in enumerate(s_tree):
@@ -470,12 +478,12 @@ def subst_types (s_tree, types) :
     _typefy_set_mut(s_tree)
 
 
-def _typefy_set_mut(s_tree) :
+def _typefy_set_mut(s_tree):
     for i, node in enumerate(s_tree):
-        if not( node[0] in ["SET_DECL", "MUT_DECL"] ):
+        if not (node[0] in ["SET_DECL", "MUT_DECL"]):
             continue
 
-        s_tree[ node[2][0] ][0] = "TYPE"
+        s_tree[node[2][0]][0] = "TYPE"
 
 
 def match_fn(node, scopes, symtbl, s_tree, name, pkg_name, loaded_functions):
@@ -488,21 +496,23 @@ def match_fn(node, scopes, symtbl, s_tree, name, pkg_name, loaded_functions):
         for fn in fn_lf:
             fn_pkg_name, fn_arg_types, fn_ret_type = fn
 
-            node_fn_name = s_tree[ node[2][1] ][1]
-            
+            node_fn_name = s_tree[node[2][1]][1]
+
             if node_fn_name != fn_name:
                 continue
 
             # get call argument types
-            call_arg_types = _get_call_arg_types(node, pkg_name, s_tree, symtbl, scopes)
+            call_arg_types = _get_call_arg_types(
+                node, pkg_name, s_tree, symtbl, scopes)
 
-            #print("call_arg_types: %s" % call_arg_types)
-            #print("fn_arg_types: %s" % fn_arg_types)
+            # print("call_arg_types: %s" % call_arg_types)
+            # print("fn_arg_types: %s" % fn_arg_types)
 
             if call_arg_types == fn_arg_types:
                 return fn
 
     return False
+
 
 def _get_call_arg_types(node, pkg_name, s_tree, symtbl, scopes):
     call_args = node[2][2:]
@@ -515,7 +525,7 @@ def _get_call_arg_types(node, pkg_name, s_tree, symtbl, scopes):
 
         for sym_pkg_name in symtbl:
             # skip different packages
-            if sym_pkg_name != pkg_name: 
+            if sym_pkg_name != pkg_name:
                 continue
 
             sym_pkg = symtbl[sym_pkg_name]
@@ -525,42 +535,44 @@ def _get_call_arg_types(node, pkg_name, s_tree, symtbl, scopes):
                 if call_arg_name != sym_key:
                     continue
 
-                #print("k: %s" % sym_key)
+                # print("k: %s" % sym_key)
 
                 # check arg scope
-                arg_scope = _get_scope(arg_node, pkg_name, s_tree, symtbl, scopes)
+                arg_scope = _get_scope(
+                    arg_node, pkg_name, s_tree, symtbl, scopes)
 
                 # sym_list scope
-                sym_node = s_tree[ sym_list[0][1] ]
-                sym_scope = _get_scope(sym_node, pkg_name, s_tree, symtbl, scopes)
+                sym_node = s_tree[sym_list[0][1]]
+                sym_scope = _get_scope(
+                    sym_node, pkg_name, s_tree, symtbl, scopes)
 
-                #print("arg_scope: %s" % arg_scope)
-                #print("sym_scope: %s" % sym_scope)
+                # print("arg_scope: %s" % arg_scope)
+                # print("sym_scope: %s" % sym_scope)
 
                 if arg_scope != sym_scope:
                     continue
 
                 # same name args, same scope args
 
-                #print("sym_list: %s" % sym_list[0][0])
+                # print("sym_list: %s" % sym_list[0][0])
                 all_arg_types = sym_list[0][0]
 
                 if all_arg_types[0] in ['set', 'mut']:
                     arg_type = all_arg_types[1]
-                    #print("s arg_type: %s" % arg_type)
+                    # print("s arg_type: %s" % arg_type)
 
                     arg_types.append(arg_type)
                     break
 
-    #print("arg_types: %s" % arg_types)
+    # print("arg_types: %s" % arg_types)
     return arg_types
 
 
 def _get_scope(node, pkg_name, s_tree, symtbl, scopes):
-    #print("node: %s" % node)
-    #print("s_tree: %s" % s_tree)
-    #print("symtbl: %s" % symtbl)
-    #print("scopes: %s" % scopes)
+    # print("node: %s" % node)
+    # print("s_tree: %s" % s_tree)
+    # print("symtbl: %s" % symtbl)
+    # print("scopes: %s" % scopes)
 
     pkg_scope = scopes[pkg_name]
     pkg_symtbl = symtbl[pkg_name]
@@ -569,26 +581,27 @@ def _get_scope(node, pkg_name, s_tree, symtbl, scopes):
     parent = s_tree[parent_i]
 
     def iterup(node):
-        #print("node: %s" % node)
+        # print("node: %s" % node)
         parent_i = node[1]
-        #print("parent_i: %s" % parent_i)
+        # print("parent_i: %s" % parent_i)
 
         for s in pkg_scope:
             # global scope
-            if parent_i == None and s[2] == None:
+            if parent_i is None and s[2] is None:
                 return s
 
             # some local scope
             if parent_i == s[0]:
                 return s
 
-        if parent_i == None:
+        if parent_i is None:
             return False
 
         parent = s_tree[parent_i]
         return iterup(parent)
 
     return iterup(parent)
+
 
 def _get_fn_arg_types(node, pkg_name, s_tree, symtbl, scopes):
     pass
