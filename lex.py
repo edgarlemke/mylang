@@ -257,8 +257,13 @@ def _sort_indentation(token_list):
 
     new_token_list = []
     level = 0
+    mark_block_end = False
     for ln, ln_content in lines.items():
-        # empty_line = len(ln_content) == 0
+        # print(f"ln: {ln} {ln_content}")
+        empty_line = len(ln_content) == 0
+        tilend = [len(lines[i]) == 0 for i in range(ln, len(lines) - 1)]
+        eof = all(tilend)
+        # print(eof)
 
         tabs_in_line = []
         for token in ln_content.copy():
@@ -274,15 +279,16 @@ def _sort_indentation(token_list):
             level += 1
 
         elif len(tabs_in_line) < level:
-            diff = level - len(tabs_in_line)
+            if (empty_line and eof) or (not empty_line and not eof):
+                diff = level - len(tabs_in_line)
 
-            for i in reversed(range(0, diff)):
-                sub = level - i - 1
-                # print(f"ADD BLOCK_END {sub}")
-                # print(f"level {level} diff {diff} i {i}")
-                ln_content.insert(0, ["BLOCK_END", sub])
+                for i in reversed(range(0, diff)):
+                    sub = level - i - 1
+                    # print(f"ADD BLOCK_END {sub}")
+                    # print(f"level {level} diff {diff} i {i}")
+                    ln_content.insert(0, ["BLOCK_END", sub])
 
-            level -= diff
+                level -= diff
         # print(f"current level: {level}\n")
 
         new_token_list += ln_content

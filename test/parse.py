@@ -276,6 +276,18 @@ def test_ret():
     )
 
 
+def test_block_empty_line():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        """fn main
+\tnop
+
+\tnop
+""",
+        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (BLOCK ((BLOCK_START 0) (EXPR ((EXPR ((NOP 9 12 nop))) (EXPR ((NOP 15 18 nop))))) (BLOCK_END 0))))))))"""
+        )
+
+
 def test_multiblock():
     _test(
         i.getframeinfo(i.currentframe()).function,
@@ -284,9 +296,25 @@ def test_multiblock():
 \tif true
 \t\tif true
 \t\t\tnop
-\tnop
-""",
+\tnop""",
         """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (SPACE 7 8 " ") (SPACE 8 9 " ") (ARG_PAR_GROUP ((PAR_OPEN 9 10 "(") (NAMEPAIR ((NAME 10 13 ui8) (SPACE 13 14 " ") (NAME 14 15 x))) (PAR_CLOSE 15 16 ")"))) (SPACE 16 17 " ") (SPACE 17 18 " ") (NAME 18 21 ui8) (BLOCK ((BLOCK_START 0) (EXPR ((EXPR ((EXPR ((NOP 23 26 nop))) (EXPR ((IF_DECL ((IF 28 30 if) (SPACE 30 31 " ") (EXPR ((BOOL 31 35 true))) (BLOCK ((BLOCK_START 1) (EXPR ((IF_DECL ((IF 38 40 if) (SPACE 40 41 " ") (EXPR ((BOOL 41 45 true))) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 49 52 nop))) (BLOCK_END 2))))))) (BLOCK_END 1))))))))) (EXPR ((NOP 54 57 nop))))) (BLOCK_END 0))))))))"""
+    )
+
+
+def test_multiblock_empty_lines():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        """fn main
+\tnop
+
+\tif true
+
+\t\tif true
+
+\t\t\tnop
+
+\tnop""",
+        """((EXPR ((FN_DECL ((FN 0 2 fn) (SPACE 2 3 " ") (NAME 3 7 main) (BLOCK ((BLOCK_START 0) (EXPR ((EXPR ((EXPR ((NOP 9 12 nop))) (EXPR ((IF_DECL ((IF 15 17 if) (SPACE 17 18 " ") (EXPR ((BOOL 18 22 true))) (BLOCK ((BLOCK_START 1) (EXPR ((IF_DECL ((IF 26 28 if) (SPACE 28 29 " ") (EXPR ((BOOL 29 33 true))) (BLOCK ((BLOCK_START 2) (EXPR ((NOP 38 41 nop))) (BLOCK_END 2))))))) (BLOCK_END 1))))))))) (EXPR ((NOP 44 47 nop))))) (BLOCK_END 0))))))))"""
     )
 
 
