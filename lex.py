@@ -78,6 +78,8 @@ def tokenize(code):
 
     token_list = _sort_indentation(token_list)
 
+    token_list = _sort_op_order(token_list)
+
     return token_list
 
 
@@ -294,6 +296,14 @@ def _sort_indentation(token_list):
         new_token_list += ln_content
 
     return new_token_list
+
+
+def _sort_op_order(token_list):
+    tl = token_list.copy()
+
+    xyz = ["'a+'b", "add('a 'b)"]
+
+    return tl
 
 
 if __name__ == "__main__":
