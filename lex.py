@@ -19,37 +19,39 @@ rules_list = [
     ["TAB", "\t"],
     ["QUOTE", "\""],
 
-    ["NAME", "\\w+"],
+    ["LIT", "\\w+"],
+    ["LIT", "[0-9]+\\.[0-9]+"],
 
-    ["INT", "[0-9]+"],
-    ["FLOAT", "[0-9]+\\.[0-9]+"],
-    ["BOOL", "true|false"],
-    ["STRUCT", "struct"],
-
-    ["NOP", "nop"],
-
-    # ["PKG", "pkg"],
-    ["USE", "use"],
-
-    ["FN", "fn"],
-    ["RET", "ret"],
-
-    ["SET", "set"],
-    ["MUT", "mut"],
-
-    ["RES", "res"],
-
-    ["IF", "if"],
-    ["ELSE", "else"],
-    ["ELIF", "elif"],
-
-    ["WHILE", "while"],
-
-    ["FOR", "for"],
-
-    ["TYPEDEF", "typedef"],
-
-    ["HASH", "#"],
+#
+#    ["INT", "[0-9]+"],
+#    ["FLOAT", "[0-9]+\\.[0-9]+"],
+#    ["BOOL", "true|false"],
+#    ["STRUCT", "struct"],
+#
+#    ["NOP", "nop"],
+#
+#    # ["PKG", "pkg"],
+#    ["USE", "use"],
+#
+#    ["FN", "fn"],
+#    ["RET", "ret"],
+#
+#    ["SET", "set"],
+#    ["MUT", "mut"],
+#
+#    ["RES", "res"],
+#
+#    ["IF", "if"],
+#    ["ELSE", "else"],
+#    ["ELIF", "elif"],
+#
+#    ["WHILE", "while"],
+#
+#    ["FOR", "for"],
+#
+#    ["TYPEDEF", "typedef"],
+#
+#    ["HASH", "#"],
 ]
 
 
@@ -65,20 +67,20 @@ def tokenize(code):
     if len(token_list) == 0:
         raise Exception("No token match!")
 
-    token_list = _match_value_tokens(token_list, code)
-    token_list = _decide_dup_tokens(token_list)
-
+    token_list = _match_lit_tokens(token_list, code)
+    token_list = _decide_dup_tokens(token_list, ["LIT"])
+#
     # sort token_list list by start position of the token
-    token_list.sort(key=lambda x: x[1])
-
-    # check for non-tokenized ranges
+    token_list.sort(key=lambda x: x[2])
+#
+#    # check for non-tokenized ranges
     _check_nontokenized(token_list, code)
-
-    token_list = _match_singleline_comments(token_list)
-
-    token_list = _sort_indentation(token_list)
-
-    token_list = _sort_op_order(token_list)
+#
+#    token_list = _match_singleline_comments(token_list)
+#
+#    token_list = _sort_indentation(token_list)
+#
+#    token_list = _sort_op_order(token_list)
 
     return token_list
 
@@ -102,25 +104,23 @@ def _match_tokens(code):
             value = match.group()
 
             # register the info as a found token
-            token = [token_cat, start, end, value]
+            token = ["TOKEN", token_cat, start, end, value]
             # print(token)
             token_list.append(token)
 
     return token_list
 
 
-def _match_value_tokens(token_list, code):
-    # match VALUE tokens
+def _match_lit_tokens(token_list, code):
     quotes = []
     for token in token_list:
         # skip all non-QUOTE tokens
-        if token[0] != "QUOTE":
+        if token[1] != "QUOTE":
             continue
 
-        # skip escaped QUOTE tokens, convert them to VALUE tokens
-        # keeping escaped \ char as VALUE
-        if code[token[1] - 1] == "\\" and code[token[1] - 2] != "\\":
-            # token[0] = "VALUE"
+        # skip escaped QUOTE tokens, convert them to LIT tokens
+        # keeping escaped \ char as LIT
+        if code[token[2] - 1] == "\\" and code[token[2] - 2] != "\\":
             continue
 
         quotes.append(token)
@@ -130,19 +130,19 @@ def _match_value_tokens(token_list, code):
     while i < len(quotes):
         quote = quotes[i]
 
-        # get initial value start and end
-        value_start = quote[2]
-        value_end = len(code)
+        # get initial lit start and end
+        lit_start = quote[2] + 1
+        lit_end = len(code)
 
-        # if there's a next QUOTE, get a new value end
+        # if there's a next QUOTE, get a new literal end
         if len(quotes) > (i + 1):
             end_quote = quotes[i + 1]
-            value_end = end_quote[1]
+            lit_end = end_quote[3] - 1
 
-        # if start is different from end, add QVALUE token to list
-        if value_start != value_end:
-            value = code[value_start: value_end]
-            token = ["QVALUE", value_start, value_end, value]
+        # if start is different from end, add LIT token to list
+        if lit_start != lit_end:
+            value = code[lit_start: lit_end]
+            token = ["TOKEN", "LIT", lit_start, lit_end, value]
             token_list.append(token)
 
         i += 2
@@ -150,11 +150,11 @@ def _match_value_tokens(token_list, code):
     return token_list
 
 
-def _decide_dup_tokens(token_list):
+def _decide_dup_tokens(token_list, to_remove):
     token_list_iter = token_list.copy()
     removed = []
-    for token in token_list_iter:
-        for token2 in token_list_iter:
+    for token in token_list:
+        for token2 in token_list:
             # skip already removed tokens
             if token in removed or token2 in removed:
                 continue
@@ -164,23 +164,30 @@ def _decide_dup_tokens(token_list):
                 continue
 
             def rem(t):
-                token_list.remove(t)
-                removed.append(t)
+                # print(f"t: {t}")
+                # print(f"token_list_iter: {token_list_iter}")
+                # print(f"removed: {removed}")
+                if t not in removed:
+                    token_list_iter.remove(t)
+                    removed.append(t)
 
-            if (token[1] <= token2[1]) and (token[2] >= token2[2]):
+#            print(f"token: {token}")
+#            print(f"token2: {token2}")
 
-                if token[0] == "QVALUE":
-                    if token2[0] in ["PAR_OPEN", "PAR_CLOSE", "SPACE"]:
-                        rem(token2)
+            if (token[2] <= token2[2]) and (token[3] >= token2[3]):
 
-                if token2[0] == "NAME":
+                #                if token[0] == "QVALUE":
+                #                    if token2[0] in ["PAR_OPEN", "PAR_CLOSE", "SPACE"]:
+                #                        rem(token2)
+                #
+                if token2[1] in to_remove:
                     rem(token2)
 
-                if (token[1] == token2[1] and token[2] > token2[2]) or (
-                        token[1] < token2[1] and token[2] == token2[2]):
+                if (token[2] == token2[2] and token[3] > token2[3]) or (
+                        token[2] < token2[2] and token[3] == token2[3]):
                     rem(token2)
 
-    return token_list
+    return token_list_iter
 
 
 def _match_singleline_comments(token_list):
@@ -209,7 +216,7 @@ def _match_singleline_comments(token_list):
 def _check_nontokenized(token_list, code):
     last_t = None
     for t in token_list:
-        t_start = int(t[1])
+        t_start = int(t[2])
 
         # check for the start
         if last_t is None:
@@ -220,7 +227,7 @@ def _check_nontokenized(token_list, code):
 
         # check for the middle
         else:
-            last_t_end = int(last_t[2])
+            last_t_end = int(last_t[3])
 
             if t_start > last_t_end:
                 ntrange = code[last_t_end:t_start]
@@ -230,7 +237,7 @@ def _check_nontokenized(token_list, code):
         last_t = t
 
     # check for the end
-    t_end = int(t[2])
+    t_end = int(t[3])
     code_end = len(code)
     if t_end < code_end:
         ntrange = code[t_end:code_end]

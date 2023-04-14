@@ -44,7 +44,7 @@ def test_par_open():
     _test(
         i.getframeinfo(
             i.currentframe()).function,
-        "((PAR_OPEN 0 1 \"(\"))\n",
+        "((TOKEN PAR_OPEN 0 1 \"(\"))\n",
         "(")
 
 
@@ -55,7 +55,7 @@ def test_par_close():
     _test(
         i.getframeinfo(
             i.currentframe()).function,
-        "((PAR_CLOSE 0 1 \")\"))\n",
+        "((TOKEN PAR_CLOSE 0 1 \")\"))\n",
         ")")
 
 
@@ -66,7 +66,7 @@ def test_space():
     _test(
         i.getframeinfo(
             i.currentframe()).function,
-        "((SPACE 0 1 \" \"))\n",
+        "((TOKEN SPACE 0 1 \" \"))\n",
         " ")
 
 
@@ -79,7 +79,7 @@ def test_par_open_space_par_close():
     """
     _test(
         i.getframeinfo(i.currentframe()).function,
-        """((PAR_OPEN 0 1 "(") (SPACE 1 2 " ") (PAR_CLOSE 2 3 ")"))\n""",
+        """((TOKEN PAR_OPEN 0 1 "(") (TOKEN SPACE 1 2 " ") (TOKEN PAR_CLOSE 2 3 ")"))\n""",
         "( )"
     )
 
@@ -92,7 +92,7 @@ def test_quote():
     _test(
         i.getframeinfo(
             i.currentframe()).function,
-        """((QUOTE 0 1 "\\\""))\n""",
+        """((TOKEN QUOTE 0 1 "\\\""))\n""",
         expr)
 
 # def test_value () :
@@ -102,19 +102,19 @@ def test_quote():
 #    _test(i.getframeinfo( i.currentframe() ).function, """((VALUE 0 11 mynametoken))\n""", "mynametoken")
 
 
-def test_int():
+def test_lit_int():
     _test(
         i.getframeinfo(
             i.currentframe()).function,
-        """((INT 0 3 123))\n""",
+        """((TOKEN LIT 0 3 123))\n""",
         "123")
 
 
-def test_float():
+def test_lit_float():
     _test(
         i.getframeinfo(
             i.currentframe()).function,
-        """((FLOAT 0 4 3.14))\n""",
+        """((TOKEN LIT 0 4 3.14))\n""",
         "3.14")
 
 
@@ -123,17 +123,17 @@ def test_abc_xyz():
     `(\"abc\" \"xyz\")` expression should return:
         one PAR_OPEN token
         one QUOTE token
-        one QVALUE token
+        one LIT token
         one QUOTE token
         one SPACE token
         one QUOTE token
-        one QVALUE token
+        one LIT token
         one QUOTE token
         one PAR_CLOSE token
     """
     _test(
         i.getframeinfo(i.currentframe()).function,
-        """((PAR_OPEN 0 1 "(") (QUOTE 1 2 "\\\"") (QVALUE 2 5 abc) (QUOTE 5 6 "\\\"") (SPACE 6 7 " ") (QUOTE 7 8 "\\\"") (QVALUE 8 11 xyz) (QUOTE 11 12 "\\\"") (PAR_CLOSE 12 13 ")"))\n""",
+        """((TOKEN PAR_OPEN 0 1 "(") (TOKEN QUOTE 1 2 "\\\"") (TOKEN LIT 2 5 abc) (TOKEN QUOTE 5 6 "\\\"") (TOKEN SPACE 6 7 " ") (TOKEN QUOTE 7 8 "\\\"") (TOKEN LIT 8 11 xyz) (TOKEN QUOTE 11 12 "\\\"") (TOKEN PAR_CLOSE 12 13 ")"))\n""",
         "(\\\"abc\\\" \\\"xyz\\\")"
     )
 
@@ -222,6 +222,7 @@ def test_quoted_unicode():
     All valid Unicode chars between QUOTE tokens should return a VALUE token
     " char should be escaped
     """
+    import inspect as i
     print(
         f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
         end="",
@@ -248,95 +249,95 @@ def test_quoted_unicode():
     print("OK")
 
 
-def test_use():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((USE 0 3 use))\n",
-        "use")
-
-
-def test_fn():
-    _test(i.getframeinfo(i.currentframe()).function, "((FN 0 2 fn))\n", "fn")
-
+# def test_use():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((USE 0 3 use))\n",
+#        "use")
+#
+#
+# def test_fn():
+#    _test(i.getframeinfo(i.currentframe()).function, "((FN 0 2 fn))\n", "fn")
+#
 # def test_call () :
-#    _test(i.getframeinfo( i.currentframe() ).function, "((CALL 0 4 call))\n", "call")
-
-
-def test_ret():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((RET 0 3 ret))\n",
-        "ret")
-
-
-def test_set():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((SET 0 3 set))\n",
-        "set")
-
-
-def test_mut():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((MUT 0 3 mut))\n",
-        "mut")
-
-
-def test_res():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((RES 0 3 res))\n",
-        "res")
-
-
-def test_if():
-    _test(i.getframeinfo(i.currentframe()).function, "((IF 0 2 if))\n", "if")
-
-
-def test_else():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((ELSE 0 4 else))\n",
-        "else")
-
-
-def test_elif():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((ELIF 0 4 elif))\n",
-        "elif")
-
-
-def test_while():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((WHILE 0 5 while))\n",
-        "while")
-
-
-def test_for():
-    _test(
-        i.getframeinfo(
-            i.currentframe()).function,
-        "((FOR 0 3 for))\n",
-        "for")
-
-
-def test_comment():
-    _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "# comment\n"
-    )
+# _test(i.getframeinfo( i.currentframe() ).function, "((CALL 0 4 call))\n", "call")
+#
+#
+# def test_ret():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((RET 0 3 ret))\n",
+#        "ret")
+#
+#
+# def test_set():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((SET 0 3 set))\n",
+#        "set")
+#
+#
+# def test_mut():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((MUT 0 3 mut))\n",
+#        "mut")
+#
+#
+# def test_res():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((RES 0 3 res))\n",
+#        "res")
+#
+#
+# def test_if():
+#    _test(i.getframeinfo(i.currentframe()).function, "((IF 0 2 if))\n", "if")
+#
+#
+# def test_else():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((ELSE 0 4 else))\n",
+#        "else")
+#
+#
+# def test_elif():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((ELIF 0 4 elif))\n",
+#        "elif")
+#
+#
+# def test_while():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((WHILE 0 5 while))\n",
+#        "while")
+#
+#
+# def test_for():
+#    _test(
+#        i.getframeinfo(
+#            i.currentframe()).function,
+#        "((FOR 0 3 for))\n",
+#        "for")
+#
+#
+# def test_comment():
+#    _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "# comment\n"
+#    )
 
 
 def test_no_token_match():
