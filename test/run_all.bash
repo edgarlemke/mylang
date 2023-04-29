@@ -5,17 +5,17 @@ echo "Lexer Tests (fast)"
 echo
 
 echo "Parser Tests"
-./parse.py
+./parse3.py
 echo
 
-echo "Package Tests"
-./pkg.py
-echo
-
-echo "Semantic Analysis Tests"
-./seman.py
-echo
-
-echo "General Tests"
-./run.py
-echo
+#echo "Package Tests"
+#./pkg.py
+#echo
+#
+#echo "Semantic Analysis Tests"
+#./seman.py
+#echo
+#
+#echo "General Tests"
+#./run.py
+#echo

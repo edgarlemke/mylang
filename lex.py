@@ -21,6 +21,7 @@ rules_list = [
 
     ["LIT", "\\w+"],
     ["LIT", "[0-9]+\\.[0-9]+"],
+    ["LIT", "\\+|\\'|\\="],
 
 #
 #    ["INT", "[0-9]+"],
@@ -78,7 +79,7 @@ def tokenize(code):
 #
 #    token_list = _match_singleline_comments(token_list)
 #
-#    token_list = _sort_indentation(token_list)
+    token_list = _sort_indentation(token_list)
 #
 #    token_list = _sort_op_order(token_list)
 
@@ -190,27 +191,27 @@ def _decide_dup_tokens(token_list, to_remove):
     return token_list_iter
 
 
-def _match_singleline_comments(token_list):
-    token_list_iter = token_list.copy()
-
-    buf = []
-    comment_lines = []
-    for index, token in enumerate(token_list):
-        if token[0] == "HASH":
-            buf.append(index)
-
-        elif len(buf) > 0:
-            buf.append(index)
-
-        if token[0] == "BREAKLINE" or index == len(token_list) - 1:
-            comment_lines.append(buf.copy())
-            buf = []
-
-    for ln in comment_lines:
-        for token in ln:
-            token_list_iter.remove(token_list[token])
-
-    return token_list_iter
+# def _match_singleline_comments(token_list):
+#    token_list_iter = token_list.copy()
+#
+#    buf = []
+#    comment_lines = []
+#    for index, token in enumerate(token_list):
+#        if token[0] == "HASH":
+#            buf.append(index)
+#
+#        elif len(buf) > 0:
+#            buf.append(index)
+#
+#        if token[0] == "BREAKLINE" or index == len(token_list) - 1:
+#            comment_lines.append(buf.copy())
+#            buf = []
+#
+#    for ln in comment_lines:
+#        for token in ln:
+#            token_list_iter.remove(token_list[token])
+#
+#    return token_list_iter
 
 
 def _check_nontokenized(token_list, code):
@@ -248,7 +249,7 @@ def _check_nontokenized(token_list, code):
 def _sort_indentation(token_list):
     # add breaklines in the end, so the programmer doesn't need to do it ;)
     for i in range(0, 2):
-        token_list.append(["BREAKLINE"])
+        token_list.append(["TOKEN", "BREAKLINE"])
 
     # print(f"token_list: {token_list}")
 
@@ -259,7 +260,7 @@ def _sort_indentation(token_list):
         if line_ct not in lines.keys():
             lines[line_ct] = []
 
-        if token[0] != "BREAKLINE":
+        if token[1] != "BREAKLINE":
             lines[line_ct].append(token)
         else:
             line_ct += 1
@@ -276,7 +277,7 @@ def _sort_indentation(token_list):
 
         tabs_in_line = []
         for token in ln_content.copy():
-            if token[0] == "TAB":
+            if token[1] == "TAB":
                 tabs_in_line.append(token)
                 ln_content.remove(token)
 
@@ -284,7 +285,7 @@ def _sort_indentation(token_list):
         # print(f"tabs_in_line {ln}: {tabs_in_line}")
         if len(tabs_in_line) == level + 1:
             # print(f"ADD BLOCK_START {level}")
-            ln_content.insert(0, ["BLOCK_START", level])
+            ln_content.insert(0, ["TOKEN", "BLOCK_START", level])
             level += 1
 
         elif len(tabs_in_line) < level:
@@ -295,7 +296,7 @@ def _sort_indentation(token_list):
                     sub = level - i - 1
                     # print(f"ADD BLOCK_END {sub}")
                     # print(f"level {level} diff {diff} i {i}")
-                    ln_content.insert(0, ["BLOCK_END", sub])
+                    ln_content.insert(0, ["TOKEN", "BLOCK_END", sub])
 
                 level -= diff
         # print(f"current level: {level}\n")
@@ -305,12 +306,12 @@ def _sort_indentation(token_list):
     return new_token_list
 
 
-def _sort_op_order(token_list):
-    tl = token_list.copy()
-
-    xyz = ["'a+'b", "add('a 'b)"]
-
-    return tl
+# def _sort_op_order(token_list):
+#    tl = token_list.copy()
+#
+#    xyz = ["'a+'b", "add('a 'b)"]
+#
+#    return tl
 
 
 if __name__ == "__main__":

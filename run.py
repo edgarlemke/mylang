@@ -4,9 +4,7 @@ import argparse
 
 import lex
 import parse
-import pkg
-import seman
-import seman.fn
+import eval
 import list as list_
 
 
@@ -14,11 +12,11 @@ def run(
     expr,
     src=None,
     print_token_list=False,
-    print_parse_tree=False,
-    print_raw_ast=False,
-    print_final_ast=False,
-    print_symbol_table=False,
-    loaded_pkg_files=None
+    print_token_tree=False,
+    #    print_raw_ast=False,
+    #    print_final_ast=False,
+    #    print_symbol_table=False,
+    #    loaded_pkg_files=None
 ):
 
     token_list = lex.tokenize(expr)
@@ -26,95 +24,75 @@ def run(
         print(list_.list_print(token_list), end="")
         exit()
 
-    parsetree = parse.parse(token_list, "EXPR")
-
-    if print_parse_tree:
-        print(list_.list_print(parsetree), end="")
+    token_list = parse.parse(token_list)
+    if print_token_tree:
+        print(list_.list_print(token_list), end="")
         exit()
 
-    ast = parse.abstract(parsetree.copy())
-    if print_raw_ast:
-        print(list_.list_print(ast), end="")
-        exit()
+#    # remove LIST from actual lists recursively
+#    def iterdown(token_list):
+#        tc = token_list.copy()
+#        for index, token in enumerate(token_list):
+#            if token[0] == "LIST":
+#                tc[index] = iterdown(token[1])
+#
+#        return tc
+#
+#    tc = iterdown(tc2)
 
-    s_tree = parse.serialize_tree(ast)
+    def reduce(li):
+        # print(f"CLEAN {li}\n")
+        lic = li.copy()
+        for index, i in enumerate(lic):
+            if len(i) > 0:
+                if i[0] == "TOKEN":
+                    lic[index] = i[4]
 
-    # get symbol table and scopes
-    symtbl, scopes = seman.get_symtbl(s_tree)
-    if print_symbol_table:
-        for sym_name in symtbl:
-            print(list_.list_print(symtbl[sym_name]), end="")
-        exit()
+                elif i[0] == "LIST":
+                    lic[index] = i[1]
 
-    # get types from expr typedef declarations
-    expr_types = seman.get_types(s_tree, scopes)
+            for subitem_i, subitem in enumerate(i):
+                if type(subitem) != list:
+                    continue
 
-    if src is not None:
-        pkg_name = pkg.get_pkg_name(src)
-    else:
-        pkg_name = None
+                reduced_subitem = reduce(subitem)
 
-    # get loaded packages info
-    loaded_pkgs = pkg.load_pkgs(s_tree, src, loaded_pkg_files)
-    # print(f"\npkg: {pkg_name}\n loaded_pkgs: {loaded_pkgs}\n")
+                if i[0] == "LIST":
+                    lic[index] = reduced_subitem
+                elif i[0] == "BLOCK":
+                    lic[index][1] = reduce_subitem
+                    lic[index].remove("BLOCK")
 
-    # get types to substitute
-    #
-    all_types = [t for t in expr_types]
+        return lic
 
-    # fill all_types with types from loaded packages
-    for pkg_name_ in loaded_pkgs:
-        pkg_ = loaded_pkgs[pkg_name_]
-        pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
+    def remove(li):
+        lic = li.copy()
 
-        all_types += pkg_types
-    #
-    #
+        to_remove = []
+        to_subst = []
 
-    # print(f"t0: {s_tree}")
-    # substitute types in tree
-    seman.subst_types(s_tree, all_types)
-    # print(f"t1: {s_tree}")
+        for index, item in enumerate(lic):
+            if type(item) == list:
+                lic[index] = remove(item)
 
-    # extract function declarations from tree
-    # print(pkg_name)
-    tree_fn_decls = seman.fn.extract_fn_decls(s_tree, symtbl, pkg_name)
-    # print(f"tree_fn_decls: {tree_fn_decls}")
+            if item in [" "]:
+                # print(f"should remove {index} from {lic}")
+                to_remove.append(index)
 
-    all_fn_decls = tree_fn_decls.copy()
-    all_symtbl = {pkg_name: symtbl.copy()}
-    all_scopes = {pkg_name: scopes.copy()}
+        lic2 = lic.copy()
+        for i in reversed(to_remove):
+            lic2.pop(i)
 
-    # extract function declarations from packages
-    pkgs_fn_decls = {}
-    for pkg_name in loaded_pkgs:
-        pkg_s_tree, pkg_symtbl, pkg_scopes, pkg_types = list(pkg_)
-        fn_decls = seman.fn.extract_fn_decls(pkg_s_tree, pkg_symtbl, pkg_name)
+        return lic2
 
-        # print(fn_decls)
-        for k in fn_decls:
-            fn_decl_li = fn_decls[k]
+    token_list = reduce(token_list)
+    # print(f"reduce {token_list}")
 
-            for j in fn_decl_li:
+    lic = remove(token_list)
+    # print(f"lic {lic}")
 
-                if k not in all_fn_decls.keys():
-                    all_fn_decls[k] = []
-
-                all_fn_decls[k].append(j)
-
-        if pkg_name not in all_symtbl.keys():
-            all_symtbl[pkg_name] = pkg_symtbl
-
-        if pkg_name not in all_scopes.keys():
-            all_scopes[pkg_name] = pkg_scopes
-
-    seman.check(s_tree, all_symtbl, all_scopes, all_fn_decls, pkg_name)
-
-    if print_final_ast:
-        print(list_.list_print(s_tree), end="")
-        exit()
-
-    return (s_tree, symtbl, scopes, expr_types)
+    eval_li = eval.eval(lic)
+    print(f"eval_li {eval_li}")
 
 
 def read_file(src):
@@ -139,11 +117,11 @@ if __name__ == "__main__":
 
     print_group = parser.add_mutually_exclusive_group()
     print_group.add_argument("--print-token-list", action="store_true")
-    print_group.add_argument("--print-parse-tree", action="store_true")
-    print_group.add_argument("--print-raw-ast", action="store_true")
-    print_group.add_argument("--print-final-ast", action="store_true")
-    print_group.add_argument("--print-symbol-table", action="store_true")
-
+    print_group.add_argument("--print-token-tree", action="store_true")
+#    print_group.add_argument("--print-raw-ast", action="store_true")
+#    print_group.add_argument("--print-final-ast", action="store_true")
+#    print_group.add_argument("--print-symbol-table", action="store_true")
+#
     args = parser.parse_args()
 
     # get the src file argument
@@ -171,8 +149,8 @@ if __name__ == "__main__":
         expr,
         src,
         args.print_token_list,
-        args.print_parse_tree,
-        args.print_raw_ast,
-        args.print_final_ast,
-        args.print_symbol_table
+        args.print_token_tree,
+        #        args.print_raw_ast,
+        #        args.print_final_ast,
+        #        args.print_symbol_table
     )

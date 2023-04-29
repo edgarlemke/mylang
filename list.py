@@ -21,8 +21,12 @@ def list_print(l):
         else:
             str_i = str(i)
 
-            quoted_chars = ["(", ")", " ", "\""]
-            esc_chars = ["\""]
+            quoted_chars = ["(", ")", " ", "\"", "\n", "\t"]
+            esc_chars = [
+                ["\"", "\\\""],
+                ["\n", "\\\n"],
+                ["\t", "\\\t"],
+            ]
 
             cvt_li = []
             quote = False
@@ -33,9 +37,11 @@ def list_print(l):
                     quote = True
 
                 # escape char
-                if ch in esc_chars and str_i[index - 1] != "\\":
-                    ch = f"\\{ch}"
-
+                # if ch in [esc_chars] and str_i[index - 1] != "\\":
+                #    ch = f"\\{ch}"
+                for ec in esc_chars:
+                    if ch == ec[0] and str_i[index - 1] != "\\":
+                        ch = ec[1]
                 cvt_li.append(ch)
 
             # add quotes if needed
