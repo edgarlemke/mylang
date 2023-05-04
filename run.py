@@ -60,7 +60,7 @@ def run(
                 if i[0] == "LIST":
                     lic[index] = reduced_subitem
                 elif i[0] == "BLOCK":
-                    lic[index][1] = reduce_subitem
+                    lic[index][1] = reduced_subitem
                     lic[index].remove("BLOCK")
 
         return lic

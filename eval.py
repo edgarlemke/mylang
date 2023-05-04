@@ -4,6 +4,12 @@ import eval_types
 def eval(li):
     print(f"eval {li}")
 
+    if len(li) == 0:
+        return li
+
+    if li[0] == "data":
+        return li
+
     new_li = None
     if len(macros):
         expand = True
@@ -16,12 +22,6 @@ def eval(li):
         # print(f"over new_li: {new_li}")
 
         li = new_li
-
-    if len(li) == 0:
-        return li
-
-    if li[0] == "data":
-        return li
 
     is_macro = li[0] == "macro"
 
@@ -50,185 +50,103 @@ def eval(li):
 
 
 def expand_macro(li):
-    print(f"expand_macro: {li}")
+    # print(f"expand_macro: {li}")
 
     new_li = li.copy()
     found_macro = False
-    # for each macro
-    for m in macros:
-        print(f"m: {m}")
-        alias, syntax, expanded = m
 
-        shift = False
-        start = None
-        end = None
-        matching = []
-        bindings = []
-        # for each item in li
-        for index, item in enumerate(li):
+    # for each item in li
+    for index, item in enumerate(li):
+        # print(f"LI index: {index} item: {item}")
 
-            # iters only over the rest of syntax if has some matching
-            rest = syntax[len(matching):]
-            print(f"index: {index} item: {item} rest: {rest}")
-            for syn in rest:
-                print(f"alias: {alias} syn \"{syn}\" item \"{item}\"")
+        found_macro = False
+        for macro in macros:
+            # print(f"macro: {macro}")
 
-                # match quoted syntax pieces with anything
-                quote = syn[0] == "'"
-                if quote:
-                    # set start if not set
-                    if start is None:
-                        start = index
+            found_macro, full_match, bindings = match_macro(li, index, macro)
+            # print(f"AA> {new_li} {found_macro}")
 
-                    # add item to matching
-                    # print(f"matchin {item} with {syn}")
-                    matching.append(item)
+            if found_macro:
+                # expand macro
+                new_li = li.copy()
+                # print(f"full_match: {full_match}")
 
-                    # add pair to bindings
-                    bindings.append([syn, item])
+                for i in reversed(full_match):
+                    new_li.pop(i)
 
-                    break
+                # print(f"all bindings: {bindings}")
 
-                # other, unquoted pieces of syntax
-                else:
-                    # if syntax piece doesn't match item, shift to next macro
-                    if syn != item:
-                        print(f"syntax piece doesn't match item: {syn} != {item}")
-                        # shift = True
-                        matching = []
-                        bindings = []
-                        start = None
-                        end = None
-                        break
+                def subst_item(extended):
+                    # print(f"subs_item: {extended}")
+                    new_extended = extended.copy()
 
-                    # syntax piece is matching item
-                    # set start if not set
-                    if start is None:
-                        start = index
+                    for index, item in enumerate(extended):
+                        # print(f"ext index: {index} item: {item}")
+                        if isinstance(item, list):
+                            new_extended[index] = subst_item(item)
 
-                    # add item to matching
-                    # print(f"matchin {item} with {syn}")
-                    matching.append(item)
-                    break
+                        else:
+                            for b in bindings:
+                                name, value = b
+                                # print(f"bindings name {name} value {value} item {item}")
 
-            if len(matching) == len(syntax):
-                # print(f"len matchings = len syntax - matching: {matching} syntax {syntax}")
-                found_macro = True
-                end = index
+                                if name == item:
+                                    new_extended[index] = value
+
+                    return new_extended
+
+                subst_extended = subst_item(macro[2])
+                for i in reversed(subst_extended):
+                    new_li.insert(full_match[0], i)
+
                 break
-
-#                # if syntax's first char is ', it matches with any li item
-#                if syn[0] == "'":
-#                    matching.append(item)
-#                    print(f"Q matching {syn} with {item}")
-#                    bindings.append([syn, item])
-#                    if start == None:
-#                        print(f"setting start as {index}")
-#                        start = index
-#                    break
-#
-#                # if syntax item doesn't match with the current li item, shift to next li macro
-#                if syn != item:
-#                    shift = True
-#                    matching = []
-#                    print(f"sym != item")
-#                    break
-#                else:
-#                    matching.append(item)
-#                    print(f"N matching {syn} with {item}")
-#                    print(f"matching: {matching}  index: {index}  syntax {syntax}")
-#
-#                    # if no start is set, set it
-#                    if start == None:
-#                        print(f"setting start as {index}")
-#                        start = index
-#
-#                print(f"-- matching: {matching} len-s: {len(syntax)}")
-#
-#                # if we're here and on the last item of syntax and all matched, found macro
-#                if len(matching) == len(syntax):
-#                    print(f"ended syntax and all matched!")
-#                    found_macro = True
-#                    shift = True
-#                    matching = []
-#                    end = index
-#                    break
-
-            if shift:
-                break
-
-        # print(f"before found macro start: {start} end: {end}")
 
         if found_macro:
-            print(f"found_macro! {m} {expanded}")
-            # print(f"start: {start} end: {end}")
-
-            # print(f"old new_li: {new_li}")
-            for i in reversed(range(start, end + 1)):
-                new_li.pop(i)
-
-            # print(f"bindings: {bindings}")
-            for exp in reversed(expanded):
-                inplace = None
-                for b in bindings:
-                    name, value = b
-                    # print(f"BINGDING: {b}\n")
-
-#                    print(f"binding exp: {exp} name: {name}")
-#                    if type(exp) == list:
-#                        print("LIST!")
-#
-#                    if exp == name:
-#                        inplace = value
-#                        print(f"found binding: {name}")
-#                        break
-                    def inplace_exp(lvl, lix):
-                        lixc = lix.copy()
-                        # print(f"\nlvl: {lvl} lix: {lix}")
-
-                        found = True
-                        while found:
-                            found = False
-
-                            for i2, item2 in enumerate(lixc):
-                                # print(f"item2: {item2}")
-                                if isinstance(item2, list):
-                                    # print(f"calling listfier again")
-                                    # print(f"LIST lixc old: {lixc}")
-                                    lixc[i2] = inplace_exp(lvl + 1, item2)
-                                    # print(f"LIST lixc new: {lixc}")
-                                else:
-                                    # print(f"OwO  {item2} {name}")
-                                    if item2 == name:
-                                        # print(f"setting {item2} {name} <<")
-                                        # print(f"MATCH lixc old: {lixc}")
-                                        lixc[i2] = value
-                                        # print(f"MATCH lixc new: {lixc}")
-                                        found = True
-
-                        # print(f"final lixc: {lixc} lvl {lvl}")
-                        return lixc
-
-                    if isinstance(exp, list):
-                        # print("LIST!")
-                        xyz = inplace_exp(0, exp)
-                        # print(f"end of inplace {xyz}")
-                        exp = xyz
-                        inplace = xyz
-
-                    elif exp == name:
-                        inplace = value
-                        break
-
-                if inplace is None:
-                    inplace = exp
-
-                new_li.insert(start, inplace)
-
-            # print(f"new new_li: {new_li}")
             break
 
     return [new_li, found_macro]
+
+
+def match_macro(li, index, macro):
+    # print(f"match_macro - li: {li} index: {index} macro: {macro}")
+
+    alias, syntax, extended = macro
+
+    # li_piece = li[index : index+len(syntax)]
+    li_piece = li[index:]
+    bindings = []
+
+    full_match = False
+    for cur_index, cur in enumerate(li_piece):
+        # print(f"cur {cur_index} {cur}")
+
+        matching = []
+
+        for cur_index2, cur2 in enumerate(li_piece[cur_index:cur_index + len(syntax)]):
+            # print(f"cur2 {cur_index2} {cur2}")
+            if syntax[cur_index2] == cur2:
+                matching.append(cur_index + cur_index2)
+                # print(f">>> common matching {cur2} against {syntax[cur_index2]}")
+
+            elif syntax[cur_index2][0] == "'":
+                bindings.append([syntax[cur_index2], cur2])
+                matching.append(cur_index + cur_index2)
+                # print(f">>> quoted maching {cur2} against {syntax[cur_index2]}")
+
+            else:
+                # print(f">>> no match {cur2} against {syntax[cur_index2]}")
+                bindings = []
+                break
+
+        if len(matching) == len(syntax):
+            # print(f"BINGO ==> matching: {matching} syntax: {syntax}\n")
+            full_match = matching
+            break
+
+    if not full_match:
+        return (False, full_match, [])
+
+    return (True, full_match, bindings)
 
 
 def __set__(node):
@@ -243,7 +161,9 @@ def __set__(node):
 
     name = node[1]
     data = node[2]
-    type_, value = data[1]
+    print(f"node: {node}")
+    print(f"data: {data}")
+    type_, value = data
 
     valid_value = None
     for T in eval_types.types:
@@ -324,9 +244,30 @@ def __macro__(node):
     return []
 
 
+def __if__(node):
+    """
+Evaluates if the first list is equals (data (bool true)), if yes returns the second list, if no returns the third list.
+    """
+    print(f"node: {node}")
+
+    if_, condition_list, true_list, false_list = node
+
+    result = eval(condition_list)
+    print(f"result: {result}")
+
+    is_true = result[0] == 'data' and result[1][0] == 'bool' and result[1][1] == 'true'
+
+    if is_true:
+        return true_list
+
+    else:
+        return false_list
+
+
 variables = [
     ["set", "fn", __set__],
-    ["macro", "fn", __macro__]
+    ["macro", "fn", __macro__],
+    ["if", "fn", __if__],
 ]
 
 macros = [
