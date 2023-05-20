@@ -24,29 +24,84 @@ def eval(li):
         li = new_li
 
     is_macro = li[0] == "macro"
+    is_list = isinstance(li[0], list)
 
-    found_list_at_0 = False
-    for index, item in enumerate(li):
-        if isinstance(item, list):
-            if index == 0:
-                found_list_at_0 = True
+    if is_list:
+        for key, item in enumerate(li):
+            li[key] = eval(item)
 
-            if not is_macro:
-                li[index] = eval(item)
+    else:
+        print(f"!!! {li}")
+        called = False
+        li, called = call_fn(li, variables)
+        li, called = call_internal(li, variables)
 
-    if not found_list_at_0:
-        funcs = [v for v in variables if v[1] == "fn"]
-        # print(f"funcs: {funcs}")
-        for fn in funcs:
-            fn_name, fn_type, fn_bgfn = fn
-
-            # if function name matches first item of list
-            if li[0] == fn_name:
-                # call background function
-                li = fn_bgfn(li)
-                break
+        if not called:
+            print(f"#####  NOT CALLED: {li}")
 
     return li
+
+
+def call_fn(li, variables):
+    funcs = [v for v in variables if v[1] == "fn"]
+    # print(f"funcs: {funcs}")
+    for fn in funcs:
+        name = fn[0]
+
+        # if function name matches first item of list
+        if li[0] == name:
+            print(li)
+            methods = fn[2]
+            candidates = []
+            for m in methods:
+                print(f"method: {m}")
+
+                # match types
+                notmatch = False
+                for arg_i, arg in enumerate(li[1:]):
+                    print(f"argument: {arg}")
+
+                    # break in methods without the arguments
+                    if len(m[0]) < arg_i + 1:
+                        notmatch = True
+                        break
+
+                    marg = m[0][arg_i]
+
+                    if arg[0][0] == "data":
+                        if arg[0][1][0] != marg[0]:
+                            notmatch = True
+                            break
+
+                    else:
+                        print(f"WHAAAT")
+
+                if not notmatch:
+                    candidates.append(m)
+
+            if len(candidates) > 1:
+                raise Exception(f"Method candidates mismatch: {name} {candidates}")
+
+            if len(candidates) == 0:
+                # return (li, False)
+                continue  # skip to next fn
+
+            the_method = candidates[0]
+
+            return (eval(the_method[2]), True)
+
+    return (li, False)
+
+
+def call_internal(li, variables):
+    internals = [v for v in variables if v[1] == "internal"]
+    print(f"internals: {internals}")
+    for i in internals:
+        name = i[0]
+        if li[0] == name:
+            return (i[2](li), True)
+
+    return (li, False)
 
 
 def expand_macro(li):
@@ -163,23 +218,41 @@ def __set__(node):
     data = node[2]
     print(f"node: {node}")
     print(f"data: {data}")
-    type_, value = data
 
-    valid_value = None
-    for T in eval_types.types:
-        if T[0] == type_:
-            valid_value = T[1](value)
+    type_ = data[0]
 
-    # remove old value from variables
-    for index, v in enumerate(variables):
-        if v[0] == name:
-            variables.remove(v)
-        break
+    if data[0] == "fn":
+        value = list(data[1:4])
+        all_fn = [(i, var) for i, var in enumerate(variables) if var[1] == "fn" and var[0] == name]
+        print(f"all_fn: {all_fn}")
 
-    # insert new value into variables
-    variables.append([name, type_, valid_value])
+        if all_fn == []:
+            variables.append([name, type_, [value]])
+
+        else:
+            match_fn = all_fn[0]
+            i, var = match_fn
+
+            variables[i][2].append(value)
+
+    else:
+        value = data[1]
+
+        valid_value = None
+        for T in eval_types.types:
+            if T[0] == type_:
+                valid_value = T[1](value)
+
+        # remove old value from variables
+        for index, v in enumerate(variables):
+            if v[0] == name:
+                variables.remove(v)
+            break
+
+        # insert new value into variables
+        variables.append([name, type_, valid_value])
+
     print(f"variables after set: {variables}")
-
     retv = ["data", ["set", name, type_, value]]
     print(f"returning {retv}")
     return retv
@@ -265,9 +338,9 @@ Evaluates if the first list is equals (data (bool true)), if yes returns the sec
 
 
 variables = [
-    ["set", "fn", __set__],
-    ["macro", "fn", __macro__],
-    ["if", "fn", __if__],
+    ["set", "internal", __set__],
+    ["macro", "internal", __macro__],
+    ["if", "internal", __if__],
 ]
 
 macros = [
