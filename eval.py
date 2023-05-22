@@ -11,6 +11,7 @@ def eval(li):
         return li
 
     new_li = None
+    macros = cur_scope[1]
     if len(macros):
         expand = True
         new_li = li.copy()
@@ -31,10 +32,10 @@ def eval(li):
             li[key] = eval(item)
 
     else:
-        print(f"!!! {li}")
+        # print(f"!!! {li}")
         called = False
-        li, called = call_fn(li, variables)
-        li, called = call_internal(li, variables)
+        li, called = call_fn(li, cur_scope[0])
+        li, called = call_internal(li, cur_scope[0])
 
         if not called:
             print(f"#####  NOT CALLED: {li}")
@@ -54,12 +55,12 @@ def call_fn(li, variables):
             methods = fn[2]
             candidates = []
             for m in methods:
-                print(f"method: {m}")
+                # print(f"method: {m}")
 
                 # match types
                 notmatch = False
                 for arg_i, arg in enumerate(li[1:]):
-                    print(f"argument: {arg}")
+                    # print(f"argument: {arg}")
 
                     # break in methods without the arguments
                     if len(m[0]) < arg_i + 1:
@@ -95,7 +96,7 @@ def call_fn(li, variables):
 
 def call_internal(li, variables):
     internals = [v for v in variables if v[1] == "internal"]
-    print(f"internals: {internals}")
+    # print(f"internals: {internals}")
     for i in internals:
         name = i[0]
         if li[0] == name:
@@ -216,24 +217,24 @@ def __set__(node):
 
     name = node[1]
     data = node[2]
-    print(f"node: {node}")
-    print(f"data: {data}")
+    # print(f"node: {node}")
+    # print(f"data: {data}")
 
     type_ = data[0]
 
     if data[0] == "fn":
         value = list(data[1:4])
-        all_fn = [(i, var) for i, var in enumerate(variables) if var[1] == "fn" and var[0] == name]
-        print(f"all_fn: {all_fn}")
+        all_fn = [(i, var) for i, var in enumerate(cur_scope[0]) if var[1] == "fn" and var[0] == name]
+        # print(f"all_fn: {all_fn}")
 
         if all_fn == []:
-            variables.append([name, type_, [value]])
+            cur_scope[0].append([name, type_, [value]])
 
         else:
             match_fn = all_fn[0]
             i, var = match_fn
 
-            variables[i][2].append(value)
+            cur_scope[0][i][2].append(value)
 
     else:
         value = data[1]
@@ -252,9 +253,9 @@ def __set__(node):
         # insert new value into variables
         variables.append([name, type_, valid_value])
 
-    print(f"variables after set: {variables}")
+    # print(f"variables after set: {variables}")
     retv = ["data", ["set", name, type_, value]]
-    print(f"returning {retv}")
+    # print(f"returning {retv}")
     return retv
 
 
@@ -321,12 +322,12 @@ def __if__(node):
     """
 Evaluates if the first list is equals (data (bool true)), if yes returns the second list, if no returns the third list.
     """
-    print(f"node: {node}")
+    print(f"calling __if__: {node}")
 
     if_, condition_list, true_list, false_list = node
 
     result = eval(condition_list)
-    print(f"result: {result}")
+    # print(f"result: {result}")
 
     is_true = result[0] == 'data' and result[1][0] == 'bool' and result[1][1] == 'true'
 
@@ -337,11 +338,67 @@ Evaluates if the first list is equals (data (bool true)), if yes returns the sec
         return false_list
 
 
-variables = [
-    ["set", "internal", __set__],
-    ["macro", "internal", __macro__],
-    ["if", "internal", __if__],
-]
+def __let__(node):
+    """
+    Creates a local scope and bind the given variables to it, the evaluates it
+    """
+    print(f"calling __let__: {node}")
 
-macros = [
+    let_, variables, code = node
+
+    new_scope = [
+        variables,
+        [],
+        cur_scope,
+        []
+    ]
+    cur_scope[3].append(new_scope)
+
+    print(f"scopes: {scopes}")
+
+
+def __meta__(node):
+    print(f"calling __meta__: {node}")
+
+
+def __mut__(node):
+    print(f"calling __mut__: {node}")
+
+
+def __data__(node):
+    print(f"calilng __data__: {node}")
+
+
+scopes = [
+    [  # META
+        [     # variables
+            ["set", "internal", __set__],  # set a constant in local scope
+            ["mut", "internal", __mut__],  # set a mutable variable in local scope
+            ["let", "internal", __let__],  # declare new local scope
+            ["macro", "internal", __macro__],  # set a new macro in local scope
+            ["if", "internal", __if__],  # compare conditions and return the appropriate list
+            ["data", "internal", __data__],  # return data not to be eval-uated
+            ["use", "internal", __use__],  # load external package into local scope
+        ],
+        [],   # macros
+        None,  # parent
+        [],   # children
+    ],
+    [  # RUNTIME
+        [     # variables
+            ["meta", "internal", __meta__],  # call compile time instructions
+
+            # ["set",   "internal", __set__  ], # check constant setting
+            # ["mut",   "internal", __mut__  ], # check mutable variable setting
+            # ["let",   "internal", __let__  ], # check lets
+            ["macro", "internal", __macro__],  # set a new macro in local scope
+            ["if", "internal", __if__],  # compare conditions and return the appropriate list
+            ["data", "internal", __data__],  # return data not to be eval-uated
+            ["use", "internal", __use__],  # load external package into local scope
+        ],
+        [],   # macros
+        None,  # parent
+        [],   # children
+    ]
 ]
+cur_scope = scopes
