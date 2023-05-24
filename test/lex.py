@@ -364,8 +364,8 @@ def test_check_nontokenized_start():
         end="",
         flush=True)
 
-    stdout, stderr = _popen("!@()")
-    msg = "Exception: Non-tokenized range at start: 0 2  \"!@\""
+    stdout, stderr = _popen("@()")
+    msg = "Exception: Non-tokenized range at start: 0 1  \"@\""
 
     if not (msg in stderr):
         print(
@@ -382,8 +382,8 @@ def test_check_nontokenized_middle():
         end="",
         flush=True)
 
-    stdout, stderr = _popen("(!@)")
-    msg = "Exception: Non-tokenized range at middle: 1 3  \"!@\""
+    stdout, stderr = _popen("(@)")
+    msg = "Exception: Non-tokenized range at middle: 1 2  \"@\""
 
     if not (msg in stderr):
         print(
@@ -400,8 +400,8 @@ def test_check_nontokenized_end():
         end="",
         flush=True)
 
-    stdout, stderr = _popen("()!@")
-    msg = "Exception: Non-tokenized range at end: 2 4  \"!@\""
+    stdout, stderr = _popen("()@")
+    msg = "Exception: Non-tokenized range at end: 2 3  \"@\""
 
     if not (msg in stderr):
         print(
