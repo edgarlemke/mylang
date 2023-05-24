@@ -1,8 +1,11 @@
 import eval_types
 
 
-def eval(li):
-    print(f"eval {li}")
+def eval(li, scope):
+    #    print(f"eval {li} {scope}")
+
+    if scope is None:
+        scope = runtime_scope
 
     if len(li) == 0:
         return li
@@ -11,7 +14,7 @@ def eval(li):
         return li
 
     new_li = None
-    macros = cur_scope[1]
+    macros = scope[1]
     if len(macros):
         expand = True
         new_li = li.copy()
@@ -29,16 +32,16 @@ def eval(li):
 
     if is_list:
         for key, item in enumerate(li):
-            li[key] = eval(item)
+            li[key] = eval(item, scope)
 
     else:
         # print(f"!!! {li}")
         called = False
-        li, called = call_fn(li, cur_scope[0])
-        li, called = call_internal(li, cur_scope[0])
+        li, called = call_fn(li, scope[0])
+        li, called = call_internal(li, scope[0])
 
-        if not called:
-            print(f"#####  NOT CALLED: {li}")
+#        if not called:
+#            print(f"#####  NOT CALLED: {li}")
 
     return li
 
@@ -205,6 +208,12 @@ def match_macro(li, index, macro):
     return (True, full_match, bindings)
 
 
+# RUNTIME INTERNALS
+#
+def __fn__(node):
+    pass
+
+
 def __set__(node):
     """
     Set a variable in the current variables namespace.
@@ -212,14 +221,10 @@ def __set__(node):
 
     print(f"calling __set__ {node}")
 
-    if len(node) != 3:
-        raise Exception(f"Wrong number of arguments for set: {node}")
+    _validate_set(node)
 
     name = node[1]
     data = node[2]
-    # print(f"node: {node}")
-    # print(f"data: {data}")
-
     type_ = data[0]
 
     if data[0] == "fn":
@@ -257,6 +262,13 @@ def __set__(node):
     retv = ["data", ["set", name, type_, value]]
     # print(f"returning {retv}")
     return retv
+
+
+def _validate_set(node):
+    if len(node) != 3:
+        raise Exception(f"Wrong number of arguments for set: {node}")
+
+    return True
 
 
 def __macro__(node):
@@ -338,67 +350,165 @@ Evaluates if the first list is equals (data (bool true)), if yes returns the sec
         return false_list
 
 
-def __let__(node):
-    """
-    Creates a local scope and bind the given variables to it, the evaluates it
-    """
-    print(f"calling __let__: {node}")
+# def __let__(node):
+#    """
+#    Creates a local scope and bind the given variables to it, the evaluates it
+#    """
+#    print(f"calling __let__: {node}")
+#
+#    let_, variables, code = node
+#
+#    new_scope = [
+#        variables,
+#        [],
+#        cur_scope,
+#        []
+#    ]
+#    cur_scope[3].append(new_scope)
+#
+#    print(f"scopes: {scopes}")
 
-    let_, variables, code = node
 
-    new_scope = [
-        variables,
-        [],
-        cur_scope,
-        []
-    ]
-    cur_scope[3].append(new_scope)
+def __data__(node):
+    print(f"calling __data__: {node}")
 
-    print(f"scopes: {scopes}")
+
+def __use__(node):
+    print(f"calling __use__: {node}")
 
 
 def __meta__(node):
     print(f"calling __meta__: {node}")
+#
+#
 
 
-def __mut__(node):
-    print(f"calling __mut__: {node}")
+# META INTERNALS
+#
+def __meta_fn__(node):
+    print(f"calling __meta_fn__: {node}")
 
 
-def __data__(node):
-    print(f"calilng __data__: {node}")
+def __meta_set__(node):
+    print(f"calling __meta_set__: {node}")
 
 
-scopes = [
-    [  # META
-        [     # variables
-            ["set", "internal", __set__],  # set a constant in local scope
-            ["mut", "internal", __mut__],  # set a mutable variable in local scope
-            ["let", "internal", __let__],  # declare new local scope
-            ["macro", "internal", __macro__],  # set a new macro in local scope
-            ["if", "internal", __if__],  # compare conditions and return the appropriate list
-            ["data", "internal", __data__],  # return data not to be eval-uated
-            ["use", "internal", __use__],  # load external package into local scope
-        ],
-        [],   # macros
-        None,  # parent
-        [],   # children
-    ],
-    [  # RUNTIME
-        [     # variables
-            ["meta", "internal", __meta__],  # call compile time instructions
+def __meta_let__(node):
+    print(f"calling __meta_let__: {node}")
 
-            # ["set",   "internal", __set__  ], # check constant setting
-            # ["mut",   "internal", __mut__  ], # check mutable variable setting
-            # ["let",   "internal", __let__  ], # check lets
-            ["macro", "internal", __macro__],  # set a new macro in local scope
-            ["if", "internal", __if__],  # compare conditions and return the appropriate list
-            ["data", "internal", __data__],  # return data not to be eval-uated
-            ["use", "internal", __use__],  # load external package into local scope
-        ],
-        [],   # macros
-        None,  # parent
-        [],   # children
-    ]
+
+def __meta_macro__(node):
+    print(f"calling __meta_macro__: {node}")
+
+
+def __meta_if__(node):
+    print(f"calling __meta_if__: {node}")
+
+
+def __meta_data__(node):
+    print(f"calling __meta_data__: {node}")
+
+
+def __meta_use__(node):
+    print(f"calling __meta_data__: {node}")
+#
+#
+
+
+meta_scope = [
+  [
+    ["fn", "internal", __meta_fn__],  # declare a function
+    ["set", "internal", __meta_set__],  # set a name in local scope
+    ["let", "internal", __meta_let__],  # abbreviation of declaring function and calling it with arguments
+    ["macro", "internal", __meta_macro__],  # set a new macro in local scope
+    ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
+    ["data", "internal", __meta_data__],  # return data not to be eval-uated
+    ["use", "internal", __meta_use__],  # load external package into local scope
+  ],
+  [],
+  None,
+  []
 ]
-cur_scope = scopes
+runtime_scope = [
+  [
+    ["fn", "internal", __fn__],  # declare a function
+#    ["set",   "internal", __set__  ], # set a name in local scope
+#    ["let",   "internal", __let__  ], # abbreviation of declaring function and calling it with arguments
+#    ["macro", "internal", __macro__], # set a new macro in local scope
+#    ["if",    "internal", __if__   ], # compare conditions and return the appropriate list
+#    ["data",  "internal", __data__ ], # return data not to be eval-uated
+#    ["use",   "internal", __use__  ], # load external package into local scope
+    ["meta", "internal", __meta__],  # evalute expressions with meta scope
+  ],
+  [],
+  None,
+  []
+]
+
+# order of development: meta first, runtime second
+
+# will the meta scope contain the runtime scope, or they can be separated?
+#  probably easier to put together than to separate if needed
+
+# should we serialize the SCOPE tree? serializing = easier references
+#  only SCOPE tree seems interesting to serialize... but not yet
+
+# which functions are the MVP? macro, if, data, set, mut, let, use, fn (useless in compile time until we have full compiler anyway)
+#  runtime
+#   set
+#    check if name has already been set-ed,mut-ed in current scope and upper scopes
+#   mut
+#    check if name has already been set-ed in current scope and upper scopes (:= for setting first time, = for re-setting)
+#   let
+#    shortcut for declaring a function and calling it with parameters (validation is from fn)
+#   fn
+#    check function validity
+#   if
+#    executes code conditionally
+#   macro
+#    declares a macro in local scope
+#   use
+#    loads a package (fn are added to static overloading, constants, variables and structs not starting with _ are loaded into variable)
+
+# should we pass scope to eval? yes
+
+# plan creating scopes with fn
+#  take scope
+#  add new scope to children
+#  enter new scope, binding the parameters
+#  there will be no closures
+#  compiler time can allocate scope dinamically, runtime when function is declared (fn actually must be called)
+
+# scopes = [
+#    [  # META
+#        [     # variables
+#            ["set", "internal", __set__],  # set a constant in local scope
+#            ["mut", "internal", __mut__],  # set a mutable variable in local scope
+#            ["let", "internal", __let__],  # declare new local scope
+#            ["macro", "internal", __macro__],  # set a new macro in local scope
+#            ["if", "internal", __if__],  # compare conditions and return the appropriate list
+#            ["data", "internal", __data__],  # return data not to be eval-uated
+#            ["use", "internal", __use__],  # load external package into local scope
+#        ],
+#        [],   # macros
+#        None,  # parent
+#        [],   # children
+#    ],
+#    [  # RUNTIME
+#        [     # variables
+#            ["meta", "internal", __meta__],  # call compile time instructions
+#
+#            # ["set",   "internal", __set__  ], # check constant setting
+#            # ["mut",   "internal", __mut__  ], # check mutable variable setting
+#            # ["let",   "internal", __let__  ], # check lets
+#            ["macro", "internal", __macro__],  # set a new macro in local scope
+#            ["if", "internal", __if__],  # compare conditions and return the appropriate list
+#            ["data", "internal", __data__],  # return data not to be eval-uated
+#            ["use", "internal", __use__],  # load external package into local scope
+#        ],
+#        [],   # macros
+#        None,  # parent
+#        [],   # children
+#    ]
+# ]
+# cur_scope = scopes

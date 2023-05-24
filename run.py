@@ -91,8 +91,8 @@ def run(
     lic = remove(token_list)
     # print(f"lic {lic}")
 
-    eval_li = eval.eval(lic)
-    print(f"eval_li {eval_li}")
+    eval_li = eval.eval(lic, None)
+    print(f"{eval_li}")
 
 
 def read_file(src):
