@@ -38,7 +38,7 @@ def eval(li, scope):
         # print(f"!!! {li}")
         called = False
         li, called = call_fn(li, scope[0])
-        li, called = call_internal(li, scope[0])
+        li, called = call_internal(li, scope)
 
 #        if not called:
 #            print(f"#####  NOT CALLED: {li}")
@@ -97,13 +97,14 @@ def call_fn(li, variables):
     return (li, False)
 
 
-def call_internal(li, variables):
-    internals = [v for v in variables if v[1] == "internal"]
+def call_internal(li, scope):
+    names = scope[0]
+    internals = [n for n in names if n[1] == "internal"]
     # print(f"internals: {internals}")
     for i in internals:
         name = i[0]
         if li[0] == name:
-            return (i[2](li), True)
+            return (i[2](li, scope), True)
 
     return (li, False)
 
@@ -210,8 +211,33 @@ def match_macro(li, index, macro):
 
 # RUNTIME INTERNALS
 #
-def __fn__(node):
-    pass
+def __fn__(node, scope):
+    """
+    Declare a new function.
+
+    Syntax is:
+    fn ((argtype1 arg1)(argtype2 arg2)) (ret_type) (body)
+    """
+    # print(f"calling __fn__ {node}")
+
+    fn, args, ret_type, body = node
+    types = [t[0] for t in scope[0] if t[1] == "type"]
+
+    # check if types of the arguments are valid
+    for arg in args:
+        # print(f"arg: {arg}")
+        type_, name = arg
+
+        if type_ not in types:
+            raise Exception(f"Function argument has invalid type: {arg} {node}")
+
+    # check if the return type is valid
+    if ret_type not in types:
+        raise Exception(f"Function return type has invalid type: {ret_type} {node}")
+
+    # check if the body is valid
+
+    return node
 
 
 def __set__(node):
@@ -424,6 +450,7 @@ meta_scope = [
     ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
     ["data", "internal", __meta_data__],  # return data not to be eval-uated
     ["use", "internal", __meta_use__],  # load external package into local scope
+
   ],
   [],
   None,
@@ -439,11 +466,42 @@ runtime_scope = [
 #    ["data",  "internal", __data__ ], # return data not to be eval-uated
 #    ["use",   "internal", __use__  ], # load external package into local scope
     ["meta", "internal", __meta__],  # evalute expressions with meta scope
+
   ],
   [],
   None,
   []
 ]
+
+
+def _add_types():
+    types = [
+      ["i8", "type", [1]],
+      ["i16", "type", [2]],
+      ["i32", "type", [4]],
+      ["i64", "type", [8]],
+
+      ["u8", "type", [1]],
+      ["u16", "type", [2]],
+      ["u32", "type", [4]],
+      ["u64", "type", [8]],
+
+      ["byte", "type", [1]],
+      ["bool", "type", [1]],
+
+      ["f32", "type", [4]],
+      ["f64", "type", [8]],
+
+      ["struct", "type", ['?']],
+      ["enum", "type", ['?']],
+    ]
+
+    for s in [meta_scope, runtime_scope]:
+        for t in types:
+            s[0].append(t)
+
+
+_add_types()
 
 # order of development: meta first, runtime second
 

@@ -92,7 +92,8 @@ def run(
     # print(f"lic {lic}")
 
     eval_li = eval.eval(lic, None)
-    print(f"{eval_li}")
+
+    print(list_.list_print(eval_li))
 
 
 def read_file(src):
