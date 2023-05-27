@@ -62,6 +62,15 @@ def test_fn_args():
     )
 
 
+def test_fn_ret_type():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Function return type has invalid type",
+        "fn ((i8 x) (i8 y)) wrong ()"
+    )
+
+
 def _popen(expr):
     cmd = f"/usr/bin/python3 ../lex.py --expr \"{expr}\""
     sp = split(cmd)
