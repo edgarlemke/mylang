@@ -225,9 +225,7 @@ def __fn__(node, scope):
 
     # check if types of the arguments are valid
     for arg in args:
-        # print(f"arg: {arg}")
         type_, name = arg
-
         if type_ not in types:
             raise Exception(f"Function argument has invalid type: {arg} {node}")
 
@@ -235,7 +233,9 @@ def __fn__(node, scope):
     if ret_type not in types:
         raise Exception(f"Function return type has invalid type: {ret_type} {node}")
 
-    # check if the body is valid
+    # create new scope
+    child_scope = [[], [], scope, []]
+    scope[3].append(child_scope)
 
     return node
 
@@ -444,7 +444,7 @@ def __meta_use__(node):
 meta_scope = [
   [
     ["fn", "internal", __meta_fn__],  # declare a function
-    ["set", "internal", __meta_set__],  # set a name in local scope
+#    ["set", "internal", __meta_set__],  # set a name in local scope
     ["let", "internal", __meta_let__],  # abbreviation of declaring function and calling it with arguments
     ["macro", "internal", __meta_macro__],  # set a new macro in local scope
     ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
@@ -465,7 +465,7 @@ runtime_scope = [
 #    ["if",    "internal", __if__   ], # compare conditions and return the appropriate list
 #    ["data",  "internal", __data__ ], # return data not to be eval-uated
 #    ["use",   "internal", __use__  ], # load external package into local scope
-    ["meta", "internal", __meta__],  # evalute expressions with meta scope
+#    ["meta", "internal", __meta__],  # evalute expressions with meta scope
 
   ],
   [],
@@ -494,6 +494,7 @@ def _add_types():
 
       ["struct", "type", ['?']],
       ["enum", "type", ['?']],
+      ["ptr", "type", ['?']],
     ]
 
     for s in [meta_scope, runtime_scope]:
