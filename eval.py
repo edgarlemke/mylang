@@ -221,6 +221,20 @@ def __fn__(node, scope):
 
     # print(f"calling __fn__ {node}")
 
+    validate_fn(node, scope)
+
+    # create new scope
+    child_scope = [[], [], scope, []]
+    scope[3].append(child_scope)
+
+    return node
+
+
+def validate_fn(node, scope):
+    # check fn arguments number
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for fn: {node}")
+
     fn, args, ret_type, body = node
     types = [t[0] for t in scope[0] if t[1] == "type"]
 
@@ -234,12 +248,6 @@ def __fn__(node, scope):
     if ret_type not in types:
         raise Exception(f"Function return type has invalid type: {ret_type} {node}")
 
-    # create new scope
-    child_scope = [[], [], scope, []]
-    scope[3].append(child_scope)
-
-    return node
-
 
 def __set__(node, scope):
     """
@@ -251,7 +259,7 @@ def __set__(node, scope):
 
 #    print(f"calling __set__ {node}")
 
-    _validate_set(node)
+    _validate_set(node, scope)
 
     return []
 
@@ -296,11 +304,21 @@ def __set__(node, scope):
 #    return retv
 
 
-def _validate_set(node):
+def _validate_set(node, scope):
+    # check set arguments number
     if len(node) != 4:
         raise Exception(f"Wrong number of arguments for set: {node}")
 
-    return True
+    set_, name, type_, value = node
+
+    types = [t[0] for t in scope[0] if t[1] == "type"]
+
+    # check type
+    if type_ not in types:
+        raise Exception(f"Constant assignment has invalid type {type_} {node}")
+
+    # check if value is valid for type
+    pass
 
 
 def __macro__(node):

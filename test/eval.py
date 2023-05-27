@@ -55,6 +55,15 @@ def test_fn():
     )
 
 
+def test_fn_node_size():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for fn",
+        "fn ((ui8 x)) i8 () wrong"
+    )
+
+
 def test_fn_args():
     _test(
         i.getframeinfo(i.currentframe()).function,
@@ -71,16 +80,33 @@ def test_fn_ret_type():
         "Function return type has invalid type",
         "fn ((i8 x) (i8 y)) wrong ()"
     )
-#
+
+
 # __set__
-
-
 def test_set():
     _test(
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
-        "set x ui8 0"
+        "set x i8 0"
+    )
+
+
+def test_set_node_size():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for set",
+        "set x i8 0 wrong"
+    )
+
+
+def test_set_type():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Constant assignment has invalid type",
+        "set x wrong 0"
     )
 #
 
