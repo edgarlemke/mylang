@@ -251,7 +251,7 @@ def validate_fn(node, scope):
 
 def __set__(node, scope):
     """
-    Validate set i.e. constant setting
+    Validate set i.e. constant setting.
 
     Syntax:
     set name type value
@@ -321,21 +321,19 @@ def _validate_set(node, scope):
     pass
 
 
-def __macro__(node):
+def __macro__(node, scope):
     """
-    Set a new macro in the current macros namespace.
+    Set a new macro in the current scope.
+
+    Syntax:
+    macro alias (syntax) (expanded)
     """
 
-    print(f"calling __macro__ {node}")
+    # print(f"calling __macro__ {node}")
 
-    alias = node[1]
-    # print(f"alias: {alias}")
+    validate_macro(node, scope)
 
-    syntax = node[2]
-    # print(f"syntax: {syntax}")
-
-    expanded = node[3]
-    # print(f"expanded: {expanded}")
+    macro, alias, syntax, expanded = node
 
     def join_quotes(li):
         # print(f"join_quotes {li}")
@@ -378,6 +376,12 @@ def __macro__(node):
     macros.append([alias, new_syntax, new_expanded])
 
     return []
+
+
+def validate_macro(node, scope):
+    # check macro arguments number
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for macro: {node}")
 
 
 def __if__(node):
@@ -467,14 +471,13 @@ def __meta_use__(node):
 
 meta_scope = [
   [
-    ["fn", "internal", __meta_fn__],  # declare a function
+#    ["fn", "internal", __meta_fn__],  # declare a function
 #    ["set", "internal", __meta_set__],  # set a name in local scope
-    ["let", "internal", __meta_let__],  # abbreviation of declaring function and calling it with arguments
-    ["macro", "internal", __meta_macro__],  # set a new macro in local scope
-    ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
-    ["data", "internal", __meta_data__],  # return data not to be eval-uated
-    ["use", "internal", __meta_use__],  # load external package into local scope
-
+#    ["let", "internal", __meta_let__],  # abbreviation of declaring function and calling it with arguments
+#    ["macro", "internal", __meta_macro__],  # set a new macro in local scope
+#    ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
+#    ["data", "internal", __meta_data__],  # return data not to be eval-uated
+#    ["use", "internal", __meta_use__],  # load external package into local scope
   ],
   [],
   None,
@@ -485,7 +488,7 @@ runtime_scope = [
     ["fn", "internal", __fn__],  # declare a function
     ["set", "internal", __set__],  # set a name in local scope
 #    ["let",   "internal", __let__  ], # abbreviation of declaring function and calling it with arguments
-#    ["macro", "internal", __macro__], # set a new macro in local scope
+    ["macro", "internal", __macro__],  # set a new macro in local scope
 #    ["if",    "internal", __if__   ], # compare conditions and return the appropriate list
 #    ["data",  "internal", __data__ ], # return data not to be eval-uated
 #    ["use",   "internal", __use__  ], # load external package into local scope

@@ -108,7 +108,16 @@ def test_set_type():
         "Constant assignment has invalid type",
         "set x wrong 0"
     )
-#
+
+
+# __macro__
+def test_macro_node_size():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for macro",
+        "macro alias () () wrong"
+    )
 
 
 def _popen(expr):
