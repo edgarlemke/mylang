@@ -213,11 +213,12 @@ def match_macro(li, index, macro):
 #
 def __fn__(node, scope):
     """
-    Declare a new function.
+    Validate function declarations.
 
-    Syntax is:
-    fn ((argtype1 arg1)(argtype2 arg2)) (ret_type) (body)
+    Syntax:
+    fn ((argtype1 arg1)(argtype2 arg2)) ret_type (body)
     """
+
     # print(f"calling __fn__ {node}")
 
     fn, args, ret_type, body = node
@@ -240,58 +241,63 @@ def __fn__(node, scope):
     return node
 
 
-def __set__(node):
+def __set__(node, scope):
     """
-    Set a variable in the current variables namespace.
+    Validate set i.e. constant setting
+
+    Syntax:
+    set name type value
     """
 
-    print(f"calling __set__ {node}")
+#    print(f"calling __set__ {node}")
 
     _validate_set(node)
 
-    name = node[1]
-    data = node[2]
-    type_ = data[0]
+    return []
 
-    if data[0] == "fn":
-        value = list(data[1:4])
-        all_fn = [(i, var) for i, var in enumerate(cur_scope[0]) if var[1] == "fn" and var[0] == name]
-        # print(f"all_fn: {all_fn}")
-
-        if all_fn == []:
-            cur_scope[0].append([name, type_, [value]])
-
-        else:
-            match_fn = all_fn[0]
-            i, var = match_fn
-
-            cur_scope[0][i][2].append(value)
-
-    else:
-        value = data[1]
-
-        valid_value = None
-        for T in eval_types.types:
-            if T[0] == type_:
-                valid_value = T[1](value)
-
-        # remove old value from variables
-        for index, v in enumerate(variables):
-            if v[0] == name:
-                variables.remove(v)
-            break
-
-        # insert new value into variables
-        variables.append([name, type_, valid_value])
-
-    # print(f"variables after set: {variables}")
-    retv = ["data", ["set", name, type_, value]]
-    # print(f"returning {retv}")
-    return retv
+#    name = node[1]
+#    data = node[2]
+#    type_ = data[0]
+#
+#    if data[0] == "fn":
+#        value = list(data[1:4])
+#        all_fn = [(i, var) for i, var in enumerate(cur_scope[0]) if var[1] == "fn" and var[0] == name]
+#        # print(f"all_fn: {all_fn}")
+#
+#        if all_fn == []:
+#            cur_scope[0].append([name, type_, [value]])
+#
+#        else:
+#            match_fn = all_fn[0]
+#            i, var = match_fn
+#
+#            cur_scope[0][i][2].append(value)
+#
+#    else:
+#        value = data[1]
+#
+#        valid_value = None
+#        for T in eval_types.types:
+#            if T[0] == type_:
+#                valid_value = T[1](value)
+#
+#        # remove old value from variables
+#        for index, v in enumerate(variables):
+#            if v[0] == name:
+#                variables.remove(v)
+#            break
+#
+#        # insert new value into variables
+#        variables.append([name, type_, valid_value])
+#
+#    # print(f"variables after set: {variables}")
+#    retv = ["data", ["set", name, type_, value]]
+#    # print(f"returning {retv}")
+#    return retv
 
 
 def _validate_set(node):
-    if len(node) != 3:
+    if len(node) != 4:
         raise Exception(f"Wrong number of arguments for set: {node}")
 
     return True
@@ -459,7 +465,7 @@ meta_scope = [
 runtime_scope = [
   [
     ["fn", "internal", __fn__],  # declare a function
-#    ["set",   "internal", __set__  ], # set a name in local scope
+    ["set", "internal", __set__],  # set a name in local scope
 #    ["let",   "internal", __let__  ], # abbreviation of declaring function and calling it with arguments
 #    ["macro", "internal", __macro__], # set a new macro in local scope
 #    ["if",    "internal", __if__   ], # compare conditions and return the appropriate list

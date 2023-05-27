@@ -44,6 +44,8 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
     print("OK")
 
 
+# RUNTIME
+# __fn__
 def test_fn():
     _test(
         i.getframeinfo(i.currentframe()).function,
@@ -69,6 +71,18 @@ def test_fn_ret_type():
         "Function return type has invalid type",
         "fn ((i8 x) (i8 y)) wrong ()"
     )
+#
+# __set__
+
+
+def test_set():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        """()\n""",
+        "",
+        "set x ui8 0"
+    )
+#
 
 
 def _popen(expr):
