@@ -387,7 +387,7 @@ def validate_macro(node, scope):
 def __if__(node, scope):
     """
     """
-    print(f"calling __if__: {node}")
+#    print(f"calling __if__: {node}")
 
     validate_if(node, scope)
 
@@ -497,14 +497,14 @@ meta_scope = [
 ]
 runtime_scope = [
   [
-    ["fn", "internal", __fn__],  # declare a function
-    ["set", "internal", __set__],  # set a name in local scope
-#    ["let",   "internal", __let__  ], # abbreviation of declaring function and calling it with arguments
-    ["macro", "internal", __macro__],  # set a new macro in local scope
-    ["if", "internal", __if__],  # compare conditions and return the appropriate list
-#    ["data",  "internal", __data__ ], # return data not to be eval-uated
-#    ["use",   "internal", __use__  ], # load external package into local scope
-#    ["meta", "internal", __meta__],  # evalute expressions with meta scope
+    ["fn", "internal", __fn__],
+    ["set", "internal", __set__],
+#    ["let",   "internal", __let__  ],
+    ["macro", "internal", __macro__],
+    ["if", "internal", __if__],
+    ["data", "internal", __data__],
+#    ["use",   "internal", __use__  ],
+#    ["meta", "internal", __meta__],
   ],
   [],
   None,

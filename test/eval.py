@@ -43,9 +43,11 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 
     print("OK")
 
-
+#
 # RUNTIME
 # __fn__
+
+
 def test_fn():
     _test(
         i.getframeinfo(i.currentframe()).function,
@@ -118,6 +120,19 @@ def test_macro_node_size():
         "Wrong number of arguments for macro",
         "macro alias () () wrong"
     )
+
+
+# __if__
+def test_if_node_size():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for if",
+        "if (true) () () wrong"
+    )
+
+#
+#
 
 
 def _popen(expr):
