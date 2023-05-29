@@ -131,6 +131,17 @@ def test_if_node_size():
         "if (true) () () wrong"
     )
 
+
+# __data__
+def test_data():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for data",
+        "data () wrong"
+    )
+
+
 #
 #
 

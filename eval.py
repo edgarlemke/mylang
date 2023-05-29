@@ -435,8 +435,18 @@ def validate_if(node, scope):
 #    print(f"scopes: {scopes}")
 
 
-def __data__(node):
-    print(f"calling __data__: {node}")
+def __data__(node, scope):
+    #    print(f"calling __data__: {node}")
+
+    validate_data(node, scope)
+
+    return node[1]
+
+
+def validate_data(node, scope):
+    # check data arguments number
+    if len(node) != 2:
+        raise Exception(f"Wrong number of arguments for data: {node}")
 
 
 def __use__(node):
