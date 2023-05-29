@@ -10,8 +10,8 @@ def eval(li, scope):
     if len(li) == 0:
         return li
 
-    if li[0] == "data":
-        return li
+#    if li[0] == "data":
+#        return li
 
     new_li = None
     macros = scope[1]
@@ -100,7 +100,7 @@ def call_fn(li, variables):
 def call_internal(li, scope):
     names = scope[0]
     internals = [n for n in names if n[1] == "internal"]
-    # print(f"internals: {internals}")
+#    print(f"internals: {internals}")
     for i in internals:
         name = i[0]
         if li[0] == name:
@@ -436,7 +436,7 @@ def validate_if(node, scope):
 
 
 def __data__(node, scope):
-    #    print(f"calling __data__: {node}")
+    # print(f"calling __data__: {node}")
 
     validate_data(node, scope)
 
@@ -447,10 +447,6 @@ def validate_data(node, scope):
     # check data arguments number
     if len(node) != 2:
         raise Exception(f"Wrong number of arguments for data: {node}")
-
-
-def __use__(node):
-    print(f"calling __use__: {node}")
 
 
 def __meta__(node):
@@ -483,10 +479,6 @@ def __meta_if__(node):
 
 def __meta_data__(node):
     print(f"calling __meta_data__: {node}")
-
-
-def __meta_use__(node):
-    print(f"calling __meta_data__: {node}")
 #
 #
 
@@ -499,7 +491,6 @@ meta_scope = [
 #    ["macro", "internal", __meta_macro__],  # set a new macro in local scope
 #    ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
 #    ["data", "internal", __meta_data__],  # return data not to be eval-uated
-#    ["use", "internal", __meta_use__],  # load external package into local scope
   ],
   [],
   None,
@@ -513,8 +504,7 @@ runtime_scope = [
     ["macro", "internal", __macro__],
     ["if", "internal", __if__],
     ["data", "internal", __data__],
-#    ["use",   "internal", __use__  ],
-#    ["meta", "internal", __meta__],
+    ["meta", "internal", __meta__],
   ],
   [],
   None,
@@ -574,8 +564,6 @@ _add_types()
 #    executes code conditionally
 #   macro
 #    declares a macro in local scope
-#   use
-#    loads a package (fn are added to static overloading, constants, variables and structs not starting with _ are loaded into variable)
 
 # should we pass scope to eval? yes
 

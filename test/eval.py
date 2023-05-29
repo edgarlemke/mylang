@@ -133,7 +133,7 @@ def test_if_node_size():
 
 
 # __data__
-def test_data():
+def test_data_node_size():
     _test(
         i.getframeinfo(i.currentframe()).function,
         "",
