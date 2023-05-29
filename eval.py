@@ -457,42 +457,14 @@ def __meta__(node, scope):
 #
 
 
-# META INTERNALS
-#
-def __meta_fn__(node):
-    print(f"calling __meta_fn__: {node}")
-
-
-def __meta_set__(node):
-    print(f"calling __meta_set__: {node}")
-
-
-def __meta_let__(node):
-    print(f"calling __meta_let__: {node}")
-
-
-def __meta_macro__(node):
-    print(f"calling __meta_macro__: {node}")
-
-
-def __meta_if__(node):
-    print(f"calling __meta_if__: {node}")
-
-
-def __meta_data__(node):
-    print(f"calling __meta_data__: {node}")
-#
-#
-
-
 meta_scope = [
   [
-#    ["fn", "internal", __meta_fn__],  # declare a function
-#    ["set", "internal", __meta_set__],  # set a name in local scope
-#    ["let", "internal", __meta_let__],  # abbreviation of declaring function and calling it with arguments
-#    ["macro", "internal", __meta_macro__],  # set a new macro in local scope
-#    ["if", "internal", __meta_if__],  # compare conditions and return the appropriate list
-#    ["data", "internal", __meta_data__],  # return data not to be eval-uated
+    ["fn", "internal", __fn__],
+    ["let", "internal", __let__],
+    ["set", "internal", __set__],
+    ["macro", "internal", __macro__],
+    ["if", "internal", __if__],
+    ["data", "internal", __data__],
   ],
   [],
   None,
