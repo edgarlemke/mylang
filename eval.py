@@ -384,24 +384,36 @@ def validate_macro(node, scope):
         raise Exception(f"Wrong number of arguments for macro: {node}")
 
 
-def __if__(node):
+def __if__(node, scope):
     """
-Evaluates if the first list is equals (data (bool true)), if yes returns the second list, if no returns the third list.
     """
     print(f"calling __if__: {node}")
 
-    if_, condition_list, true_list, false_list = node
+    validate_if(node, scope)
 
-    result = eval(condition_list)
-    # print(f"result: {result}")
+    return []
 
-    is_true = result[0] == 'data' and result[1][0] == 'bool' and result[1][1] == 'true'
+#    if_, condition_list, true_list, false_list = node
+#
+#    result = eval(condition_list)
+#    # print(f"result: {result}")
+#
+#    is_true = result[0] == 'data' and result[1][0] == 'bool' and result[1][1] == 'true'
+#
+#    if is_true:
+#        return true_list
+#
+#    else:
+#        return false_list
 
-    if is_true:
-        return true_list
 
-    else:
-        return false_list
+def validate_if(node, scope):
+    # check if arguments number
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for if: {node}")
+
+    # check if condition is of type bool
+    pass
 
 
 # def __let__(node):
@@ -489,11 +501,10 @@ runtime_scope = [
     ["set", "internal", __set__],  # set a name in local scope
 #    ["let",   "internal", __let__  ], # abbreviation of declaring function and calling it with arguments
     ["macro", "internal", __macro__],  # set a new macro in local scope
-#    ["if",    "internal", __if__   ], # compare conditions and return the appropriate list
+    ["if", "internal", __if__],  # compare conditions and return the appropriate list
 #    ["data",  "internal", __data__ ], # return data not to be eval-uated
 #    ["use",   "internal", __use__  ], # load external package into local scope
 #    ["meta", "internal", __meta__],  # evalute expressions with meta scope
-
   ],
   [],
   None,
