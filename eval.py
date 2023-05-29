@@ -19,7 +19,7 @@ def eval(li, scope):
         expand = True
         new_li = li.copy()
         while expand:
-            new_li, found_macro = expand_macro(new_li)
+            new_li, found_macro = expand_macro(new_li, scope)
             # print(f"expand new_li: {new_li}")
             expand = found_macro
 
@@ -109,7 +109,7 @@ def call_internal(li, scope):
     return (li, False)
 
 
-def expand_macro(li):
+def expand_macro(li, scope):
     # print(f"expand_macro: {li}")
 
     new_li = li.copy()
@@ -120,7 +120,7 @@ def expand_macro(li):
         # print(f"LI index: {index} item: {item}")
 
         found_macro = False
-        for macro in macros:
+        for macro in scope[1]:
             # print(f"macro: {macro}")
 
             found_macro, full_match, bindings = match_macro(li, index, macro)
@@ -373,7 +373,7 @@ def __macro__(node, scope):
     new_expanded = join_quotes(expanded)
     # print(f"new_expanded: {new_expanded}")
 
-    macros.append([alias, new_syntax, new_expanded])
+    scope[1].append([alias, new_syntax, new_expanded])
 
     return []
 

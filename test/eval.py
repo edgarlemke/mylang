@@ -131,6 +131,16 @@ def test_macro_node_size():
     )
 
 
+def test_macro_expansion():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() (someop 1 2))\n",
+        "",
+        """(macro test ('a ! 'b) (someop 'a 'b))
+(1 ! 2)"""
+    )
+
+
 # __if__
 def test_if_node_size():
     _test(
