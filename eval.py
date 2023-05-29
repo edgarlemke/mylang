@@ -40,8 +40,8 @@ def eval(li, scope):
         li, called = call_fn(li, scope[0])
         li, called = call_internal(li, scope)
 
-#        if not called:
-#            print(f"#####  NOT CALLED: {li}")
+        if not called:
+            raise Exception(f"Invalid function or internal: {li}")
 
     return li
 
