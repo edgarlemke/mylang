@@ -416,23 +416,23 @@ def validate_if(node, scope):
     pass
 
 
-# def __let__(node):
-#    """
-#    Creates a local scope and bind the given variables to it, the evaluates it
-#    """
+def __let__(node, scope):
+    """
+    Shortcut for defining an anonymous function and calling it with the given arguments
+    """
 #    print(f"calling __let__: {node}")
-#
-#    let_, variables, code = node
-#
-#    new_scope = [
-#        variables,
-#        [],
-#        cur_scope,
-#        []
-#    ]
-#    cur_scope[3].append(new_scope)
-#
-#    print(f"scopes: {scopes}")
+
+    validate_let(node, scope)
+
+    let_, args, body = node
+
+    return []
+
+
+def validate_let(node, scope):
+    # check let arguments number
+    if len(node) != 3:
+        raise Exception(f"Wrong number of arguments for let: {node}")
 
 
 def __data__(node, scope):
@@ -501,8 +501,8 @@ meta_scope = [
 runtime_scope = [
   [
     ["fn", "internal", __fn__],
+    ["let", "internal", __let__],
     ["set", "internal", __set__],
-#    ["let",   "internal", __let__  ],
     ["macro", "internal", __macro__],
     ["if", "internal", __if__],
     ["data", "internal", __data__],

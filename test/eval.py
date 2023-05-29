@@ -43,11 +43,10 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 
     print("OK")
 
+
 #
 # RUNTIME
 # __fn__
-
-
 def test_fn():
     _test(
         i.getframeinfo(i.currentframe()).function,
@@ -81,6 +80,16 @@ def test_fn_ret_type():
         "",
         "Function return type has invalid type",
         "fn ((i8 x) (i8 y)) wrong ()"
+    )
+
+
+# __let__
+def test_let_node_size():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for let",
+        "let (i8 x 0) (body) wrong"
     )
 
 
