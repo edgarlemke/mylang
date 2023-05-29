@@ -449,8 +449,10 @@ def validate_data(node, scope):
         raise Exception(f"Wrong number of arguments for data: {node}")
 
 
-def __meta__(node):
-    print(f"calling __meta__: {node}")
+def __meta__(node, scope):
+    #    print(f"calling __meta__: {node}")
+
+    return eval(node[1:], meta_scope)
 #
 #
 
