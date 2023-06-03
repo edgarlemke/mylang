@@ -22,37 +22,6 @@ rules_list = [
     ["LIT", "\\w+"],
     ["LIT", "[0-9]+\\.[0-9]+"],
     ["LIT", "\\+|\\'|\\=|\\-|\\*|\\/|\\%|\\<|\\>|\\^|\\!"],
-
-#
-#    ["INT", "[0-9]+"],
-#    ["FLOAT", "[0-9]+\\.[0-9]+"],
-#    ["BOOL", "true|false"],
-#    ["STRUCT", "struct"],
-#
-#    ["NOP", "nop"],
-#
-#    # ["PKG", "pkg"],
-#    ["USE", "use"],
-#
-#    ["FN", "fn"],
-#    ["RET", "ret"],
-#
-#    ["SET", "set"],
-#    ["MUT", "mut"],
-#
-#    ["RES", "res"],
-#
-#    ["IF", "if"],
-#    ["ELSE", "else"],
-#    ["ELIF", "elif"],
-#
-#    ["WHILE", "while"],
-#
-#    ["FOR", "for"],
-#
-#    ["TYPEDEF", "typedef"],
-#
-#    ["HASH", "#"],
 ]
 
 

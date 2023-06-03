@@ -50,9 +50,9 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 def test_fn():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        """(fn ((i8 x) (i8 y)) i8 ())\n""",
+        """(fn ((int x) (int y)) int ())\n""",
         "",
-        "fn ((i8 x) (i8 y)) i8 ()"
+        "fn ((int x) (int y)) int ()"
     )
 
 
@@ -61,7 +61,7 @@ def test_fn_node_size():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for fn",
-        "fn ((ui8 x)) i8 () wrong"
+        "fn ((uint x)) int () wrong"
     )
 
 
@@ -70,7 +70,7 @@ def test_fn_args():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function argument has invalid type",
-        "fn ((wrong x) (wrong y)) i8 ()"
+        "fn ((wrong x) (wrong y)) int ()"
     )
 
 
@@ -79,7 +79,17 @@ def test_fn_ret_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function return type has invalid type",
-        "fn ((i8 x) (i8 y)) wrong ()"
+        "fn ((int x) (int y)) wrong ()"
+    )
+
+
+def test_fn_tipefy_int():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() ())\n",
+        "",
+        """(set myfn (fn ( ((int x)) int () ) ))
+(myfn 1234)"""
     )
 
 
@@ -89,7 +99,7 @@ def test_let_node_size():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for let",
-        "let (i8 x 0) (body) wrong"
+        "let (int x 0) (body) wrong"
     )
 
 
@@ -99,7 +109,7 @@ def test_set():
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
-        "set x i8 0"
+        "set x (int 0)"
     )
 
 
@@ -108,7 +118,7 @@ def test_set_node_size():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for set",
-        "set x i8 0 wrong"
+        "set x (int 0) wrong"
     )
 
 
@@ -117,7 +127,7 @@ def test_set_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Constant assignment has invalid type",
-        "set x wrong 0"
+        "set x (wrong 0)"
     )
 
 
@@ -139,6 +149,15 @@ def test_macro_expansion():
         """(macro test ('a ! 'b) (data ('a 'b)))
 (1 ! 2)"""
     )
+
+# def test_default_macros():
+#    _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "(() (1 2))\n",
+#        "",
+#        """(macro op_add ('a + 'b) (add('a 'b)))
+# (1 + 2)"""
+#    )
 
 
 # __if__

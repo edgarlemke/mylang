@@ -1,4 +1,5 @@
 import eval_types
+import re
 
 
 def eval(li, scope):
@@ -35,78 +36,85 @@ def eval(li, scope):
             li[key] = eval(item, scope)
 
     else:
-        # print(f"!!! {li}")
-        called = False
-        li, called = call_fn(li, scope[0])
-        li, called = call_internal(li, scope)
+        # get all names matching list's first value
+        name_matches = [n for n in scope[0] if n[0] == li[0]]
+#        print(f"name_matches: {match_name}")
 
-        if not called:
-            raise Exception(f"Invalid function or internal: {li}")
+        # check name_matches size
+        if len(name_matches) == 0:
+            raise Exception(f"Unassigned name: {li[0]}")
+        elif len(name_matches) > 1:
+            raise Exception(f"More than one name set, it's a bug! {li[0]}")
+
+        # get the only valid name
+        n = name_matches[0]
+
+        if n[1] in ["fn", "internal"]:
+            if len(li) == 1:
+                li = n[1:]
+
+            else:
+                if n[1] == "fn":
+                    li = call_fn(li, n, scope)
+                elif n[1] == "internal":
+                    li = n[2](li, scope)
+
+        else:
+            li = v[1:]
 
     return li
 
 
-def call_fn(li, variables):
-    funcs = [v for v in variables if v[1] == "fn"]
-    # print(f"funcs: {funcs}")
-    for fn in funcs:
-        name = fn[0]
+def call_fn(li, fn, scope):
+    name = fn[0]
+    methods = fn[2]
+    candidates = []
+    for m in methods:
+        #        print(f"method: {m}")
 
-        # if function name matches first item of list
-        if li[0] == name:
-            print(li)
-            methods = fn[2]
-            candidates = []
-            for m in methods:
-                # print(f"method: {m}")
+        # match types
+        match = True
+        for arg_i, arg in enumerate(li[1:]):
+            #            print(f"argument: {arg}")
 
-                # match types
-                notmatch = False
-                for arg_i, arg in enumerate(li[1:]):
-                    # print(f"argument: {arg}")
+            # break in methods without the arguments
+            if len(m[0]) < arg_i + 1:
+                match = False
+                break
 
-                    # break in methods without the arguments
-                    if len(m[0]) < arg_i + 1:
-                        notmatch = True
-                        break
+            marg = m[0][arg_i][0]
+#            print(f"marg: {marg}")
 
-                    marg = m[0][arg_i]
+            solved_arg = infer_type(arg)
+#            print(f"solved_arg: {solved_arg}")
 
-                    if arg[0][0] == "data":
-                        if arg[0][1][0] != marg[0]:
-                            notmatch = True
-                            break
+            if solved_arg[0] != marg[0]:
+                match = False
+                break
 
-                    else:
-                        print(f"WHAAAT")
+        if match:
+            candidates.append(m)
 
-                if not notmatch:
-                    candidates.append(m)
+    if len(candidates) == 0:
+        raise Exception(f"No candidate function found: {name}")
+    if len(candidates) > 1:
+        raise Exception(f"Method candidates mismatch: {name} {candidates}")
 
-            if len(candidates) > 1:
-                raise Exception(f"Method candidates mismatch: {name} {candidates}")
+    the_method = candidates[0][0]
+#    print(f"the_method: {the_method}")
 
-            if len(candidates) == 0:
-                # return (li, False)
-                continue  # skip to next fn
-
-            the_method = candidates[0]
-
-            return (eval(the_method[2]), True)
-
-    return (li, False)
+    return eval(the_method[2], scope)
 
 
-def call_internal(li, scope):
-    names = scope[0]
-    internals = [n for n in names if n[1] == "internal"]
-#    print(f"internals: {internals}")
-    for i in internals:
-        name = i[0]
-        if li[0] == name:
-            return (i[2](li, scope), True)
+def infer_type(arg):
+    if re.match("[0-9]+", arg):
+        return ["int", arg]
 
-    return (li, False)
+#    elif re.match("[0-9]+\\.[0-9]+", lit):
+#        return ["float", lit]
+#
+#    elif re.match("true|false", lit):
+#        return "bool"
 
 
 def expand_macro(li, scope):
@@ -257,64 +265,64 @@ def __set__(node, scope):
     set name type value
     """
 
-#    print(f"calling __set__ {node}")
+    # print(f"calling __set__ {node}")
 
     _validate_set(node, scope)
 
-    return []
+    names = scope[0]
+    set_, name, data = node
+    type_ = data[0]
 
-#    name = node[1]
-#    data = node[2]
-#    type_ = data[0]
-#
-#    if data[0] == "fn":
-#        value = list(data[1:4])
-#        all_fn = [(i, var) for i, var in enumerate(cur_scope[0]) if var[1] == "fn" and var[0] == name]
-#        # print(f"all_fn: {all_fn}")
-#
-#        if all_fn == []:
-#            cur_scope[0].append([name, type_, [value]])
-#
-#        else:
-#            match_fn = all_fn[0]
-#            i, var = match_fn
-#
-#            cur_scope[0][i][2].append(value)
-#
-#    else:
-#        value = data[1]
-#
-#        valid_value = None
-#        for T in eval_types.types:
-#            if T[0] == type_:
-#                valid_value = T[1](value)
-#
-#        # remove old value from variables
-#        for index, v in enumerate(variables):
-#            if v[0] == name:
-#                variables.remove(v)
-#            break
-#
-#        # insert new value into variables
-#        variables.append([name, type_, valid_value])
-#
-#    # print(f"variables after set: {variables}")
-#    retv = ["data", ["set", name, type_, value]]
-#    # print(f"returning {retv}")
-#    return retv
+    if data[0] == "fn":
+        value = list(data[1:4])
+        all_fn = [(i, var) for i, var in enumerate(names) if var[1] == "fn" and var[0] == name]
+        # print(f"all_fn: {all_fn}")
+
+        if all_fn == []:
+            names.append([name, type_, [value]])
+
+        else:
+            match_fn = all_fn[0]
+            i, var = match_fn
+
+            names[i][2].append(value)
+
+    else:
+        value = data[1]
+
+        valid_value = None
+        for T in eval_types.types:
+            if T[0] == type_:
+                valid_value = T[1](value)
+
+        # remove old value from names
+        for index, v in enumerate(names):
+            if v[0] == name:
+                names.remove(v)
+            break
+
+        # insert new value into names
+        names.append([name, type_, valid_value])
+
+    # print(f"names after set: {names}")
+    retv = ["data", [type_, value]]
+    # print(f"returning {retv}")
+    return []
 
 
 def _validate_set(node, scope):
     # check set arguments number
-    if len(node) != 4:
+    if len(node) != 3:
         raise Exception(f"Wrong number of arguments for set: {node}")
 
-    set_, name, type_, value = node
+    set_, name, data = node
+    type_ = data[0]
 
     types = [t[0] for t in scope[0] if t[1] == "type"]
+    exceptions = ["fn"]
 
     # check type
-    if type_ not in types:
+    if type_ not in types and type_ not in exceptions:
         raise Exception(f"Constant assignment has invalid type {type_} {node}")
 
     # check if value is valid for type
@@ -488,25 +496,28 @@ runtime_scope = [
 
 def _add_types():
     types = [
-      ["i8", "type", [1]],
-      ["i16", "type", [2]],
-      ["i32", "type", [4]],
-      ["i64", "type", [8]],
+#      ["i8", "type", [1]],
+#      ["i16", "type", [2]],
+#      ["i32", "type", [4]],
+#      ["i64", "type", [8]],
+      ['int', 'type', ['?']],  # signed int, register width
 
-      ["u8", "type", [1]],
-      ["u16", "type", [2]],
-      ["u32", "type", [4]],
-      ["u64", "type", [8]],
+#      ["u8", "type", [1]],
+#      ["u16", "type", [2]],
+#      ["u32", "type", [4]],
+#      ["u64", "type", [8]],
+      ['uint', 'type', ['?']],  # unsigned int, register width
 
       ["byte", "type", [1]],
       ["bool", "type", [1]],
 
-      ["f32", "type", [4]],
-      ["f64", "type", [8]],
+#      ["f32", "type", [4]],
+#      ["f64", "type", [8]],
+      ['float', 'type', ['?']],
 
       ["struct", "type", ['?']],
       ["enum", "type", ['?']],
-      ["ptr", "type", ['?']],
+      ["ptr", "type", ['?']],  # the size will probably be the same of int, have complementary type
     ]
 
     for s in [meta_scope, runtime_scope]:
