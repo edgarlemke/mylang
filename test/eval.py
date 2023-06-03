@@ -202,14 +202,14 @@ def test_macro_expansion():
 (1 ! 2)"""
     )
 
-# def test_default_macros():
-#    _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "(() (1 2))\n",
-#        "",
-#        """(macro op_add ('a + 'b) (add('a 'b)))
-# (1 + 2)"""
-#    )
+
+def test_default_macros():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() (1 2))\n",
+        "",
+        """(1 + 2)"""
+    )
 
 
 # __if__

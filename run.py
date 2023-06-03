@@ -19,6 +19,28 @@ def run(
     #    loaded_pkg_files=None
 ):
 
+    op_to_join = []
+    operators = [
+      ["+", "add"]
+    ]
+    for o in operators:
+        symbol, function = o
+        op_to_join.append(f"(macro op_{function} ('a {symbol} 'b) ({function} ('a 'b)))")
+
+    operators_expr = "\n".join(op_to_join)
+    op_li = get_list_from_expr(operators_expr)
+    # print(f"op_li: {op_li}")
+    eval.eval(op_li, None)
+
+    lic = get_list_from_expr(expr)
+    eval_li = eval.eval(lic, None)
+
+    print(list_.list_print(eval_li))
+
+    return eval_li
+
+
+def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     token_list = lex.tokenize(expr)
     if print_token_list:
         print(list_.list_print(token_list), end="")
@@ -91,9 +113,7 @@ def run(
     lic = remove(token_list)
     # print(f"lic {lic}")
 
-    eval_li = eval.eval(lic, None)
-
-    print(list_.list_print(eval_li))
+    return lic
 
 
 def read_file(src):

@@ -3,7 +3,7 @@ import re
 
 
 def eval(li, scope):
-    # print(f"eval {li} {scope}")
+    # print(f"\neval {li} {scope}")
 
     if scope is None:
         scope = runtime_scope
@@ -59,6 +59,7 @@ def eval(li, scope):
         if n[2] in ["fn", "internal"]:
             # len 1, so is a reference
             if len(li) == 1:
+                # print(f"fn ref {li}")
                 li = n[1:]
 
             # len > 1, so is a function call
@@ -360,19 +361,20 @@ def __set__(node, scope):
     set_, mutdecl, name, data = node
     type_ = data[0]
 
-    if data[0] == "fn":
+    if type_ == "fn":
         value = list(data[1:4])
         all_fn = [(i, var) for i, var in enumerate(names) if var[1] == "fn" and var[0] == name]
         # print(f"all_fn: {all_fn}")
 
         if all_fn == []:
+            # print(f"empty all_fn")
             names.append([name, mutdecl, type_, [value]])
 
         else:
             match_fn = all_fn[0]
             i, var = match_fn
 
-            names[i][2].append(value)
+            names[i][3].append(value)
 
     else:
         value = data[1]
@@ -396,7 +398,8 @@ def __set__(node, scope):
         names.append([name, mutdecl, type_, valid_value])
 
     # print(f"names after set: {names}")
-    retv = ["data", [type_, value]]
+
+    # retv = ["data", [type_, value]]
     # print(f"returning {retv}")
     return []
 
