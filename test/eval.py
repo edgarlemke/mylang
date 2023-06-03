@@ -86,7 +86,7 @@ def test_fn_ret_type():
 def test_fn_arg_type_infer_int():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() ())\n",
+        "()\n",
         "",
         """(set myfn (fn ( ((int x)) int () ) ))
 (myfn 1234)"""
@@ -96,7 +96,7 @@ def test_fn_arg_type_infer_int():
 def test_fn_arg_type_infer_float():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() ())\n",
+        "()\n",
         "",
         """(set myfn (fn ( ((float x)) float () ) ))
 (myfn 3.14)"""
@@ -106,7 +106,7 @@ def test_fn_arg_type_infer_float():
 def test_fn_arg_type_infer_bool_true():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() ())\n",
+        "()\n",
         "",
         """(set myfn (fn ( ((bool x)) bool () ) ))
 (myfn true)"""
@@ -116,7 +116,7 @@ def test_fn_arg_type_infer_bool_true():
 def test_fn_arg_type_infer_bool_false():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() ())\n",
+        "()\n",
         "",
         """(set myfn (fn ( ((bool x)) bool () ) ))
 (myfn false)"""
@@ -126,7 +126,7 @@ def test_fn_arg_type_infer_bool_false():
 def test_fn_arg_name():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() () ())\n",
+        "()\n",
         "",
         """(set myfn (fn ( ((bool x)) bool () ) ))
 (set mybool (bool true))
@@ -137,7 +137,7 @@ def test_fn_arg_name():
 def test_fn_arg_fncall():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() () ())\n",
+        "()\n",
         "",
         """(set myfn (fn ( ((bool x)) bool () ) ))
 (set retbool (fn (() bool (data (bool true)) ) ))
@@ -196,7 +196,7 @@ def test_macro_node_size():
 def test_macro_expansion():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() (1 2))\n",
+        "((1 2))\n",
         "",
         """(macro test ('a ! 'b) (data ('a 'b)))
 (1 ! 2)"""

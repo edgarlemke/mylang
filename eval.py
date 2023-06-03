@@ -3,13 +3,13 @@ import re
 
 
 def eval(li, scope):
-    print(f"eval {li} {scope}")
+    # print(f"eval {li} {scope}")
 
     if scope is None:
         scope = runtime_scope
 
     if len(li) == 0:
-        print(f"exiting eval {li}")
+        # print(f"exiting eval {li}")
         return li
 
 #    if li[0] == "data":
@@ -33,8 +33,13 @@ def eval(li, scope):
     is_list = isinstance(li[0], list)
 
     if is_list:
+        evaled_li = []
         for key, item in enumerate(li):
-            li[key] = eval(item, scope)
+            # li[key] = eval(item, scope)
+            e = eval(item, scope)
+            if len(e) > 0:
+                evaled_li.append(e)
+        li = evaled_li
 
     else:
         # get all names matching list's first value
@@ -51,35 +56,39 @@ def eval(li, scope):
         n = name_matches[0]
 
         if n[1] in ["fn", "internal"]:
+            # len 1, so is a reference
             if len(li) == 1:
                 li = n[1:]
 
+            # len > 1, so is a function call
             else:
                 if n[1] == "fn":
-                    li = call_fn(li, n, scope)
+                    x = call_fn(li, n, scope)
+                    li = x
                 elif n[1] == "internal":
-                    li = n[2](li, scope)
+                    x = n[2](li, scope)
+                    li = x
 
         else:
             li = v[1:]
 
-    print(f"exiting eval {li}")
+    # print(f"exiting eval {li}")
     return li
 
 
 def call_fn(li, fn, scope):
-    print(f"call_fn {li}")
+    # print(f"call_fn {li}")
 
     name = fn[0]
     methods = fn[2]
     candidates = []
     for m in methods:
-        print(f"method: {m}")
+        # print(f"method: {m}")
 
         # match types
         match = True
         for arg_i, arg in enumerate(li[1:]):
-            print(f"argument: {arg_i} {arg}")
+            # print(f"argument: {arg_i} {arg}")
 
             # break in methods without the arguments
             if len(m[0]) < arg_i + 1:
@@ -114,7 +123,7 @@ def call_fn(li, fn, scope):
 
             else:
                 # print(f"solved_arg: {solved_arg}")
-                print(f"m[0]: {m[0]}")
+                # print(f"m[0]: {m[0]}")
                 marg = m[0][arg_i][0]
                 # print(f"marg: {marg}")
 
@@ -134,15 +143,15 @@ def call_fn(li, fn, scope):
 #    print(f"the_method: {the_method}")
 
     retv = eval(the_method[2], scope)
-    print(f"exiting call_fn {li}")
+    # print(f"exiting call_fn {li}")
     return retv
 
 
 def get_name_value(name, scope):
     def iterup(scope):
-        print(f"interup {scope}")
+        # print(f"interup {scope}")
         for n in scope[0]:
-            print(f"n: {n}")
+            # print(f"n: {n}")
             if n[0] == name:
                 return list(n[1:])
 
@@ -341,7 +350,7 @@ def __set__(node, scope):
     set name type value
     """
 
-    print(f"calling __set__ {node}")
+    # print(f"calling __set__ {node}")
 
     _validate_set(node, scope)
 
