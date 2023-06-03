@@ -3,12 +3,13 @@ import re
 
 
 def eval(li, scope):
-    #    print(f"eval {li} {scope}")
+    print(f"eval {li} {scope}")
 
     if scope is None:
         scope = runtime_scope
 
     if len(li) == 0:
+        print(f"exiting eval {li}")
         return li
 
 #    if li[0] == "data":
@@ -62,45 +63,64 @@ def eval(li, scope):
         else:
             li = v[1:]
 
+    print(f"exiting eval {li}")
     return li
 
 
 def call_fn(li, fn, scope):
+    print(f"call_fn {li}")
+
     name = fn[0]
     methods = fn[2]
     candidates = []
     for m in methods:
-        # print(f"method: {m}")
+        print(f"method: {m}")
 
         # match types
         match = True
         for arg_i, arg in enumerate(li[1:]):
-            # print(f"argument: {arg}")
+            print(f"argument: {arg_i} {arg}")
 
             # break in methods without the arguments
             if len(m[0]) < arg_i + 1:
                 match = False
                 break
 
-            marg = m[0][arg_i][0]
-            # print(f"marg: {marg}")
-
+            # solve argument
             solved_arg = None
-            name_value = get_name_value(arg, scope)
-            found_value = name_value != []
 
-            # print(f"name_value: {name_value}")
-
-            if found_value:
-                solved_arg = name_value
+            is_list = isinstance(arg, list)
+            if is_list:
+                solved_arg = eval(arg, scope)
 
             else:
-                solved_arg = infer_type(arg)
+                name_value = get_name_value(arg, scope)
+                found_value = name_value != []
 
-            # print(f"solved_arg: {solved_arg}")
-            if solved_arg is None or solved_arg[0] != marg[0]:
+                # print(f"name_value: {name_value}")
+
+                if found_value:
+                    solved_arg = name_value
+
+                else:
+                    solved_arg = infer_type(arg)
+
+            if solved_arg is None:
                 match = False
                 break
+
+            if len(solved_arg) == 0:
+                pass
+
+            else:
+                # print(f"solved_arg: {solved_arg}")
+                print(f"m[0]: {m[0]}")
+                marg = m[0][arg_i][0]
+                # print(f"marg: {marg}")
+
+                if solved_arg[0] != marg[0]:
+                    match = False
+                    break
 
         if match:
             candidates.append(m)
@@ -113,13 +133,16 @@ def call_fn(li, fn, scope):
     the_method = candidates[0][0]
 #    print(f"the_method: {the_method}")
 
-    return eval(the_method[2], scope)
+    retv = eval(the_method[2], scope)
+    print(f"exiting call_fn {li}")
+    return retv
 
 
 def get_name_value(name, scope):
     def iterup(scope):
+        print(f"interup {scope}")
         for n in scope[0]:
-            # print(f"n: {n}")
+            print(f"n: {n}")
             if n[0] == name:
                 return list(n[1:])
 
@@ -318,7 +341,7 @@ def __set__(node, scope):
     set name type value
     """
 
-    # print(f"calling __set__ {node}")
+    print(f"calling __set__ {node}")
 
     _validate_set(node, scope)
 

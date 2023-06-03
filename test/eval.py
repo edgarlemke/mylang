@@ -134,6 +134,17 @@ def test_fn_arg_name():
     )
 
 
+def test_fn_arg_fncall():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() () ())\n",
+        "",
+        """(set myfn (fn ( ((bool x)) bool () ) ))
+(set retbool (fn (() bool (data (bool true)) ) ))
+(myfn (retbool ()))"""
+    )
+
+
 # __let__
 def test_let_node_size():
     _test(
