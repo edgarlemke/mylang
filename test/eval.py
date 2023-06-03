@@ -102,6 +102,26 @@ def test_fn_tipefy_float():
 (myfn 3.14)"""
     )
 
+
+def test_fn_tipefy_bool_true():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() ())\n",
+        "",
+        """(set myfn (fn ( ((bool x)) bool () ) ))
+(myfn true)"""
+    )
+
+
+def test_fn_tipefy_bool_false():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() ())\n",
+        "",
+        """(set myfn (fn ( ((bool x)) bool () ) ))
+(myfn false)"""
+    )
+
 # __let__
 
 

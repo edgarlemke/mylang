@@ -119,6 +119,11 @@ def infer_type(arg):
     if m:
         candidates.append([m, "float"])
 
+    bool_regexp = "true|false"
+    m = re.match(bool_regexp, arg)
+    if m:
+        candidates.append([m, "bool"])
+
     biggest = None
     for c in candidates:
         if biggest is None:
