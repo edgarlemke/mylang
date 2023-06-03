@@ -44,7 +44,7 @@ def eval(li, scope):
     else:
         # get all names matching list's first value
         name_matches = [n for n in scope[0] if n[0] == li[0]]
-#        print(f"name_matches: {match_name}")
+        # print(f"name_matches: {name_matches}")
 
         # check name_matches size
         if len(name_matches) == 0:
@@ -54,23 +54,25 @@ def eval(li, scope):
 
         # get the only valid name
         n = name_matches[0]
+        # print(f"n: {n}")
 
-        if n[1] in ["fn", "internal"]:
+        if n[2] in ["fn", "internal"]:
             # len 1, so is a reference
             if len(li) == 1:
                 li = n[1:]
 
             # len > 1, so is a function call
             else:
-                if n[1] == "fn":
+                if n[2] == "fn":
                     x = call_fn(li, n, scope)
                     li = x
-                elif n[1] == "internal":
-                    x = n[2](li, scope)
+                elif n[2] == "internal":
+                    # print(f"!!! internal")
+                    x = n[3](li, scope)
                     li = x
 
         else:
-            li = v[1:]
+            li = n[1:]
 
     # print(f"exiting eval {li}")
     return li
@@ -80,7 +82,7 @@ def call_fn(li, fn, scope):
     # print(f"call_fn {li}")
 
     name = fn[0]
-    methods = fn[2]
+    methods = fn[3]
     candidates = []
     for m in methods:
         # print(f"method: {m}")
@@ -105,8 +107,6 @@ def call_fn(li, fn, scope):
             else:
                 name_value = get_name_value(arg, scope)
                 found_value = name_value != []
-
-                # print(f"name_value: {name_value}")
 
                 if found_value:
                     solved_arg = name_value
@@ -153,7 +153,7 @@ def get_name_value(name, scope):
         for n in scope[0]:
             # print(f"n: {n}")
             if n[0] == name:
-                return list(n[1:])
+                return list(n[2:])
 
         # didn't return found value...
 
@@ -329,7 +329,7 @@ def validate_fn(node, scope):
         raise Exception(f"Wrong number of arguments for fn: {node}")
 
     fn, args, ret_type, body = node
-    types = [t[0] for t in scope[0] if t[1] == "type"]
+    types = [t[0] for t in scope[0] if t[2] == "type"]
 
     # check if types of the arguments are valid
     for arg in args:
@@ -347,7 +347,9 @@ def __set__(node, scope):
     Validate set i.e. constant setting.
 
     Syntax:
-    set name type value
+    set name mutability (type value)
+
+    mutablity values can be "const" or "mut", without the quotes
     """
 
     # print(f"calling __set__ {node}")
@@ -355,7 +357,7 @@ def __set__(node, scope):
     _validate_set(node, scope)
 
     names = scope[0]
-    set_, name, data = node
+    set_, mutdecl, name, data = node
     type_ = data[0]
 
     if data[0] == "fn":
@@ -364,7 +366,7 @@ def __set__(node, scope):
         # print(f"all_fn: {all_fn}")
 
         if all_fn == []:
-            names.append([name, type_, [value]])
+            names.append([name, mutdecl, type_, [value]])
 
         else:
             match_fn = all_fn[0]
@@ -376,18 +378,22 @@ def __set__(node, scope):
         value = data[1]
 
         valid_value = None
-        for T in [t for t in scope[0] if t[1] == "type"]:
+        for T in [t for t in scope[0] if t[2] == "type"]:
             if T[0] == type_:
                 valid_value = value
 
         # remove old value from names
         for index, v in enumerate(names):
             if v[0] == name:
-                names.remove(v)
+                if v[1] == "const":
+                    raise Exception("Trying to reassign constant: {node}")
+
+                elif v[1] == "mut":
+                    names.remove(v)
             break
 
         # insert new value into names
-        names.append([name, type_, valid_value])
+        names.append([name, mutdecl, type_, valid_value])
 
     # print(f"names after set: {names}")
     retv = ["data", [type_, value]]
@@ -397,13 +403,13 @@ def __set__(node, scope):
 
 def _validate_set(node, scope):
     # check set arguments number
-    if len(node) != 3:
+    if len(node) != 4:
         raise Exception(f"Wrong number of arguments for set: {node}")
 
-    set_, name, data = node
+    set_, mutdecl, name, data = node
     type_ = data[0]
 
-    types = [t[0] for t in scope[0] if t[1] == "type"]
+    types = [t[0] for t in scope[0] if t[2] == "type"]
     exceptions = ["fn"]
 
     # check type
@@ -552,12 +558,12 @@ def __meta__(node, scope):
 
 meta_scope = [
   [
-    ["fn", "internal", __fn__],
-    ["let", "internal", __let__],
-    ["set", "internal", __set__],
-    ["macro", "internal", __macro__],
-    ["if", "internal", __if__],
-    ["data", "internal", __data__],
+    ["fn", "mut", "internal", __fn__],
+    ["let", "mut", "internal", __let__],
+    ["set", "mut", "internal", __set__],
+    ["macro", "mut", "internal", __macro__],
+    ["if", "mut", "internal", __if__],
+    ["data", "mut", "internal", __data__],
   ],
   [],
   None,
@@ -565,13 +571,13 @@ meta_scope = [
 ]
 runtime_scope = [
   [
-    ["fn", "internal", __fn__],
-    ["let", "internal", __let__],
-    ["set", "internal", __set__],
-    ["macro", "internal", __macro__],
-    ["if", "internal", __if__],
-    ["data", "internal", __data__],
-    ["meta", "internal", __meta__],
+    ["fn", "mut", "internal", __fn__],
+    ["let", "mut", "internal", __let__],
+    ["set", "mut", "internal", __set__],
+    ["macro", "mut", "internal", __macro__],
+    ["if", "mut", "internal", __if__],
+    ["data", "mut", "internal", __data__],
+    ["meta", "mut", "internal", __meta__],
   ],
   [],
   None,
@@ -581,28 +587,28 @@ runtime_scope = [
 
 def _add_types():
     types = [
-#      ["i8", "type", [1]],
-#      ["i16", "type", [2]],
-#      ["i32", "type", [4]],
-#      ["i64", "type", [8]],
-      ['int', 'type', ['?']],  # signed int, register width
+#      ["i8", "mut", "type", [1]],
+#      ["i16", "mut", "type", [2]],
+#      ["i32", "mut", "type", [4]],
+#      ["i64", "mut", "type", [8]],
+      ['int', "mut", 'type', ['?']],  # signed int, register width
 
-#      ["u8", "type", [1]],
-#      ["u16", "type", [2]],
-#      ["u32", "type", [4]],
-#      ["u64", "type", [8]],
-      ['uint', 'type', ['?']],  # unsigned int, register width
+#      ["u8", "mut", "type", [1]],
+#      ["u16", "mut", "type", [2]],
+#      ["u32", "mut", "type", [4]],
+#      ["u64", "mut", "type", [8]],
+      ['uint', "mut", 'type', ['?']],  # unsigned int, register width
 
-      ["byte", "type", [1]],
-      ["bool", "type", [1]],
+      ["byte", "mut", "type", [1]],
+      ["bool", "mut", "type", [1]],
 
-#      ["f32", "type", [4]],
-#      ["f64", "type", [8]],
-      ['float', 'type', ['?']],
+#      ["f32", "mut", "type", [4]],
+#      ["f64", "mut", "type", [8]],
+      ['float', "mut", 'type', ['?']],
 
-      ["struct", "type", ['?']],
-      ["enum", "type", ['?']],
-      ["ptr", "type", ['?']],  # the size will probably be the same of int, have complementary type
+      ["struct", "mut", "type", ['?']],
+      ["enum", "mut", "type", ['?']],
+      ["ptr", "mut", "type", ['?']],  # the size will probably be the same of int, have complementary type
     ]
 
     for s in [meta_scope, runtime_scope]:

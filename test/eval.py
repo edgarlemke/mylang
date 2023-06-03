@@ -88,7 +88,7 @@ def test_fn_arg_type_infer_int():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set myfn (fn ( ((int x)) int () ) ))
+        """(set const myfn (fn ( ((int x)) int () ) ))
 (myfn 1234)"""
     )
 
@@ -98,7 +98,7 @@ def test_fn_arg_type_infer_float():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set myfn (fn ( ((float x)) float () ) ))
+        """(set const myfn (fn ( ((float x)) float () ) ))
 (myfn 3.14)"""
     )
 
@@ -108,7 +108,7 @@ def test_fn_arg_type_infer_bool_true():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set myfn (fn ( ((bool x)) bool () ) ))
+        """(set const myfn (fn ( ((bool x)) bool () ) ))
 (myfn true)"""
     )
 
@@ -118,7 +118,7 @@ def test_fn_arg_type_infer_bool_false():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set myfn (fn ( ((bool x)) bool () ) ))
+        """(set const myfn (fn ( ((bool x)) bool () ) ))
 (myfn false)"""
     )
 
@@ -128,8 +128,8 @@ def test_fn_arg_name():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set myfn (fn ( ((bool x)) bool () ) ))
-(set mybool (bool true))
+        """(set const myfn (fn ( ((bool x)) bool () ) ))
+(set const mybool (bool true))
 (myfn mybool)"""
     )
 
@@ -139,8 +139,8 @@ def test_fn_arg_fncall():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set myfn (fn ( ((bool x)) bool () ) ))
-(set retbool (fn (() bool (data (bool true)) ) ))
+        """(set const myfn (fn ( ((bool x)) bool () ) ))
+(set const retbool (fn (() bool (data (bool true)) ) ))
 (myfn (retbool ()))"""
     )
 
@@ -156,12 +156,12 @@ def test_let_node_size():
 
 
 # __set__
-def test_set():
+def test_set_const():
     _test(
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
-        "set x (int 0)"
+        "set const x (int 0)"
     )
 
 
@@ -170,7 +170,7 @@ def test_set_node_size():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for set",
-        "set x (int 0) wrong"
+        "set const x (int 0) wrong"
     )
 
 
@@ -179,7 +179,7 @@ def test_set_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Constant assignment has invalid type",
-        "set x (wrong 0)"
+        "set const x (wrong 0)"
     )
 
 
