@@ -83,7 +83,7 @@ def test_fn_ret_type():
     )
 
 
-def test_fn_type_infer_int():
+def test_fn_arg_type_infer_int():
     _test(
         i.getframeinfo(i.currentframe()).function,
         "(() ())\n",
@@ -93,7 +93,7 @@ def test_fn_type_infer_int():
     )
 
 
-def test_fn_type_infer_float():
+def test_fn_arg_type_infer_float():
     _test(
         i.getframeinfo(i.currentframe()).function,
         "(() ())\n",
@@ -103,7 +103,7 @@ def test_fn_type_infer_float():
     )
 
 
-def test_fn_type_infer_bool_true():
+def test_fn_arg_type_infer_bool_true():
     _test(
         i.getframeinfo(i.currentframe()).function,
         "(() ())\n",
@@ -113,13 +113,24 @@ def test_fn_type_infer_bool_true():
     )
 
 
-def test_fn_type_infer_bool_false():
+def test_fn_arg_type_infer_bool_false():
     _test(
         i.getframeinfo(i.currentframe()).function,
         "(() ())\n",
         "",
         """(set myfn (fn ( ((bool x)) bool () ) ))
 (myfn false)"""
+    )
+
+
+def test_fn_arg_name():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() () ())\n",
+        "",
+        """(set myfn (fn ( ((bool x)) bool () ) ))
+(set mybool (bool true))
+(myfn mybool)"""
     )
 
 

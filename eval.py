@@ -85,10 +85,20 @@ def call_fn(li, fn, scope):
             marg = m[0][arg_i][0]
             # print(f"marg: {marg}")
 
-            solved_arg = infer_type(arg)
-            # print(f"solved_arg: {solved_arg}")
+            solved_arg = None
+            name_value = get_name_value(arg, scope)
+            found_value = name_value != []
 
-            if solved_arg[0] != marg[0]:
+            # print(f"name_value: {name_value}")
+
+            if found_value:
+                solved_arg = name_value
+
+            else:
+                solved_arg = infer_type(arg)
+
+            # print(f"solved_arg: {solved_arg}")
+            if solved_arg is None or solved_arg[0] != marg[0]:
                 match = False
                 break
 
@@ -104,6 +114,25 @@ def call_fn(li, fn, scope):
 #    print(f"the_method: {the_method}")
 
     return eval(the_method[2], scope)
+
+
+def get_name_value(name, scope):
+    def iterup(scope):
+        for n in scope[0]:
+            # print(f"n: {n}")
+            if n[0] == name:
+                return list(n[1:])
+
+        # didn't return found value...
+
+        # if has parent scope, iterup
+        if scope[2] is not None:
+            return iterup(scope[2])
+        # else, return empty list
+        else:
+            return []
+
+    return iterup(scope)
 
 
 def infer_type(arg):
@@ -315,9 +344,9 @@ def __set__(node, scope):
         value = data[1]
 
         valid_value = None
-        for T in eval_types.types:
+        for T in [t for t in scope[0] if t[1] == "type"]:
             if T[0] == type_:
-                valid_value = T[1](value)
+                valid_value = value
 
         # remove old value from names
         for index, v in enumerate(names):
