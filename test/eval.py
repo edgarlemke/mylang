@@ -93,7 +93,18 @@ def test_fn_tipefy_int():
     )
 
 
+def test_fn_tipefy_float():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(() ())\n",
+        "",
+        """(set myfn (fn ( ((float x)) float () ) ))
+(myfn 3.14)"""
+    )
+
 # __let__
+
+
 def test_let_node_size():
     _test(
         i.getframeinfo(i.currentframe()).function,

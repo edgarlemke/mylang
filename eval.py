@@ -70,12 +70,12 @@ def call_fn(li, fn, scope):
     methods = fn[2]
     candidates = []
     for m in methods:
-        #        print(f"method: {m}")
+        # print(f"method: {m}")
 
         # match types
         match = True
         for arg_i, arg in enumerate(li[1:]):
-            #            print(f"argument: {arg}")
+            # print(f"argument: {arg}")
 
             # break in methods without the arguments
             if len(m[0]) < arg_i + 1:
@@ -83,10 +83,10 @@ def call_fn(li, fn, scope):
                 break
 
             marg = m[0][arg_i][0]
-#            print(f"marg: {marg}")
+            # print(f"marg: {marg}")
 
             solved_arg = infer_type(arg)
-#            print(f"solved_arg: {solved_arg}")
+            # print(f"solved_arg: {solved_arg}")
 
             if solved_arg[0] != marg[0]:
                 match = False
@@ -107,14 +107,33 @@ def call_fn(li, fn, scope):
 
 
 def infer_type(arg):
-    if re.match("[0-9]+", arg):
-        return ["int", arg]
+    candidates = []
 
-#    elif re.match("[0-9]+\\.[0-9]+", lit):
-#        return ["float", lit]
-#
-#    elif re.match("true|false", lit):
-#        return "bool"
+    int_regexp = "[0-9]+"
+    m = re.match(int_regexp, arg)
+    if m:
+        candidates.append([m, "int"])
+
+    float_regexp = "[0-9]+\\.[0-9]+"
+    m = re.match(float_regexp, arg)
+    if m:
+        candidates.append([m, "float"])
+
+    biggest = None
+    for c in candidates:
+        if biggest is None:
+            biggest = c
+        else:
+            if len(c[0].group()) > len(biggest[0].group()):
+                biggest = c
+
+            elif len(c[0].group()) == len(biggest[0].group()):
+                raise Exception("Two candidates with same size!")
+
+    if biggest is None:
+        return None
+
+    return [biggest[1], arg]
 
 
 def expand_macro(li, scope):
