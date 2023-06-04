@@ -19,18 +19,7 @@ def run(
     #    loaded_pkg_files=None
 ):
 
-    op_to_join = []
-    operators = [
-      ["+", "add"]
-    ]
-    for o in operators:
-        symbol, function = o
-        op_to_join.append(f"(macro op_{function} ('a {symbol} 'b) ({function} ('a 'b)))")
-
-    operators_expr = "\n".join(op_to_join)
-    op_li = get_list_from_expr(operators_expr)
-    # print(f"op_li: {op_li}")
-    eval.eval(op_li, None)
+    setup_env()
 
     lic = get_list_from_expr(expr)
     eval_li = eval.eval(lic, None)
@@ -114,6 +103,33 @@ def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     # print(f"lic {lic}")
 
     return lic
+
+
+def setup_env():
+    # Macros declared first are matched first...
+    default_macros = """
+(macro op_mul ('a * 'b) (mul ('a 'b)))
+(macro op_div ('a / 'b) (div ('a 'b)))
+(macro op_mod ('a % 'b) (mod ('a 'b)))
+
+(macro op_add ('a + 'b) (add ('a 'b)))
+(macro op_sub ('a - 'b) (sub ('a 'b)))
+
+(macro op_eq  ('a == 'b) (eq  ('a 'b)))
+(macro op_neq ('a != 'b) (neq ('a 'b)))
+(macro op_gt  ('a > 'b)  (gt  ('a 'b)))
+(macro op_gte ('a >= 'b) (gte ('a 'b)))
+(macro op_lt  ('a < 'b)  (lt  ('a 'b)))
+(macro op_lte ('a <= 'b) (lte ('a 'b)))
+
+(macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c)))
+
+(macro op_set ('a = 'b) (set 'a 'b))
+"""
+
+    op_li = get_list_from_expr(default_macros)
+    # print(f"op_li: {op_li}")
+    eval.eval(op_li, None)
 
 
 def read_file(src):
