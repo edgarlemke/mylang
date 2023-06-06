@@ -20,9 +20,12 @@ def _test(fn_name, expected, expr):
     stdout_dec = stdout.decode()
     stdout_ok = (stdout_dec == expected)
 
+    stderr_dec = stderr.decode()
+    stderr_ok = stderr_dec != ""
+
     err = False
-    if stderr != b'':
-        print(f"FAIL - stderr not empty: {stderr}")
+    if stderr_ok:
+        print(f"FAIL - stderr not empty: {stderr_dec}")
         err = True
 
     if not stdout_ok:
@@ -358,59 +361,64 @@ def test_no_token_match():
     print("OK")
 
 
-def test_check_nontokenized_start():
-    print(
-        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
-        end="",
-        flush=True)
+# def test_check_nontokenized_start():
+#    print(
+#        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
+#        end="",
+#        flush=True)
+#
+#    stdout, stderr = _popen("@()")
+#    msg = "Exception: Non-tokenized range at start: 0 1  \"@\""
+#
+#    if not (msg in stderr):
+#        print(
+#            f"FAIL - non-tokenized @ char at start\nstderr: {stderr}",
+#            flush=True)
+#
+#    print("OK")
+#
+#
+# def test_check_nontokenized_middle():
+#    print(
+#        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
+#        end="",
+#        flush=True)
+#
+#    stdout, stderr = _popen("(@)")
+#    msg = "Exception: Non-tokenized range at middle: 1 2  \"@\""
+#
+#    if not (msg in stderr):
+#        print(
+#            f"FAIL - non-tokenized @ char at middle\nstderr: {stderr}",
+#            flush=True)
+#
+#    print("OK")
+#
+#
+# def test_check_nontokenized_end():
+#    print(
+#        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
+#        end="",
+#        flush=True)
+#
+#    stdout, stderr = _popen("()@")
+#    msg = "Exception: Non-tokenized range at end: 2 3  \"@\""
+#
+#    if not (msg in stderr):
+#        print(
+#            f"FAIL - non-tokenized @ char at end\nstderr: {stderr}",
+#            flush=True)
+#
+#    print("OK")
 
-    stdout, stderr = _popen("@()")
-    msg = "Exception: Non-tokenized range at start: 0 1  \"@\""
 
-    if not (msg in stderr):
-        print(
-            f"FAIL - non-tokenized @ char at start\nstderr: {stderr}",
-            flush=True)
-        exit()
-
-    print("OK")
-
-
-def test_check_nontokenized_middle():
-    print(
-        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
-        end="",
-        flush=True)
-
-    stdout, stderr = _popen("(@)")
-    msg = "Exception: Non-tokenized range at middle: 1 2  \"@\""
-
-    if not (msg in stderr):
-        print(
-            f"FAIL - non-tokenized @ char at middle\nstderr: {stderr}",
-            flush=True)
-        exit()
-
-    print("OK")
-
-
-def test_check_nontokenized_end():
-    print(
-        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
-        end="",
-        flush=True)
-
-    stdout, stderr = _popen("()@")
-    msg = "Exception: Non-tokenized range at end: 2 3  \"@\""
-
-    if not (msg in stderr):
-        print(
-            f"FAIL - non-tokenized @ char at end\nstderr: {stderr}",
-            flush=True)
-        # print(stdout)
-        exit()
-
-    print("OK")
+def test_single_line_comment():
+    _test(
+        i.getframeinfo(
+            i.currentframe()).function,
+        """((TOKEN LIT 15 19 3.14))\n""",
+        """# some comment
+3.14""")
 
 
 def test_check_no_argument():

@@ -18,10 +18,12 @@ rules_list = [
     ["BREAKLINE", "\n"],
     ["TAB", "\t"],
     ["QUOTE", "\""],
+    ["HASH", r'#'],
 
-    ["LIT", "\\w+"],
-    ["LIT", "[0-9]+\\.[0-9]+"],
-    ["LIT", "\\+|\\'|\\=|\\-|\\*|\\/|\\%|\\<|\\>|\\^|\\!"],
+    ["LIT", r'[^()\s\n\t#"]+'],
+    # ["LIT", "\\w+"],
+    # ["LIT", "[0-9]+\\.[0-9]+"],
+    # ["LIT", "\\+|\\'|\\=|\\-|\\*|\\/|\\%|\\<|\\>|\\^|\\!"],
 ]
 
 
@@ -39,12 +41,14 @@ def tokenize(code):
 
     token_list = _match_lit_tokens(token_list, code)
     token_list = _decide_dup_tokens(token_list, ["LIT"])
-#
+
     # sort token_list list by start position of the token
     token_list.sort(key=lambda x: x[2])
+    token_list = _remove_comments(token_list)
+#
 #
 #    # check for non-tokenized ranges
-    _check_nontokenized(token_list, code)
+#    _check_nontokenized(token_list, code)
 #
 #    token_list = _match_singleline_comments(token_list)
 #
@@ -79,6 +83,49 @@ def _match_tokens(code):
             token_list.append(token)
 
     return token_list
+
+
+def _remove_comments(token_list):
+    new_token_list = token_list.copy()
+
+#    hash_tokens = [(index, t) for index, t in enumerate(token_list) if t[1] == "HASH"]
+#
+#    to_remove = []
+#
+#    for index, t in hash_tokens:
+#        for new_index, token in enumerate(new_token_list[index:]):
+#            print(f"token: {token}")
+#            #if token[1] == "BREAKLINE":
+#            #    to_remove.append([index, new_index])
+#            #    break
+#
+#    print(f"to_remove: {to_remove}")
+
+    # get tokens to remove
+    to_remove = []
+    remove = False
+    for index, t in enumerate(new_token_list):
+        # set remove if hash is found
+        if t[1] == "HASH":
+            remove = True
+
+        if remove:
+            to_remove.append(index)
+
+        # unset remove if breakline is found
+        if t[1] == "BREAKLINE" and remove:
+            remove = False
+
+    # print(f"old token_list: {new_token_list}")
+    # print(f"to_remove: {to_remove}")
+
+    # remove tokens in reversed order to preserve indexes
+    for i in reversed(to_remove):
+        new_token_list.pop(i)
+
+    # print(f"new_token_list: {new_token_list}")
+
+    return new_token_list
 
 
 def _match_lit_tokens(token_list, code):
@@ -183,36 +230,36 @@ def _decide_dup_tokens(token_list, to_remove):
 #    return token_list_iter
 
 
-def _check_nontokenized(token_list, code):
-    last_t = None
-    for t in token_list:
-        t_start = int(t[2])
-
-        # check for the start
-        if last_t is None:
-            if t_start > 0:
-                ntrange = code[0:t_start]
-                raise Exception(
-                    f"Non-tokenized range at start: 0 {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
-
-        # check for the middle
-        else:
-            last_t_end = int(last_t[3])
-
-            if t_start > last_t_end:
-                ntrange = code[last_t_end:t_start]
-                raise Exception(
-                    f"Non-tokenized range at middle: {last_t_end} {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
-
-        last_t = t
-
-    # check for the end
-    t_end = int(t[3])
-    code_end = len(code)
-    if t_end < code_end:
-        ntrange = code[t_end:code_end]
-        raise Exception(
-            f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
+# def _check_nontokenized(token_list, code):
+#    last_t = None
+#    for t in token_list:
+#        t_start = int(t[2])
+#
+#        # check for the start
+#        if last_t is None:
+#            if t_start > 0:
+#                ntrange = code[0:t_start]
+#                raise Exception(
+#                    f"Non-tokenized range at start: 0 {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
+#
+#        # check for the middle
+#        else:
+#            last_t_end = int(last_t[3])
+#
+#            if t_start > last_t_end:
+#                ntrange = code[last_t_end:t_start]
+#                raise Exception(
+#                    f"Non-tokenized range at middle: {last_t_end} {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
+#
+#        last_t = t
+#
+#    # check for the end
+#    t_end = int(t[3])
+#    code_end = len(code)
+#    if t_end < code_end:
+#        ntrange = code[t_end:code_end]
+#        raise Exception(
+#            f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
 
 
 def _sort_indentation(token_list):
