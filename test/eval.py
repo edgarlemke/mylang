@@ -232,6 +232,19 @@ def test_data_node_size():
     )
 
 
+# other tests
+def test_ptr():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        "set x const (ptr int 0xdeadbeef)"
+    )
+
+
+# other tests
+
+
 #
 #
 
