@@ -72,7 +72,29 @@ def eval(li, scope):
                     li = x
 
         else:
-            li = n[1:]
+            if len(li) == 1:
+                li = n[1:]
+            else:
+                # get possible struct name
+                struct_name = n[2]
+
+                # check if there's some struct set with this name
+                candidates = [s for s in scope[0] if s[2] == "struct" and s[0] == struct_name]
+                # print(f"candidates: {candidates}")
+
+                # end getting the candidate struct
+                c = candidates[0]
+
+                # check if member name exists
+                member_name = li[1]
+                members_match = [(index, m) for index, m in enumerate(c[3]) if m[1] == member_name][0]
+                # print(f"members_match: {members_match}")
+
+                if len(members_match) == 0:
+                    raise Exception(f"Struct {struct_name} has no member {member_name}")
+
+                index, m = members_match
+                li = n[3][index]
 
     # print(f"exiting eval {li}")
     return li
