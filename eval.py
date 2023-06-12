@@ -44,7 +44,6 @@ def eval(li, scope):
     else:
         # get all names matching list's first value
         name_matches = [n for n in scope[0] if n[0] == li[0]]
-        # print(f"name_matches: {name_matches}")
 
         # check name_matches size
         if len(name_matches) == 0:
@@ -380,9 +379,15 @@ def __set__(node, scope):
         value = data[1]
 
         valid_value = None
-        for T in [t for t in scope[0] if t[2] == "type"]:
+        types = [t for t in scope[0] if t[2] == "type"]
+        structs = [s for s in scope[0] if s[2] == "struct"]
+        valid_types = types + structs
+
+        for T in valid_types:
+            # print(f"T[0]: {T[0]} type_: {type_}")
             if T[0] == type_:
                 valid_value = value
+                # print(f"valid_value: {valid_value}")
 
         # remove old value from names
         for index, v in enumerate(names):
@@ -413,10 +418,13 @@ def _validate_set(node, scope):
     type_ = data[0]
 
     types = [t[0] for t in scope[0] if t[2] == "type"]
+    structs = [s[0] for s in scope[0] if s[2] == "struct"]
     exceptions = ["fn"]
 
     # check type
-    if type_ not in types and type_ not in exceptions:
+    valid_types = (types + structs + exceptions)
+    # print(f"valid_types: {valid_types}")
+    if type_ not in valid_types:
         raise Exception(f"Constant assignment has invalid type {type_} {node}")
 
     # check if value is valid for type

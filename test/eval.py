@@ -233,12 +233,44 @@ def test_data_node_size():
 
 
 # other tests
+# ptr
 def test_ptr():
     _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        "set x const (ptr int 0xdeadbeef)"
+        "set const x (ptr int 0xdeadbeef)"
+    )
+
+
+# struct
+def test_struct_decl():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        "set const mystruct (struct ((mut x int)))"
+    )
+
+
+def test_struct_init():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """(set const mystruct (struct ((mut x int))))
+(set const mystruct_ (mystruct (1)))"""
+    )
+
+
+def test_struct_member_access():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(1)\n",
+        "",
+        """(set const mystruct (struct ((mut x int))))
+(set const mystruct_ (mystruct (1)))
+(mystruct_ x)"""
     )
 
 
