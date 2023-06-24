@@ -73,7 +73,14 @@ def eval(li, scope):
 
         else:
             if len(li) == 1:
-                li = n[1:]
+                if isinstance(n[3], list):
+                    evaled_n3 = eval(n[3], scope)
+                    if n[2] != evaled_n3[0]:
+                        raise Exception(f"Wrong type! {n[2]} {evaled_n3[0]}")
+                    li = evaled_n3
+
+                else:
+                    li = n[2:]
             else:
                 li = get_struct_member(li, scope)
 
@@ -306,6 +313,87 @@ def match_macro(li, index, macro):
 
 
 def get_struct_member(li, scope):
+    #    # print(f"get_struct_member li: {li}")
+    #
+    #    # seeks names matching with li[0]
+    #    name_matches = [n for n in scope[0] if n[0] == li[0]]
+    #    n = name_matches[0]
+    #
+    #    # get possible struct name
+    #    struct_name = n[2]
+    #
+    #    # check if there's some struct set with this name
+    #    candidates = [s for s in scope[0] if s[2] == "struct" and s[0] == struct_name]
+    #    # print(f"candidates: {candidates}")
+    #
+    #    # get the candidate struct
+    #    c = candidates[0]
+    #
+    #    # check if member name exists
+    #    member_name = li[1]
+    #    members_match = [(index, m) for index, m in enumerate(c[3]) if m[1] == member_name][0]
+    #    # print(f"members_match: {members_match}")
+    #
+    #    if len(members_match) == 0:
+    #        raise Exception(f"Struct {struct_name} has no member {member_name}")
+    #
+    #    # get value
+    #    # print(f"n: {n}")
+    #    index, m = members_match
+    #    new_li = n[3][index]
+    #
+    #    # check if member access "goes deeper"
+    #    if len(li) > 2:
+    #        # print(f"len(li) > 2: {li} {new_li}")
+    #        return get_struct_member([new_li] + li[2:], scope)
+    #    else:
+    #        return new_li
+    def myfn(n, index):
+        new_li = n[3][index]
+
+        if len(li) > 2:
+            return get_struct_member([new_li] + li[2:], scope)
+        else:
+            # print(f"n: {n}")
+            # print(f"new_li: {new_li}")
+            matches = [name for name in scope[0] if name[0] == n[2] and name[2] == "struct"]
+            # print(f"matches: {matches}")
+            member_type = matches[0][3][index][2]
+            # print(f"member_type: {member_type}")
+
+            return [member_type, new_li]
+
+    return _seek_struct_ref(li, scope, myfn)
+
+
+def set_struct_member(li, scope, value):
+    # print(f"set_struct_member {li} {scope} {value}")
+
+    def myfn(n, index):
+        new_li = n[3][index]
+        if len(li) > 2:
+            return set_struct_member([new_li] + li[2:], scope)
+        else:
+            # print(f"n: {n}")
+            value_type = infer_type(value)[0]
+            # print(f"value_type: {value_type}")
+
+            n_type = n[2]
+            struct_matches = [n for n in scope[0] if n[0] == n_type and n[2] == "struct"]
+            member_type = struct_matches[0][3][0][2]
+
+            # print(f"member_type: {member_type}")
+
+            if value_type != member_type:
+                raise Exception("Setting struct member with invalid value type: {value_type}")
+
+            n[3][index] = value
+            # print(f"value: {value}")
+
+    return _seek_struct_ref(li, scope, myfn)
+
+
+def _seek_struct_ref(li, scope, fn):
     # print(f"get_struct_member li: {li}")
 
     # seeks names matching with li[0]
@@ -333,14 +421,15 @@ def get_struct_member(li, scope):
     # get value
     # print(f"n: {n}")
     index, m = members_match
-    new_li = n[3][index]
+    # new_li = n[3][index]
+    return fn(n, index)
 
     # check if member access "goes deeper"
-    if len(li) > 2:
-        # print(f"len(li) > 2: {li} {new_li}")
-        return get_struct_member([new_li] + li[2:], scope)
-    else:
-        return new_li
+    # if len(li) > 2:
+    #    # print(f"len(li) > 2: {li} {new_li}")
+    #    return get_struct_member([new_li] + li[2:], scope)
+    # else:
+    #    return new_li
 
 
 # RUNTIME INTERNALS
@@ -419,29 +508,38 @@ def __set__(node, scope):
     else:
         value = data[1]
 
-        valid_value = None
-        types = [t for t in scope[0] if t[2] == "type"]
-        structs = [s for s in scope[0] if s[2] == "struct"]
-        valid_types = types + structs
+        if not isinstance(name, list):
+            # print(f"value: {value}")
+            # print(f"typeof {name} not list")
 
-        for T in valid_types:
-            # print(f"T[0]: {T[0]} type_: {type_}")
-            if T[0] == type_:
-                valid_value = value
-                # print(f"valid_value: {valid_value}")
+            # valid_value = None
+            # types = [t for t in scope[0] if t[2] == "type"]
+            # structs = [s for s in scope[0] if s[2] == "struct"]
+            # valid_types = types + structs
 
-        # remove old value from names
-        for index, v in enumerate(names):
-            if v[0] == name:
-                if v[1] == "const":
-                    raise Exception("Trying to reassign constant: {node}")
+            # for T in valid_types:
+            #    # print(f"T[0]: {T[0]} type_: {type_}")
+            #    if T[0] == type_:
+            #        valid_value = _validate_value(type_, value, scope)
+            #        #print(f"valid_value: {valid_value}")
+            #        break
 
-                elif v[1] == "mut":
-                    names.remove(v)
-            break
+            # remove old value from names
+            for index, v in enumerate(names):
+                if v[0] == name:
+                    if v[1] == "const":
+                        raise Exception("Trying to reassign constant: {node}")
 
-        # insert new value into names
-        names.append([name, mutdecl, type_, valid_value])
+                    elif v[1] == "mut":
+                        names.remove(v)
+                    break
+
+            # insert new value into names
+            names.append([name, mutdecl, type_, value])
+
+        else:
+            # print(f"name: {name}")
+            set_struct_member(name, scope, value)
 
     # print(f"names after set: {names}")
 
@@ -457,6 +555,7 @@ def _validate_set(node, scope):
 
     set_, mutdecl, name, data = node
     type_ = data[0]
+    value = data[1]
 
     types = [t[0] for t in scope[0] if t[2] == "type"]
     structs = [s[0] for s in scope[0] if s[2] == "struct"]
@@ -469,7 +568,46 @@ def _validate_set(node, scope):
         raise Exception(f"Constant assignment has invalid type {type_} {node}")
 
     # check if value is valid for type
-    pass
+    # print(f"type_ {type_}")
+    # print(f"structs {structs}")
+    if type_ in structs:
+        struct_type = [st for st in scope[0] if st[2] == "struct" and st[0] == type_][0]
+        # print(f"struct_type: {struct_type}")
+
+        if len(value) != len(struct_type[3]):
+            raise Exception("Initializing struct with wrong number of member values: {value} {struct_type[3]}")
+
+        for value_member in value:
+            for struct_member in struct_type[3]:
+                # print(f"value_member {value_member} {struct_type} {structs}")
+                value_member_type = None
+                struct_names = []
+                for st in structs:
+                    for sts in scope[0]:
+                        # print(f"st {st} sts {sts}")
+                        if st == sts[2]:
+                            struct_names.append(sts)
+                # print(f"struct_names {struct_names}")
+                found_value_member = False
+                value_member_type = None
+                for s in struct_names:
+                    if value_member == s[0]:
+                        found_value_member = True
+                        value_member_type = s[2]
+
+                if found_value_member:
+                    value_member_type = value_member_type
+                else:
+                    it_value_member = infer_type(value_member)
+                    # print(f"it_value_member: {it_value_member} struct_member: {struct_member}")
+                    value_member_type = it_value_member[0]
+
+                struct_member_type = struct_member[2]
+                if value_member_type != struct_member_type:
+                    raise Exception(f"Initializing struct with invalid value type for member: {value_member_type} {struct_member_type}")
+
+    else:
+        pass
 
 
 def __macro__(node, scope):
@@ -669,69 +807,3 @@ def _add_types():
 
 
 _add_types()
-
-# order of development: meta first, runtime second
-
-# will the meta scope contain the runtime scope, or they can be separated?
-#  probably easier to put together than to separate if needed
-
-# should we serialize the SCOPE tree? serializing = easier references
-#  only SCOPE tree seems interesting to serialize... but not yet
-
-# which functions are the MVP? macro, if, data, set, mut, let, use, fn (useless in compile time until we have full compiler anyway)
-#  runtime
-#   set
-#    check if name has already been set-ed,mut-ed in current scope and upper scopes
-#   mut
-#    check if name has already been set-ed in current scope and upper scopes (:= for setting first time, = for re-setting)
-#   let
-#    shortcut for declaring a function and calling it with parameters (validation is from fn)
-#   fn
-#    check function validity
-#   if
-#    executes code conditionally
-#   macro
-#    declares a macro in local scope
-
-# should we pass scope to eval? yes
-
-# plan creating scopes with fn
-#  take scope
-#  add new scope to children
-#  enter new scope, binding the parameters
-#  there will be no closures
-#  compiler time can allocate scope dinamically, runtime when function is declared (fn actually must be called)
-
-# scopes = [
-#    [  # META
-#        [     # variables
-#            ["set", "internal", __set__],  # set a constant in local scope
-#            ["mut", "internal", __mut__],  # set a mutable variable in local scope
-#            ["let", "internal", __let__],  # declare new local scope
-#            ["macro", "internal", __macro__],  # set a new macro in local scope
-#            ["if", "internal", __if__],  # compare conditions and return the appropriate list
-#            ["data", "internal", __data__],  # return data not to be eval-uated
-#            ["use", "internal", __use__],  # load external package into local scope
-#        ],
-#        [],   # macros
-#        None,  # parent
-#        [],   # children
-#    ],
-#    [  # RUNTIME
-#        [     # variables
-#            ["meta", "internal", __meta__],  # call compile time instructions
-#
-#            # ["set",   "internal", __set__  ], # check constant setting
-#            # ["mut",   "internal", __mut__  ], # check mutable variable setting
-#            # ["let",   "internal", __let__  ], # check lets
-#            ["macro", "internal", __macro__],  # set a new macro in local scope
-#            ["if", "internal", __if__],  # compare conditions and return the appropriate list
-#            ["data", "internal", __data__],  # return data not to be eval-uated
-#            ["use", "internal", __use__],  # load external package into local scope
-#        ],
-#        [],   # macros
-#        None,  # parent
-#        [],   # children
-#    ]
-# ]
-# cur_scope = scopes

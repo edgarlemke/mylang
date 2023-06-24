@@ -266,7 +266,7 @@ def test_struct_init():
 def test_struct_member_access():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(1)\n",
+        "((int 1))\n",
         "",
         """(set const mystruct (struct ((mut x int))))
 (set const mystruct_ (mystruct (1)))
@@ -277,7 +277,7 @@ def test_struct_member_access():
 def test_struct_deep_member_access():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(1)\n",
+        "((int 1))\n",
         "",
         """(set const mystruct (struct ((mut member_x int))))
 (set const mystruct2 (struct ((const member_mystruct mystruct))))
@@ -287,7 +287,73 @@ def test_struct_deep_member_access():
     )
 
 
+def test_struct_member_set():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 2))\n",
+        "",
+        """(set const mystruct (struct ((mut x int))))
+(set const mystruct_ (mystruct (1)))
+(set mut (mystruct_ x) (int 2))
+(mystruct_ x)"""
+    )
+
+
+def test_struct_member_set_wrong_type():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Setting struct member with invalid value type",
+        """(set const mystruct (struct ((mut x int))))
+(set const mystruct_ (mystruct (1)))
+(set mut (mystruct_ x) (float 3.14))
+(mystruct_ x)"""
+    )
+
+
+def test_struct_member_access_for_name():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 1))\n",
+        "",
+        """(set const mystruct (struct ((mut x int))))
+(set const mystruct_ (mystruct (1)))
+(set const randomvar (int (mystruct_ x)))
+(randomvar)"""
+    )
+
+
+def test_struct_init_wrong_number_of_members():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Initializing struct with wrong number of member values",
+        """(set const mystruct (struct ((mut x int)(mut y int))))
+(set const mystruct_ (mystruct (1)))
+"""
+    )
+
+
+def test_struct_init_wrong_type_for_member():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Initializing struct with invalid value type for member",
+        """(set const mystruct (struct ((mut x int)(mut y int))))
+(set const mystruct_ (mystruct (1 3.14)))
+"""
+    )
+
+
 # other tests
+def test_eval_name():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 1))\n",
+        "",
+        """(set const randomvar (int 1))
+(randomvar)"""
+    )
 
 
 #
