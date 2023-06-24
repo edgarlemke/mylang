@@ -274,6 +274,19 @@ def test_struct_member_access():
     )
 
 
+def test_struct_deep_member_access():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(1)\n",
+        "",
+        """(set const mystruct (struct ((mut member_x int))))
+(set const mystruct2 (struct ((const member_mystruct mystruct))))
+(set const st_mystruct (mystruct (1)))
+(set const st_mystruct2 (mystruct2 (st_mystruct)))
+(st_mystruct2 member_mystruct member_x)"""
+    )
+
+
 # other tests
 
 

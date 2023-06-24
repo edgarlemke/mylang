@@ -75,26 +75,7 @@ def eval(li, scope):
             if len(li) == 1:
                 li = n[1:]
             else:
-                # get possible struct name
-                struct_name = n[2]
-
-                # check if there's some struct set with this name
-                candidates = [s for s in scope[0] if s[2] == "struct" and s[0] == struct_name]
-                # print(f"candidates: {candidates}")
-
-                # end getting the candidate struct
-                c = candidates[0]
-
-                # check if member name exists
-                member_name = li[1]
-                members_match = [(index, m) for index, m in enumerate(c[3]) if m[1] == member_name][0]
-                # print(f"members_match: {members_match}")
-
-                if len(members_match) == 0:
-                    raise Exception(f"Struct {struct_name} has no member {member_name}")
-
-                index, m = members_match
-                li = n[3][index]
+                li = get_struct_member(li, scope)
 
     # print(f"exiting eval {li}")
     return li
@@ -322,6 +303,44 @@ def match_macro(li, index, macro):
         return (False, full_match, [])
 
     return (True, full_match, bindings)
+
+
+def get_struct_member(li, scope):
+    # print(f"get_struct_member li: {li}")
+
+    # seeks names matching with li[0]
+    name_matches = [n for n in scope[0] if n[0] == li[0]]
+    n = name_matches[0]
+
+    # get possible struct name
+    struct_name = n[2]
+
+    # check if there's some struct set with this name
+    candidates = [s for s in scope[0] if s[2] == "struct" and s[0] == struct_name]
+    # print(f"candidates: {candidates}")
+
+    # get the candidate struct
+    c = candidates[0]
+
+    # check if member name exists
+    member_name = li[1]
+    members_match = [(index, m) for index, m in enumerate(c[3]) if m[1] == member_name][0]
+    # print(f"members_match: {members_match}")
+
+    if len(members_match) == 0:
+        raise Exception(f"Struct {struct_name} has no member {member_name}")
+
+    # get value
+    # print(f"n: {n}")
+    index, m = members_match
+    new_li = n[3][index]
+
+    # check if member access "goes deeper"
+    if len(li) > 2:
+        # print(f"len(li) > 2: {li} {new_li}")
+        return get_struct_member([new_li] + li[2:], scope)
+    else:
+        return new_li
 
 
 # RUNTIME INTERNALS
