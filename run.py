@@ -131,6 +131,11 @@ def setup_env():
     # print(f"op_li: {op_li}")
     eval.eval(op_li, None)
 
+    default_functions = """
+"""
+    fn_li = get_list_from_expr(default_functions)
+    eval.eval(fn_li, None)
+
 
 def read_file(src):
     # create a file descriptor for the src file

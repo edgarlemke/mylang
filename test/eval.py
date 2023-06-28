@@ -243,6 +243,44 @@ def test_ptr():
     )
 
 
+def test_write_ptr():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(read_ptr int 0xdeadbeef)\n",
+        "",
+        "read_ptr int 0xdeadbeef"
+    )
+
+
+def test_read_ptr():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(write_ptr 0xdeadbeef int 0)\n",
+        "",
+        "write_ptr 0xdeadbeef int 0"
+    )
+
+
+def test_get_ptr():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((get_ptr x))\n",
+        "",
+        """(set const x (int 0))
+(get_ptr x)"""
+    )
+
+
+def test_size_of():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((size_of x))\n",
+        "",
+        """(set const x (int 0))
+(size_of x)"""
+    )
+
+
 # struct
 def test_struct_decl():
     _test(
@@ -354,8 +392,6 @@ def test_eval_name():
         """(set const randomvar (int 1))
 (randomvar)"""
     )
-
-
 #
 #
 

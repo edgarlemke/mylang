@@ -56,6 +56,7 @@ def eval(li, scope):
         # print(f"n: {n}")
 
         if n[2] in ["fn", "internal"]:
+            # print(f"fn/internal")
             # len 1, so is a reference
             if len(li) == 1:
                 # print(f"fn ref {li}")
@@ -74,6 +75,7 @@ def eval(li, scope):
         else:
             if len(li) == 1:
                 if isinstance(n[3], list):
+                    # print(f"evaling {n[3]}")
                     evaled_n3 = eval(n[3], scope)
                     if n[2] != evaled_n3[0]:
                         raise Exception(f"Wrong type! {n[2]} {evaled_n3[0]}")
@@ -82,7 +84,7 @@ def eval(li, scope):
                 else:
                     li = n[2:]
             else:
-                li = get_struct_member(li, scope)
+                li = _get_struct_member(li, scope)
 
     # print(f"exiting eval {li}")
     return li
@@ -106,6 +108,11 @@ def call_fn(li, fn, scope):
             if len(m[0]) < arg_i + 1:
                 match = False
                 break
+
+            # if an argument name starts with ', consider anything a match
+            # print(f"m0: {m[0][arg_i]}")
+            # if m[0][arg_i][0][0][0] == "'":
+            #    continue
 
             # solve argument
             solved_arg = None
@@ -133,8 +140,9 @@ def call_fn(li, fn, scope):
 
             else:
                 # print(f"solved_arg: {solved_arg}")
-                # print(f"m[0]: {m[0]}")
-                marg = m[0][arg_i][0]
+                # print(f"m: {m}")
+                # print(f"m[0]: {m[0][0][arg_i]} {arg_i}")
+                marg = m[0][0][arg_i]
                 # print(f"marg: {marg}")
 
                 if solved_arg[0] != marg[0]:
@@ -145,12 +153,13 @@ def call_fn(li, fn, scope):
             candidates.append(m)
 
     if len(candidates) == 0:
-        raise Exception(f"No candidate function found: {name}")
+        fns = [n for n in scope[0] if n[2] == "fn"]
+        raise Exception(f"No candidate function found: {name} {fns}")
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
 
     the_method = candidates[0][0]
-#    print(f"the_method: {the_method}")
+    # print(f"the_method: {the_method}")
 
     retv = eval(the_method[2], scope)
     # print(f"exiting call_fn {li}")
@@ -312,47 +321,12 @@ def match_macro(li, index, macro):
     return (True, full_match, bindings)
 
 
-def get_struct_member(li, scope):
-    #    # print(f"get_struct_member li: {li}")
-    #
-    #    # seeks names matching with li[0]
-    #    name_matches = [n for n in scope[0] if n[0] == li[0]]
-    #    n = name_matches[0]
-    #
-    #    # get possible struct name
-    #    struct_name = n[2]
-    #
-    #    # check if there's some struct set with this name
-    #    candidates = [s for s in scope[0] if s[2] == "struct" and s[0] == struct_name]
-    #    # print(f"candidates: {candidates}")
-    #
-    #    # get the candidate struct
-    #    c = candidates[0]
-    #
-    #    # check if member name exists
-    #    member_name = li[1]
-    #    members_match = [(index, m) for index, m in enumerate(c[3]) if m[1] == member_name][0]
-    #    # print(f"members_match: {members_match}")
-    #
-    #    if len(members_match) == 0:
-    #        raise Exception(f"Struct {struct_name} has no member {member_name}")
-    #
-    #    # get value
-    #    # print(f"n: {n}")
-    #    index, m = members_match
-    #    new_li = n[3][index]
-    #
-    #    # check if member access "goes deeper"
-    #    if len(li) > 2:
-    #        # print(f"len(li) > 2: {li} {new_li}")
-    #        return get_struct_member([new_li] + li[2:], scope)
-    #    else:
-    #        return new_li
+def _get_struct_member(li, scope):
     def myfn(n, index):
         new_li = n[3][index]
 
         if len(li) > 2:
-            return get_struct_member([new_li] + li[2:], scope)
+            return _get_struct_member([new_li] + li[2:], scope)
         else:
             # print(f"n: {n}")
             # print(f"new_li: {new_li}")
@@ -366,13 +340,13 @@ def get_struct_member(li, scope):
     return _seek_struct_ref(li, scope, myfn)
 
 
-def set_struct_member(li, scope, value):
-    # print(f"set_struct_member {li} {scope} {value}")
+def _set_struct_member(li, scope, value):
+    # print(f"_set_struct_member {li} {scope} {value}")
 
     def myfn(n, index):
         new_li = n[3][index]
         if len(li) > 2:
-            return set_struct_member([new_li] + li[2:], scope)
+            return _set_struct_member([new_li] + li[2:], scope)
         else:
             # print(f"n: {n}")
             value_type = infer_type(value)[0]
@@ -394,7 +368,7 @@ def set_struct_member(li, scope, value):
 
 
 def _seek_struct_ref(li, scope, fn):
-    # print(f"get_struct_member li: {li}")
+    # print(f"_get_struct_member li: {li}")
 
     # seeks names matching with li[0]
     name_matches = [n for n in scope[0] if n[0] == li[0]]
@@ -427,7 +401,7 @@ def _seek_struct_ref(li, scope, fn):
     # check if member access "goes deeper"
     # if len(li) > 2:
     #    # print(f"len(li) > 2: {li} {new_li}")
-    #    return get_struct_member([new_li] + li[2:], scope)
+    #    return _get_struct_member([new_li] + li[2:], scope)
     # else:
     #    return new_li
 
@@ -539,7 +513,7 @@ def __set__(node, scope):
 
         else:
             # print(f"name: {name}")
-            set_struct_member(name, scope, value)
+            _set_struct_member(name, scope, value)
 
     # print(f"names after set: {names}")
 
@@ -742,6 +716,46 @@ def __meta__(node, scope):
     #    print(f"calling __meta__: {node}")
 
     return eval(node[1:], meta_scope)
+
+
+def __write_ptr__(node, scope):
+    _validate_write_ptr(node, scope)
+    return node
+
+
+def _validate_write_ptr(node, scope):
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for write_ptr: {node}")
+
+
+def __read_ptr__(node, scope):
+    _validate_read_ptr(node, scope)
+    return node
+
+
+def _validate_read_ptr(node, scope):
+    if len(node) != 3:
+        raise Exception(f"Wrong number of arguments for read_ptr: {node}")
+
+
+def __get_ptr__(node, scope):
+    _validate_get_ptr(node, scope)
+    return node
+
+
+def _validate_get_ptr(node, scope):
+    if len(node) != 2:
+        raise Exception(f"Wrong number of arguments for get_ptr: {node}")
+
+
+def __size_of__(node, scope):
+    _validate_size_of(node, scope)
+    return node
+
+
+def _validate_size_of(node, scope):
+    if len(node) != 2:
+        raise Exception(f"Wrong number of arguments for size_of: {node}")
 #
 #
 
@@ -768,6 +782,10 @@ runtime_scope = [
     ["if", "mut", "internal", __if__],
     ["data", "mut", "internal", __data__],
     ["meta", "mut", "internal", __meta__],
+    ["write_ptr", "mut", "internal", __write_ptr__],
+    ["read_ptr", "mut", "internal", __read_ptr__],
+    ["get_ptr", "mut", "internal", __get_ptr__],
+    ["size_of", "mut", "internal", __size_of__],
   ],
   [],
   None,
