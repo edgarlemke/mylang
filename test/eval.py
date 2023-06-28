@@ -145,6 +145,17 @@ def test_fn_arg_fncall():
     )
 
 
+def test_fn_arg_inside_scope():
+    _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 1))\n",
+        "",
+        """(set const myfn (fn ( ((int x)) int (x) ) ))
+(myfn 1)
+"""
+    )
+
+
 # __let__
 def test_let_node_size():
     _test(

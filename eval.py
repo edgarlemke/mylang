@@ -43,47 +43,46 @@ def eval(li, scope):
 
     else:
         # get all names matching list's first value
-        name_matches = [n for n in scope[0] if n[0] == li[0]]
+        # name_matches = [n for n in scope[0] if n[0] == li[0]]
+        name_match = get_name_value(li[0], scope)
+        # print(f"name_match: {name_match}")
 
         # check name_matches size
-        if len(name_matches) == 0:
+        if name_match == []:
             raise Exception(f"Unassigned name: {li[0]}")
-        elif len(name_matches) > 1:
-            raise Exception(f"More than one name set, it's a bug! {li[0]}")
+        # elif len(name_matches) > 1:
+        #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
 
-        # get the only valid name
-        n = name_matches[0]
-        # print(f"n: {n}")
-
-        if n[2] in ["fn", "internal"]:
+        if name_match[2] in ["fn", "internal"]:
             # print(f"fn/internal")
             # len 1, so is a reference
             if len(li) == 1:
                 # print(f"fn ref {li}")
-                li = n[1:]
+                li = name_match
 
             # len > 1, so is a function call
             else:
-                if n[2] == "fn":
-                    x = call_fn(li, n, scope)
+                if name_match[2] == "fn":
+                    x = call_fn(li, name_match, scope)
                     li = x
-                elif n[2] == "internal":
+                elif name_match[2] == "internal":
                     # print(f"!!! internal")
-                    x = n[3](li, scope)
+                    x = name_match[3](li, scope)
                     li = x
 
         else:
             if len(li) == 1:
-                if isinstance(n[3], list):
-                    # print(f"evaling {n[3]}")
-                    evaled_n3 = eval(n[3], scope)
-                    if n[2] != evaled_n3[0]:
-                        raise Exception(f"Wrong type! {n[2]} {evaled_n3[0]}")
+                if isinstance(name_match[3], list):
+                    # print(f"evaling {name_match[3]}")
+                    evaled_n3 = eval(name_match[3], scope)
+                    if name_match[2] != evaled_n3[0]:
+                        raise Exception(f"Wrong type! {name_match} {evaled_n3}")
                     li = evaled_n3
 
                 else:
-                    li = n[2:]
+                    li = name_match[2:]
             else:
+                # print(f"li[0]: {li[0]}")
                 li = _get_struct_member(li, scope)
 
     # print(f"exiting eval {li}")
@@ -106,6 +105,7 @@ def call_fn(li, fn, scope):
 
             # break in methods without the arguments
             if len(m[0]) < arg_i + 1:
+                # print(f"not matching - len(m[0]_ < arg_i + 1")
                 match = False
                 break
 
@@ -123,15 +123,16 @@ def call_fn(li, fn, scope):
 
             else:
                 name_value = get_name_value(arg, scope)
-                found_value = name_value != []
+                found_value = list(name_value[2:]) != []
 
                 if found_value:
-                    solved_arg = name_value
+                    solved_arg = name_value[2:]
 
                 else:
                     solved_arg = infer_type(arg)
 
             if solved_arg is None:
+                # print(f"not matching - solved_arg is None")
                 match = False
                 break
 
@@ -146,6 +147,7 @@ def call_fn(li, fn, scope):
                 # print(f"marg: {marg}")
 
                 if solved_arg[0] != marg[0]:
+                    # print(f"not matching - solved_arg[2] != marg[0]")
                     match = False
                     break
 
@@ -161,7 +163,23 @@ def call_fn(li, fn, scope):
     the_method = candidates[0][0]
     # print(f"the_method: {the_method}")
 
-    retv = eval(the_method[2], scope)
+    # set new scope
+    fn_scope = [
+        [],  # names
+        [],  # macros
+        scope,  # parent scope
+        []  # children scopes
+    ]
+
+    # populate new scope's names with function call arguments
+    if li[1:] != [[]]:
+        for arg_i, arg in enumerate(li[1:]):
+            method_arg = the_method[0][arg_i]
+            fn_scope[0].append([method_arg[1], "const", method_arg[0], arg])
+
+    # print(f"fn_scope: {fn_scope}")
+
+    retv = eval(the_method[2], fn_scope)
     # print(f"exiting call_fn {li}")
     return retv
 
@@ -172,7 +190,7 @@ def get_name_value(name, scope):
         for n in scope[0]:
             # print(f"n: {n}")
             if n[0] == name:
-                return list(n[2:])
+                return n  # list(n[2:])
 
         # didn't return found value...
 
