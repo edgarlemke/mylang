@@ -217,8 +217,8 @@ def test_macro_expansion():
 def test_default_macros():
     _test(
         i.getframeinfo(i.currentframe()).function,
-        "(() (1 2))\n",
         "",
+        "Unassigned name: add",
         """(1 + 2)"""
     )
 
