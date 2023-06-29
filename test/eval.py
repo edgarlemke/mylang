@@ -7,6 +7,9 @@ from subprocess import Popen, PIPE
 from shlex import split
 import unicodedata
 
+OK = "\033[92mOK\033[0m"
+FAIL = "\033[91mFAIL\033[0m"
+
 
 def _test(fn_name, expected_stdout, expected_stderr, expr):
     print(f"TEST {fn_name} - ", end="")
@@ -26,13 +29,18 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 
     err = False
     if not stderr_ok:
-        print(f"""FAIL - stderr not correct:
+        print(FAIL)
+
+        print(f"""stderr not correct:
         expected:   %s
         got:        %s""" % (expected_stderr, stderr_dec))
         err = True
 
     if not stdout_ok:
-        print("""FAIL - stdout not correct:
+        if not err:
+            print(FAIL)
+
+        print("""stdout not correct:
         expected:   %s
         got:        %s""" % (expected_stdout, stdout_dec))
         err = True
@@ -41,14 +49,15 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
         print(f"CMD: %s" % cmd)
         return False
 
-    print("OK")
+    print(OK)
+    return True
 
 
 #
 # RUNTIME
 # __fn__
 def test_fn():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         """(fn ((int x) (int y)) int ())\n""",
         "",
@@ -57,7 +66,7 @@ def test_fn():
 
 
 def test_fn_node_size():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for fn",
@@ -66,7 +75,7 @@ def test_fn_node_size():
 
 
 def test_fn_args():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function argument has invalid type",
@@ -75,7 +84,7 @@ def test_fn_args():
 
 
 def test_fn_ret_type():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function return type has invalid type",
@@ -84,7 +93,7 @@ def test_fn_ret_type():
 
 
 def test_fn_arg_type_infer_int():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -94,7 +103,7 @@ def test_fn_arg_type_infer_int():
 
 
 def test_fn_arg_type_infer_float():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -104,7 +113,7 @@ def test_fn_arg_type_infer_float():
 
 
 def test_fn_arg_type_infer_bool_true():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -114,7 +123,7 @@ def test_fn_arg_type_infer_bool_true():
 
 
 def test_fn_arg_type_infer_bool_false():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -124,7 +133,7 @@ def test_fn_arg_type_infer_bool_false():
 
 
 def test_fn_arg_name():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -135,7 +144,7 @@ def test_fn_arg_name():
 
 
 def test_fn_arg_fncall():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -146,7 +155,7 @@ def test_fn_arg_fncall():
 
 
 def test_fn_arg_inside_scope():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
@@ -158,7 +167,7 @@ def test_fn_arg_inside_scope():
 
 # __let__
 def test_let_node_size():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for let",
@@ -168,7 +177,7 @@ def test_let_node_size():
 
 # __set__
 def test_set_const():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
@@ -177,7 +186,7 @@ def test_set_const():
 
 
 def test_set_node_size():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for set",
@@ -186,7 +195,7 @@ def test_set_node_size():
 
 
 def test_set_type():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Constant assignment has invalid type",
@@ -196,7 +205,7 @@ def test_set_type():
 
 # __macro__
 def test_macro_node_size():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for macro",
@@ -205,7 +214,7 @@ def test_macro_node_size():
 
 
 def test_macro_expansion():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((1 2))\n",
         "",
@@ -215,7 +224,7 @@ def test_macro_expansion():
 
 
 def test_default_macros():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Unassigned name: add",
@@ -225,7 +234,7 @@ def test_default_macros():
 
 # __if__
 def test_if_node_size():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for if",
@@ -235,7 +244,7 @@ def test_if_node_size():
 
 # __data__
 def test_data_node_size():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for data",
@@ -246,7 +255,7 @@ def test_data_node_size():
 # other tests
 # ptr
 def test_ptr():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -255,7 +264,7 @@ def test_ptr():
 
 
 def test_write_ptr():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "(read_ptr int 0xdeadbeef)\n",
         "",
@@ -264,7 +273,7 @@ def test_write_ptr():
 
 
 def test_read_ptr():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "(write_ptr 0xdeadbeef int 0)\n",
         "",
@@ -273,7 +282,7 @@ def test_read_ptr():
 
 
 def test_get_ptr():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((get_ptr x))\n",
         "",
@@ -283,7 +292,7 @@ def test_get_ptr():
 
 
 def test_size_of():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((size_of x))\n",
         "",
@@ -294,7 +303,7 @@ def test_size_of():
 
 # struct
 def test_struct_decl():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -303,7 +312,7 @@ def test_struct_decl():
 
 
 def test_struct_init():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
@@ -313,7 +322,7 @@ def test_struct_init():
 
 
 def test_struct_member_access():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
@@ -324,7 +333,7 @@ def test_struct_member_access():
 
 
 def test_struct_deep_member_access():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
@@ -337,7 +346,7 @@ def test_struct_deep_member_access():
 
 
 def test_struct_member_set():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 2))\n",
         "",
@@ -349,7 +358,7 @@ def test_struct_member_set():
 
 
 def test_struct_member_set_wrong_type():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Setting struct member with invalid value type",
@@ -361,7 +370,7 @@ def test_struct_member_set_wrong_type():
 
 
 def test_struct_member_access_for_name():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
@@ -373,7 +382,7 @@ def test_struct_member_access_for_name():
 
 
 def test_struct_init_wrong_number_of_members():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Initializing struct with wrong number of member values",
@@ -384,7 +393,7 @@ def test_struct_init_wrong_number_of_members():
 
 
 def test_struct_init_wrong_type_for_member():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Initializing struct with invalid value type for member",
@@ -396,7 +405,7 @@ def test_struct_init_wrong_type_for_member():
 
 # other tests
 def test_eval_name():
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
@@ -423,15 +432,30 @@ if __name__ == "__main__":
     group.add_argument("-f")
     args = parser.parse_args()
 
+    test_ct, ok_ct, failed_ct = 0, 0, 0
+
     if args.f is None:
         fast = args.fast
         slow = ["test_quoted_unicode"]
-        tests = [t for t in globals() if t[0:5] == "test_"]
+        tests = [t for t in globals() if t[0:5] == "test_" and callable(eval(t))]
         for t in tests:
 
             if fast and t in slow:
                 continue
 
-            eval(f"{t}()")
+            result = eval(f"{t}()")
+            test_ct += 1
+            if result:
+                ok_ct += 1
+            else:
+                failed_ct += 1
+
     else:
-        eval(f"{args.f}()")
+        result = eval(f"{args.f}()")
+        test_ct += 1
+        if result:
+            ok_ct += 1
+        else:
+            failed_ct += 1
+
+    print(f"\nTests: {test_ct} - Passed: {ok_ct} - Failed: {failed_ct}")

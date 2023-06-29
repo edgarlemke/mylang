@@ -7,6 +7,8 @@ from subprocess import Popen, PIPE
 from shlex import split
 import unicodedata
 
+OK = "\033[92mOK\033[0m"
+
 
 def _test(fn_name, expected, expr):
     print(f"TEST {fn_name} - ", end="")
@@ -25,11 +27,13 @@ def _test(fn_name, expected, expr):
 
     err = False
     if stderr_ok:
-        print(f"FAIL - stderr not empty: {stderr_dec}")
+        print(f"""
+\033[91mFAIL\033[0m - stderr not empty: {stderr_dec}""")
         err = True
 
     if not stdout_ok:
-        print("""FAIL - stdout not correct:
+        print("""
+\033[91mFAIL\033[0m - stdout not correct:
         expected:   %s
         got:        %s""" % (expected, stdout_dec))
         err = True
@@ -37,14 +41,15 @@ def _test(fn_name, expected, expr):
     if err:
         return False
 
-    print("OK")
+    print(OK)
+    return True
 
 
 def test_par_open():
     """
     `(` expresssion should return only one PAR_OPEN token
     """
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         "((TOKEN PAR_OPEN 0 1 \"(\"))\n",
@@ -55,7 +60,7 @@ def test_par_close():
     """
     `)` expression should return only one PAR_CLOSE token
     """
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         "((TOKEN PAR_CLOSE 0 1 \")\"))\n",
@@ -66,7 +71,7 @@ def test_space():
     """
     ` ` expression should return only one SPACE token
     """
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         "((TOKEN SPACE 0 1 \" \"))\n",
@@ -80,7 +85,7 @@ def test_par_open_space_par_close():
     list_print() is tested for absence of spaces between lists inside a list
     tokenize() is tested for ordering of tokens
     """
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         """((TOKEN PAR_OPEN 0 1 "(") (TOKEN SPACE 1 2 " ") (TOKEN PAR_CLOSE 2 3 ")"))\n""",
         "( )"
@@ -92,7 +97,7 @@ def test_quote():
     `"` expression should return only one QUOTE token
     """
     expr = "\\\""
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         """((TOKEN QUOTE 0 1 "\\\""))\n""",
@@ -102,11 +107,11 @@ def test_quote():
 #    """
 #    `mynametoken` expression should return only one VALUE token
 #    """
-#    _test(i.getframeinfo( i.currentframe() ).function, """((VALUE 0 11 mynametoken))\n""", "mynametoken")
+#    return _test(i.getframeinfo( i.currentframe() ).function, """((VALUE 0 11 mynametoken))\n""", "mynametoken")
 
 
 def test_lit_int():
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         """((TOKEN LIT 0 3 123))\n""",
@@ -114,7 +119,7 @@ def test_lit_int():
 
 
 def test_lit_float():
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         """((TOKEN LIT 0 4 3.14))\n""",
@@ -134,7 +139,7 @@ def test_abc_xyz():
         one QUOTE token
         one PAR_CLOSE token
     """
-    _test(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         """((TOKEN PAR_OPEN 0 1 "(") (TOKEN QUOTE 1 2 "\\\"") (TOKEN LIT 2 5 abc) (TOKEN QUOTE 5 6 "\\\"") (TOKEN SPACE 6 7 " ") (TOKEN QUOTE 7 8 "\\\"") (TOKEN LIT 8 11 xyz) (TOKEN QUOTE 11 12 "\\\"") (TOKEN PAR_CLOSE 12 13 ")"))\n""",
         "(\\\"abc\\\" \\\"xyz\\\")"
@@ -249,7 +254,7 @@ def test_quoted_unicode():
                 print(msg, flush=True)
                 exit()
 
-    print("OK")
+    print(OK)
 
 
 # def test_use():
@@ -261,14 +266,14 @@ def test_quoted_unicode():
 #
 #
 # def test_fn():
-#    _test(i.getframeinfo(i.currentframe()).function, "((FN 0 2 fn))\n", "fn")
+#    return _test(i.getframeinfo(i.currentframe()).function, "((FN 0 2 fn))\n", "fn")
 #
 # def test_call () :
-# _test(i.getframeinfo( i.currentframe() ).function, "((CALL 0 4 call))\n", "call")
+# return _test(i.getframeinfo( i.currentframe() ).function, "((CALL 0 4 call))\n", "call")
 #
 #
 # def test_ret():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((RET 0 3 ret))\n",
@@ -276,7 +281,7 @@ def test_quoted_unicode():
 #
 #
 # def test_set():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((SET 0 3 set))\n",
@@ -284,7 +289,7 @@ def test_quoted_unicode():
 #
 #
 # def test_mut():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((MUT 0 3 mut))\n",
@@ -292,7 +297,7 @@ def test_quoted_unicode():
 #
 #
 # def test_res():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((RES 0 3 res))\n",
@@ -300,11 +305,11 @@ def test_quoted_unicode():
 #
 #
 # def test_if():
-#    _test(i.getframeinfo(i.currentframe()).function, "((IF 0 2 if))\n", "if")
+#    return _test(i.getframeinfo(i.currentframe()).function, "((IF 0 2 if))\n", "if")
 #
 #
 # def test_else():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((ELSE 0 4 else))\n",
@@ -312,7 +317,7 @@ def test_quoted_unicode():
 #
 #
 # def test_elif():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((ELIF 0 4 elif))\n",
@@ -320,7 +325,7 @@ def test_quoted_unicode():
 #
 #
 # def test_while():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((WHILE 0 5 while))\n",
@@ -328,7 +333,7 @@ def test_quoted_unicode():
 #
 #
 # def test_for():
-#    _test(
+#    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
 #        "((FOR 0 3 for))\n",
@@ -336,7 +341,7 @@ def test_quoted_unicode():
 #
 #
 # def test_comment():
-#    _test(
+#    return _test(
 #        i.getframeinfo(i.currentframe()).function,
 #        "()\n",
 #        "# comment\n"
@@ -353,12 +358,14 @@ def test_no_token_match():
     expected = "No token match!"
 
     if not (expected in stderr):
-        print(f"""FAIL - stderr not correct:
+        print(FAIL)
+        print(f"""stderr not correct:
         expected: {expected}
         got: {stderr}""")
-        exit()
+        return False
 
-    print("OK")
+    print(OK)
+    return True
 
 
 # def test_check_nontokenized_start():
@@ -413,7 +420,7 @@ def test_no_token_match():
 
 
 def test_single_line_comment():
-    _test(
+    return _test(
         i.getframeinfo(
             i.currentframe()).function,
         """((TOKEN LIT 15 19 3.14))\n""",
@@ -437,12 +444,14 @@ def test_check_no_argument():
     expected = "Either --src or --expr argument must be provided"
 
     if not (expected in stderr):
-        print(f"""FAIL - stderr not correct:
+        print(FAIL)
+        print(f"""stderr not correct:
         expected: {expected}
         got: {stderr}""")
-        exit()
+        return False
 
-    print("OK")
+    print(OK)
+    return True
 
 
 def _popen(expr):
@@ -461,15 +470,30 @@ if __name__ == "__main__":
     group.add_argument("-f")
     args = parser.parse_args()
 
+    test_ct, ok_ct, failed_ct = 0, 0, 0
+
     if args.f is None:
         fast = args.fast
         slow = ["test_quoted_unicode"]
-        tests = [t for t in globals() if t[0:5] == "test_"]
+        tests = [t for t in globals() if t[0:5] == "test_" and callable(eval(t))]
         for t in tests:
 
             if fast and t in slow:
                 continue
 
-            eval(f"{t}()")
+            result = eval(f"{t}()")
+            test_ct += 1
+            if result:
+                ok_ct += 1
+            else:
+                failed_ct += 1
+
     else:
-        eval(f"{args.f}()")
+        result = eval(f"{args.f}()")
+        test_ct += 1
+        if result:
+            ok_ct += 1
+        else:
+            failed_ct += 1
+
+    print(f"\nTests: {test_ct} - Passed: {ok_ct} - Failed: {failed_ct}")
