@@ -8,6 +8,7 @@ from shlex import split
 import unicodedata
 
 OK = "\033[92mOK\033[0m"
+FAIL = "\033[91mFAIL\033[0m"
 
 
 def _test(fn_name, expected, expr):
@@ -27,13 +28,16 @@ def _test(fn_name, expected, expr):
 
     err = False
     if stderr_ok:
-        print(f"""
-\033[91mFAIL\033[0m - stderr not empty: {stderr_dec}""")
+        print(FAIL)
+
+        print(f"""stderr not empty: {stderr_dec}""")
         err = True
 
     if not stdout_ok:
-        print("""
-\033[91mFAIL\033[0m - stdout not correct:
+        if not err:
+            print(FAIL)
+
+        print("""stdout not correct:
         expected:   %s
         got:        %s""" % (expected, stdout_dec))
         err = True
