@@ -203,6 +203,35 @@ def test_set_type():
     )
 
 
+def test_set_mutdecl():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Assignment with invalid mutability declaration",
+        "set wrong x (int 0)"
+    )
+
+
+def test_set_const_over_mut():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Trying to reassign a constant name over a mutable name",
+        """(set mut x (int 0))
+(set const x (int 0))"""
+    )
+
+
+def test_set_const_reassignment():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Trying to reassign constant",
+        """(set const x (int 0))
+(set mut x (int 0))"""
+    )
+
+
 # __macro__
 def test_macro_node_size():
     return _test(

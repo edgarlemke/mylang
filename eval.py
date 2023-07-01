@@ -523,11 +523,7 @@ def __set__(node, scope):
             # remove old value from names
             for index, v in enumerate(names):
                 if v[0] == name:
-                    if v[1] == "const":
-                        raise Exception("Trying to reassign constant: {node}")
-
-                    elif v[1] == "mut":
-                        names.remove(v)
+                    names.remove(v)
                     break
 
             # insert new value into names
@@ -552,6 +548,10 @@ def _validate_set(node, scope):
     set_, mutdecl, name, data = node
     type_ = data[0]
     value = data[1]
+
+    # check mutability declaration
+    if mutdecl not in ["const", "mut"]:
+        raise Exception(f"Assignment with invalid mutability declaration: {node}")
 
     types = [t[0] for t in scope[0] if t[2] == "type"]
     structs = [s[0] for s in scope[0] if s[2] == "struct"]
@@ -602,8 +602,16 @@ def _validate_set(node, scope):
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: {value_member_type} {struct_member_type}")
 
-    else:
-        pass
+    # check reassignment over const
+    # check const reassignment over mut
+    if type_ != "fn" and not isinstance(name, list):
+        for index, v in enumerate(scope[0]):
+            if v[0] == name:
+                if v[1] == "const":
+                    raise Exception("Trying to reassign constant: {node}")
+
+                elif v[1] == "mut" and mutdecl == "const":
+                    raise Exception("Trying to reassign a constant name over a mutable name: {node}")
 
 
 def __macro__(node, scope):
