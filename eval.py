@@ -164,12 +164,16 @@ def call_fn(li, fn, scope):
     # print(f"the_method: {the_method}")
 
     # set new scope
-    fn_scope = [
-        [],  # names
-        [],  # macros
-        scope,  # parent scope
-        []  # children scopes
-    ]
+    # fn_scope = [
+    #    [],      # names
+    #    [],      # macros
+    #    scope,   # parent scope
+    #    []       # children scopes
+    #    scope[4] # is safe scope
+    # ]
+    fn_scope = default_scope.copy()
+    fn_scope[2] = scope
+    fn_scope[4] = scope[4]
 
     # populate new scope's names with function call arguments
     if li[1:] != [[]]:
@@ -745,6 +749,9 @@ def _validate_write_ptr(node, scope):
     if len(node) != 4:
         raise Exception(f"Wrong number of arguments for write_ptr: {node}")
 
+    if scope[4] == True:
+        raise Exception(f"Trying to write_ptr outside of unsafe scope: {node}")
+
 
 def __read_ptr__(node, scope):
     _validate_read_ptr(node, scope)
@@ -754,6 +761,9 @@ def __read_ptr__(node, scope):
 def _validate_read_ptr(node, scope):
     if len(node) != 3:
         raise Exception(f"Wrong number of arguments for read_ptr: {node}")
+
+    if scope[4] == True:
+        raise Exception(f"Trying to read_ptr outside of unsafe scope: {node}")
 
 
 def __get_ptr__(node, scope):
@@ -774,6 +784,17 @@ def __size_of__(node, scope):
 def _validate_size_of(node, scope):
     if len(node) != 2:
         raise Exception(f"Wrong number of arguments for size_of: {node}")
+
+
+def __unsafe__(node, scope):
+    _validate_unsafe(node, scope)
+
+    return node[1]
+
+
+def _validate_unsafe(node, scope):
+    if len(node) != 2:
+        raise Exception(f"Wrong number of arguments for unsafe: {node}")
 #
 #
 
@@ -789,10 +810,11 @@ meta_scope = [
   ],
   [],
   None,
-  []
+  [],
+  True
 ]
 runtime_scope = [
-  [
+  [  # names
     ["fn", "mut", "internal", __fn__],
     ["let", "mut", "internal", __let__],
     ["set", "mut", "internal", __set__],
@@ -804,10 +826,20 @@ runtime_scope = [
     ["read_ptr", "mut", "internal", __read_ptr__],
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
+    ["unsafe", "mut", "internal", __unsafe__],
   ],
-  [],
-  None,
-  []
+  [],   # macros
+  None,  # parent scope
+  [],   # children scope
+  True  # is safe scope
+]
+
+default_scope = [
+    [],   # names
+    [],   # macros
+    None,  # parent scope
+    [],   # children scopes
+    True  # is safe scope
 ]
 
 

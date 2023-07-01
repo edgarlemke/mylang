@@ -252,7 +252,16 @@ def test_data_node_size():
     )
 
 
-# other tests
+# unsafe
+def test_unsafe():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(data (OK))\n",
+        "",
+        "unsafe (data (OK))"
+    )
+
+
 # ptr
 def test_ptr():
     return _test(
@@ -263,21 +272,21 @@ def test_ptr():
     )
 
 
-def test_write_ptr():
+def test_read_ptr():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "(read_ptr int 0xdeadbeef)\n",
         "",
-        "read_ptr int 0xdeadbeef"
+        "unsafe (read_ptr int 0xdeadbeef)"
     )
 
 
-def test_read_ptr():
+def test_write_ptr():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        "(write_ptr 0xdeadbeef int 0)\n",
+        "(write_ptr (int 0) 0xdeadbeef)\n",
         "",
-        "write_ptr 0xdeadbeef int 0"
+        "unsafe (write_ptr (int 0) 0xdeadbeef)"
     )
 
 
