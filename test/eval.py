@@ -83,6 +83,17 @@ def test_fn_args():
     )
 
 
+def test_fn_without_args():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """(set mut x (fn (() () ())))
+(x ())
+"""
+    )
+
+
 def test_fn_ret_type():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -165,13 +176,87 @@ def test_fn_arg_inside_scope():
     )
 
 
-# __let__
-def test_let_node_size():
+def test_ret():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """(set mut x (fn ( () () (ret ()) ) ))
+(x ())
+"""
+    )
+
+
+# This test was commented out because the proper checking of ret being outside of a function
+# needs executing a function at compile time, and it was chosen not to provide it in Python
+#
+# def test_ret_outside_function():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Function return declared outside of function",
+#        """ret
+# """
+#    )
+
+
+def test_ret_type():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
-        "Wrong number of arguments for let",
-        "let (int x 0) (body) wrong"
+        "Returned value type of function is different from called function type",
+        """(set mut x (fn ( () bool (ret (data (int 0))) ) ))
+(x ())
+"""
+    )
+
+
+def test_ret_handler():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((bool true) (overflow))\n",
+        "",
+        """(set mut x (fn ( () bool (
+ret (data (bool true)) (data (overflow))
+))))
+(x ())
+(handle overflow (
+  (data overflow)
+))
+"""
+    )
+
+
+def test_ret_missing_handler_evaled_li():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Forced handler set in scope but no handler",
+        """(set mut x (fn ( () bool (
+ret (data (bool true)) (data (overflow))
+))))
+(x ())
+(handle somethingelse (
+  (data somethingelse)
+))
+"""
+    )
+
+
+def test_ret_missing_handler():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Forced handler set but no handler",
+        """(set mut x (fn ( () bool (
+ret (data (bool true)) (data (overflow))
+))))
+(x ())
+(handle somethingelse (
+  (data somethingelse)
+))
+(data whatever)
+"""
     )
 
 

@@ -8,19 +8,14 @@ def eval(li, scope):
     if scope is None:
         scope = runtime_scope
 
-    if len(li) == 0:
-        # print(f"exiting eval {li}")
-        return li
-
-#    if li[0] == "data":
-#        return li
-
     new_li = None
     macros = scope[1]
+    # print(f"macros: {macros}")
     if len(macros):
         expand = True
         new_li = li.copy()
         while expand:
+            # print(f"will try to expand macros in {new_li}")
             new_li, found_macro = expand_macro(new_li, scope)
             # print(f"expand new_li: {new_li}")
             expand = found_macro
@@ -29,9 +24,15 @@ def eval(li, scope):
 
         li = new_li
 
-    is_macro = li[0] == "macro"
-    is_list = isinstance(li[0], list)
+    if len(li) == 0:
+        # print(f"exiting eval {li}")
+        return li
 
+    if scope[5] is not None and li[0] != "handle":
+        # panic
+        raise Exception("Forced handler set but no handler")
+
+    is_list = isinstance(li[0], list)
     if is_list:
         evaled_li = []
         for key, item in enumerate(li):
@@ -39,12 +40,18 @@ def eval(li, scope):
             e = eval(item, scope)
             if len(e) > 0:
                 evaled_li.append(e)
+
         li = evaled_li
+
+        # check if li has evaled with forced handler in scope but no handler
+        if scope[5] is not None:
+            # panic
+            raise Exception("Forced handler set in scope but no handler: {scope[5]} {li}")
 
     else:
         # get all names matching list's first value
         # name_matches = [n for n in scope[0] if n[0] == li[0]]
-        name_match = get_name_value(li[0], scope)
+        name_match = _get_name_value(li[0], scope)
         # print(f"name_match: {name_match}")
 
         # check name_matches size
@@ -55,16 +62,19 @@ def eval(li, scope):
 
         if name_match[2] in ["fn", "internal"]:
             # print(f"fn/internal")
-            # len 1, so is a reference
+            # len == 1, so it's a reference
             if len(li) == 1:
                 # print(f"fn ref {li}")
                 li = name_match
 
-            # len > 1, so is a function call
+            # len > 1, so it's a function call
             else:
                 if name_match[2] == "fn":
-                    x = call_fn(li, name_match, scope)
-                    li = x
+                    retv = _call_fn(li, name_match, scope)
+                    if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
+                        scope[5] = retv[1]
+                        retv = retv[0]
+                    li = retv
                 elif name_match[2] == "internal":
                     # print(f"!!! internal")
                     x = name_match[3](li, scope)
@@ -89,12 +99,15 @@ def eval(li, scope):
     return li
 
 
-def call_fn(li, fn, scope):
-    # print(f"call_fn {li}")
+def _call_fn(li, fn, scope):
+    # print(f"_call_fn {li}")
 
     name = fn[0]
     methods = fn[3]
     candidates = []
+
+    # print(f"methods: {methods}")
+
     for m in methods:
         # print(f"method: {m}")
 
@@ -104,8 +117,8 @@ def call_fn(li, fn, scope):
             # print(f"argument: {arg_i} {arg}")
 
             # break in methods without the arguments
-            if len(m[0]) < arg_i + 1:
-                # print(f"not matching - len(m[0]_ < arg_i + 1")
+            if len(m[0]) < arg_i + 1 and not (len(m[0]) == 0 and len(li[1:]) == 1 and li[1] == []):
+                # print(f"not matching - len(m[0]) < arg_i + 1")
                 match = False
                 break
 
@@ -122,14 +135,14 @@ def call_fn(li, fn, scope):
                 solved_arg = eval(arg, scope)
 
             else:
-                name_value = get_name_value(arg, scope)
+                name_value = _get_name_value(arg, scope)
                 found_value = list(name_value[2:]) != []
 
                 if found_value:
                     solved_arg = name_value[2:]
 
                 else:
-                    solved_arg = infer_type(arg)
+                    solved_arg = _infer_type(arg)
 
             if solved_arg is None:
                 # print(f"not matching - solved_arg is None")
@@ -137,6 +150,7 @@ def call_fn(li, fn, scope):
                 break
 
             if len(solved_arg) == 0:
+                # print("len(sorved_arg) == 0")
                 pass
 
             else:
@@ -159,6 +173,8 @@ def call_fn(li, fn, scope):
         raise Exception(f"No candidate function found: {name} {fns}")
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
+
+    # print(f"candidates: {candidates}")
 
     the_method = candidates[0][0]
     # print(f"the_method: {the_method}")
@@ -184,11 +200,19 @@ def call_fn(li, fn, scope):
     # print(f"fn_scope: {fn_scope}")
 
     retv = eval(the_method[2], fn_scope)
-    # print(f"exiting call_fn {li}")
+
+    # if returned value isn't empty list
+    if len(retv) > 0:
+        # if returned value type is different from called function type
+        if not isinstance(retv[0], list) and retv[0] != the_method[1] or isinstance(retv[0], list) and retv[0][0] != the_method[1]:
+            raise Exception(f"Returned value type of function is different from called function type: {retv} {the_method[1]}")
+
+    # print(f"exiting _call_fn {li} {retv}")
+
     return retv
 
 
-def get_name_value(name, scope):
+def _get_name_value(name, scope):
     def iterup(scope):
         # print(f"interup {scope}")
         for n in scope[0]:
@@ -208,7 +232,7 @@ def get_name_value(name, scope):
     return iterup(scope)
 
 
-def infer_type(arg):
+def _infer_type(arg):
     candidates = []
 
     int_regexp = "[0-9]+"
@@ -253,12 +277,19 @@ def expand_macro(li, scope):
     for index, item in enumerate(li):
         # print(f"LI index: {index} item: {item}")
 
+        if isinstance(item, list):
+            sub_new_li, sub_found_macro = expand_macro(item, scope)
+            if sub_found_macro:
+                # print(f"sub_found_macro! {item} -> {sub_new_li}")
+                item = sub_new_li
+                li[index] = sub_new_li
+
         found_macro = False
         for macro in scope[1]:
             # print(f"macro: {macro}")
 
             found_macro, full_match, bindings = match_macro(li, index, macro)
-            # print(f"AA> {new_li} {found_macro}")
+            # print(f"match_macro > {new_li} {found_macro}")
 
             if found_macro:
                 # expand macro
@@ -313,6 +344,11 @@ def match_macro(li, index, macro):
     full_match = False
     for cur_index, cur in enumerate(li_piece):
         # print(f"cur {cur_index} {cur}")
+
+        #        if type(cur) == list:
+        #            #print(f"cur is list! {cur}")
+        #            result = match_macro(cur, 0, macro)
+        #            print(f"result: {result}")
 
         matching = []
 
@@ -371,7 +407,7 @@ def _set_struct_member(li, scope, value):
             return _set_struct_member([new_li] + li[2:], scope)
         else:
             # print(f"n: {n}")
-            value_type = infer_type(value)[0]
+            value_type = _infer_type(value)[0]
             # print(f"value_type: {value_type}")
 
             n_type = n[2]
@@ -594,7 +630,7 @@ def _validate_set(node, scope):
                 if found_value_member:
                     value_member_type = value_member_type
                 else:
-                    it_value_member = infer_type(value_member)
+                    it_value_member = _infer_type(value_member)
                     # print(f"it_value_member: {it_value_member} struct_member: {struct_member}")
                     value_member_type = it_value_member[0]
 
@@ -709,25 +745,6 @@ def validate_if(node, scope):
     pass
 
 
-def __let__(node, scope):
-    """
-    Shortcut for defining an anonymous function and calling it with the given arguments
-    """
-#    print(f"calling __let__: {node}")
-
-    validate_let(node, scope)
-
-    let_, args, body = node
-
-    return []
-
-
-def validate_let(node, scope):
-    # check let arguments number
-    if len(node) != 3:
-        raise Exception(f"Wrong number of arguments for let: {node}")
-
-
 def __data__(node, scope):
     # print(f"calling __data__: {node}")
 
@@ -803,14 +820,41 @@ def __unsafe__(node, scope):
 def _validate_unsafe(node, scope):
     if len(node) != 2:
         raise Exception(f"Wrong number of arguments for unsafe: {node}")
-#
-#
+
+
+def __handle__(node, scope):
+    _validate_handle(node, scope)
+
+    if scope[5] is not None and ((not isinstance(node[1], list) and scope[5][0] == node[1]) or (isinstance(node[1], list) and scope[5][0] in node[1])):
+        handler_scope = default_scope.copy()
+        handler_scope[2] = scope
+        scope[3].append(handler_scope)
+
+        # print(f"node: {node}")
+        if len(node) == 4:
+            __set__(['set', 'const', node[3], ['data', scope[5]]], handler_scope)
+            eval(node[len(node) - 1], handler_scope)
+
+        scope[3].remove(handler_scope)
+
+        li = eval(node[len(node) - 1], handler_scope)
+
+        # clear forced handler field
+        scope[5] = None
+
+        return li
+
+    return []
+
+
+def _validate_handle(node, scope):
+    if len(node) not in [3, 4]:
+        raise Exception(f"Wrong number of arguments for handle: {node}")
 
 
 meta_scope = [
   [
     ["fn", "mut", "internal", __fn__],
-    ["let", "mut", "internal", __let__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
@@ -824,7 +868,7 @@ meta_scope = [
 runtime_scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
-    ["let", "mut", "internal", __let__],
+    ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
@@ -836,10 +880,11 @@ runtime_scope = [
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
   ],
-  [],   # macros
+  [],    # macros
   None,  # parent scope
-  [],   # children scope
-  True  # is safe scope
+  [],    # children scope
+  True,  # is safe scope
+  None   # forced handler
 ]
 
 default_scope = [
@@ -847,7 +892,8 @@ default_scope = [
     [],   # macros
     None,  # parent scope
     [],   # children scopes
-    True  # is safe scope
+    True,  # is safe scope
+    None   # forced handler
 ]
 
 

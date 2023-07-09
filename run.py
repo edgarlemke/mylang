@@ -125,6 +125,8 @@ def setup_env():
 (macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c)))
 
 (macro op_set ('a = 'b) (set 'a 'b))
+
+(macro ret (ret) ())
 """
 
     op_li = get_list_from_expr(default_macros)
