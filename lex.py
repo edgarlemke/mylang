@@ -27,7 +27,7 @@ rules_list = [
 ]
 
 
-def tokenize(code):
+def tokenize(code, autolist=True):
     """
     Tokenize code according to rules.
 
@@ -39,22 +39,19 @@ def tokenize(code):
     if len(token_list) == 0:
         raise Exception("No token match!")
 
+    # match literals tokens
     token_list = _match_lit_tokens(token_list, code)
+
+    # sort outo duplicated tokens
     token_list = _decide_dup_tokens(token_list, ["LIT"])
 
     # sort token_list list by start position of the token
     token_list.sort(key=lambda x: x[2])
     token_list = _remove_comments(token_list)
-#
-#
-#    # check for non-tokenized ranges
-#    _check_nontokenized(token_list, code)
-#
-#    token_list = _match_singleline_comments(token_list)
-#
-    token_list = _sort_indentation(token_list)
-#
-#    token_list = _sort_op_order(token_list)
+
+    # sort autolist if needed
+    if autolist:
+        token_list = _sort_autolist(token_list)
 
     return token_list
 
@@ -262,7 +259,7 @@ def _decide_dup_tokens(token_list, to_remove):
 #            f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
 
 
-def _sort_indentation(token_list):
+def _sort_autolist(token_list):
     # add breaklines in the end, so the programmer doesn't need to do it ;)
     for i in range(0, 2):
         token_list.append(["TOKEN", "BREAKLINE"])
@@ -305,8 +302,8 @@ def _sort_indentation(token_list):
         if len(ln_content) > 0:
 
             # the "text" parts must be different
-            ln_content.insert(0, ["TOKEN", "PAR_OPEN", f"start ln {ln}", '', "("])
-            ln_content.append(["TOKEN", "PAR_CLOSE", f"end ln {ln}", '', ")"])
+            ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", f"start ln {ln}"])
+            ln_content.append(["TOKEN", "PAR_CLOSE", '', '', ")", f"end ln {ln}"])
 
         # if starting a new level with tab
         abc = False
@@ -320,7 +317,7 @@ def _sort_indentation(token_list):
             blocked_lines[ln - 1].pop(len(blocked_lines[ln - 1]) - 1)
 
             # insert PAR_OPEN at the start of current line
-            ln_content.insert(0, ["TOKEN", "PAR_OPEN", 'start blk {level}', '', "("])
+            ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", 'start blk {level}'])
             # ln_content.insert(0, ["TOKEN", "SPACE", '?', '?', " "])
 
             abc = True
@@ -337,7 +334,7 @@ def _sort_indentation(token_list):
                     # print(f"level {level} diff {diff} i {i}")
                     # ln_content.insert(0, ["TOKEN", "BLOCK_END"])
                     # blocked_lines[ ln-1 ].append(["TOKEN", "BLOCK_END", 0, 0, ")"])
-                    ln_content.insert(0, ["TOKEN", "PAR_CLOSE", f"end blk {sub}", '', ")"])
+                    ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '', '', ")", f"end blk {sub}"])
 
                 level -= diff
                 xyz = True
@@ -377,6 +374,8 @@ if __name__ == "__main__":
     group.add_argument("--src")
     group.add_argument("--expr")
 
+    parser.add_argument("--disable-autolist", action="store_false")
+
     args = parser.parse_args()
 
     # get the src file argument
@@ -403,6 +402,6 @@ if __name__ == "__main__":
         raise Exception("Either --src or --expr argument must be provided")
 
     # generate token list from content variable
-    token_list = tokenize(expr)
+    token_list = tokenize(expr, autolist=not (args.disable_autolist))
 
     print(list_.list_print(token_list))

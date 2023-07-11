@@ -436,7 +436,7 @@ def test_fn_indent():
     return _test(
         i.getframeinfo(
             i.currentframe()).function,
-        """((TOKEN LIT 15 19 3.14))\n""",
+        """((TOKEN LIT 0 6 somefn) (TOKEN SPACE 6 7 " ") (TOKEN LIT 7 8 =) (TOKEN SPACE 8 9 " ") (TOKEN LIT 9 11 fn) (TOKEN SPACE 11 12 " ") (TOKEN PAR_OPEN 12 13 "(") (TOKEN LIT 13 16 int) (TOKEN SPACE 16 17 " ") (TOKEN LIT 17 18 x) (TOKEN SPACE 18 19 " ") (TOKEN SPACE 19 20 " ") (TOKEN LIT 20 23 int) (TOKEN SPACE 23 24 " ") (TOKEN LIT 24 25 y) (TOKEN PAR_CLOSE 25 26 ")") (TOKEN SPACE 26 27 " ") (TOKEN PAR_OPEN 27 28 "(") (TOKEN PAR_CLOSE 28 29 ")") (TOKEN BREAKLINE 29 30 "\\n") (TOKEN TAB 30 31 "\\t") (TOKEN LIT 31 34 ret) (TOKEN BREAKLINE 34 35 "\\n") (TOKEN LIT 35 41 somefn) (TOKEN SPACE 41 42 " ") (TOKEN LIT 42 44 12) (TOKEN SPACE 44 45 " ") (TOKEN LIT 45 47 34) (TOKEN BREAKLINE 47 48 "\\n"))\n""",
         """somefn = fn (int x  int y) ()
 	ret
 somefn 12 34
@@ -471,7 +471,7 @@ def test_check_no_argument():
 
 
 def _popen(expr):
-    cmd = f"/usr/bin/python3 ../lex.py --expr \"{expr}\""
+    cmd = f"/usr/bin/python3 ../lex.py --disable-autolist --expr \"{expr}\""
     sp = split(cmd)
     p = Popen(sp, stdout=PIPE, stderr=PIPE, encoding="utf-8")
     return p.communicate()

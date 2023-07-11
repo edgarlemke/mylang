@@ -23,13 +23,18 @@ def list_print(l):
 
             quoted_chars = ["(", ")", " ", "\"", "\n", "\t"]
             esc_chars = [
-                ["\"", "\\\""],
-                ["\n", "\\\n"],
-                ["\t", "\\\t"],
+                ["\"", '\\"'],
+                ["\n", "\\n"],
+                ["\t", "\\t"],
             ]
 
             cvt_li = []
             quote = False
+
+            # quote empty strings
+            if len(str_i) == 0:
+                quote = True
+
             # iter over string checking for quoted and escaped chars
             for index, ch in enumerate(str_i):
                 # detect need for quotes
