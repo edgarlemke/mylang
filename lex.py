@@ -274,14 +274,16 @@ def _sort_indentation(token_list):
     line_ct = 0
     for token in token_list:
         if line_ct not in lines.keys():
+            # lines[line_ct] = [["TOKEN", "PAR_OPEN"]]
             lines[line_ct] = []
 
         if token[1] != "BREAKLINE":
             lines[line_ct].append(token)
         else:
+            # lines[line_ct].append(["TOKEN", "PAR_CLOSE"])
             line_ct += 1
 
-    new_token_list = []
+    blocked_lines = []
     level = 0
     mark_block_end = False
     for ln, ln_content in lines.items():
@@ -299,25 +301,61 @@ def _sort_indentation(token_list):
 
         # print(f"previous level: {level}")
         # print(f"tabs_in_line {ln}: {tabs_in_line}")
+
+        if len(ln_content) > 0:
+
+            # the "text" parts must be different
+            ln_content.insert(0, ["TOKEN", "PAR_OPEN", f"start ln {ln}", '', "("])
+            ln_content.append(["TOKEN", "PAR_CLOSE", f"end ln {ln}", '', ")"])
+
+        # if starting a new level with tab
+        abc = False
+        xyz = False
         if len(tabs_in_line) == level + 1:
             # print(f"ADD BLOCK_START {level}")
-            ln_content.insert(0, ["TOKEN", "BLOCK_START", level])
+            # ln_content.insert(0, ["TOKEN", "BLOCK_START", level])
             level += 1
 
+            # remove PAR_CLOSE from previous line
+            blocked_lines[ln - 1].pop(len(blocked_lines[ln - 1]) - 1)
+
+            # insert PAR_OPEN at the start of current line
+            ln_content.insert(0, ["TOKEN", "PAR_OPEN", 'start blk {level}', '', "("])
+            # ln_content.insert(0, ["TOKEN", "SPACE", '?', '?', " "])
+
+            abc = True
+
+        # elif decreasing level receding tabs
         elif len(tabs_in_line) < level:
             if (empty_line and eof) or (not empty_line and not eof):
                 diff = level - len(tabs_in_line)
 
-                for i in reversed(range(0, diff)):
+                # ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '#', '#', ")"])
+                for i in reversed(range(0, diff + 1)):
                     sub = level - i - 1
                     # print(f"ADD BLOCK_END {sub}")
                     # print(f"level {level} diff {diff} i {i}")
-                    ln_content.insert(0, ["TOKEN", "BLOCK_END", sub])
+                    # ln_content.insert(0, ["TOKEN", "BLOCK_END"])
+                    # blocked_lines[ ln-1 ].append(["TOKEN", "BLOCK_END", 0, 0, ")"])
+                    ln_content.insert(0, ["TOKEN", "PAR_CLOSE", f"end blk {sub}", '', ")"])
 
                 level -= diff
-        # print(f"current level: {level}\n")
+                xyz = True
 
-        new_token_list += ln_content
+        # if len(ln_content):
+        # if not abc:
+        #    ln_content.insert(0, ["TOKEN", "PAR_OPEN"])
+        # if not xyz:
+        #    ln_content.append(["TOKEN", "PAR_CLOSE"])
+
+        blocked_lines.append(ln_content)
+
+    new_token_list = []
+    for bln in blocked_lines:
+        # print(f"bln: {bln}")
+        new_token_list += bln
+
+    # print(f"new_token_list: {new_token_list}")
 
     return new_token_list
 

@@ -432,6 +432,18 @@ def test_single_line_comment():
 3.14""")
 
 
+def test_fn_indent():
+    return _test(
+        i.getframeinfo(
+            i.currentframe()).function,
+        """((TOKEN LIT 15 19 3.14))\n""",
+        """somefn = fn (int x  int y) ()
+	ret
+somefn 12 34
+"""
+)
+
+
 def test_check_no_argument():
     print(
         f"TEST {i.getframeinfo( i.currentframe() ).function} - ",

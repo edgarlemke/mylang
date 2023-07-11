@@ -21,8 +21,10 @@ def run(
 
     setup_env()
 
-    lic = get_list_from_expr(expr)
-    eval_li = eval.eval(lic, None)
+    expr_li = get_list_from_expr(expr)
+    # print(f"expr_li: {expr_li}")
+
+    eval_li = eval.eval(expr_li, None)
 
     print(list_.list_print(eval_li))
 
@@ -35,10 +37,14 @@ def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
         print(list_.list_print(token_list), end="")
         exit()
 
+    # print(f"tokenize token_list: {token_list}\n")
+
     token_list = parse.parse(token_list)
     if print_token_tree:
         print(list_.list_print(token_list), end="")
         exit()
+
+    # print(f"parse token_list: {token_list}\n")
 
 #    # remove LIST from actual lists recursively
 #    def iterdown(token_list):
@@ -57,6 +63,7 @@ def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
         for index, i in enumerate(lic):
             if len(i) > 0:
                 if i[0] == "TOKEN":
+                    # print(f"i: {i}")
                     lic[index] = i[4]
 
                 elif i[0] == "LIST":
@@ -97,10 +104,10 @@ def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
         return lic2
 
     token_list = reduce(token_list)
-    # print(f"reduce {token_list}")
+    # print(f"reduce {token_list}\n")
 
     lic = remove(token_list)
-    # print(f"lic {lic}")
+    # print(f"remove lic {lic}\n")
 
     return lic
 
@@ -124,7 +131,9 @@ def setup_env():
 
 (macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c)))
 
-(macro op_set ('a = 'b) (set 'a 'b))
+(macro op_set_fn ('f = fn 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body))) )
+(macro op_set_mut (mut 't 'a = 'b) (set mut 'a ('t 'b)))
+(macro op_set_const ('t 'a = 'b) (set const 'a ('t 'b)))
 
 (macro ret (ret) ())
 """

@@ -24,6 +24,8 @@ def eval(li, scope):
 
         li = new_li
 
+    # print(f"macro expanded li: {li}")
+
     if len(li) == 0:
         # print(f"exiting eval {li}")
         return li
@@ -92,7 +94,7 @@ def eval(li, scope):
                 else:
                     li = name_match[2:]
             else:
-                # print(f"li[0]: {li[0]}")
+                # print(f"struct member? li: {li}")
                 li = _get_struct_member(li, scope)
 
     # print(f"exiting eval {li}")

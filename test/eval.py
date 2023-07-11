@@ -526,7 +526,7 @@ def test_struct_init_wrong_type_for_member():
     )
 
 
-# other tests
+# eval tests
 def test_eval_name():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -535,6 +535,41 @@ def test_eval_name():
         """(set const randomvar (int 1))
 (randomvar)"""
     )
+
+
+# unlispifcation tests
+def test_unlisp_set_value():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """int somename = 1"""
+    )
+
+
+def test_unlisp_set_mut_value():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """mut int somename = 1"""
+    )
+
+
+def test_unlisp_set_fn():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """somefn = fn ((int x) (int y)) ()
+	ret
+somefn 12 34
+"""
+#       """(set mut somefn ( fn ( ((int x) (int y)) int (ret (data (int 56))) ) ))
+# (somefn 12 34)
+# """
+    )
+
 #
 #
 
