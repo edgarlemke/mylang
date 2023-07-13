@@ -112,6 +112,7 @@ def _call_fn(li, fn, scope):
     candidates = []
 
     # print(f"methods: {methods}")
+    solved_args = []
 
     for m in methods:
         # print(f"method: {m}")
@@ -153,6 +154,8 @@ def _call_fn(li, fn, scope):
                 # print(f"not matching - solved_arg is None")
                 match = False
                 break
+
+            solved_args.append(solved_arg)
 
             if len(solved_arg) == 0:
                 # print("len(sorved_arg) == 0")
@@ -196,11 +199,15 @@ def _call_fn(li, fn, scope):
     fn_scope[2] = scope
     fn_scope[4] = scope[4]
 
+    # print(f"solved_args: {solved_args}")
+
     # populate new scope's names with function call arguments
     if li[1:] != [[]]:
-        for arg_i, arg in enumerate(li[1:]):
+
+        # for arg_i, arg in enumerate(li[1:]):
+        for arg_i, arg in enumerate(solved_args):
             method_arg = the_method[0][arg_i]
-            fn_scope[0].append([method_arg[1], "const", method_arg[0], arg])
+            fn_scope[0].append([method_arg[1], "const", method_arg[0], arg[1]])
 
     # print(f"fn_scope: {fn_scope}")
 

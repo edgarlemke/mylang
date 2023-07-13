@@ -146,9 +146,11 @@ def test_fn_arg_type_infer_bool_false():
 def test_fn_arg_name():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        "()\n",
+        "((bool true))\n",
         "",
-        """set const myfn (fn ( ((bool x)) bool () ) )
+        """set const myfn (fn ( ((bool x)) bool
+	x
+))
 set const mybool (bool true)
 myfn mybool"""
     )
