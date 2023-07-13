@@ -32,19 +32,21 @@ def run(
 
 
 def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
+    from pprint import pprint
+
     token_list = lex.tokenize(expr)
     if print_token_list:
         print(list_.list_print(token_list), end="")
         exit()
 
-    # print(f"tokenize token_list: {token_list}\n")
+    # print(f"tokenize token_list: {pprint(token_list)}\n")
 
     token_list = parse.parse(token_list)
     if print_token_tree:
         print(list_.list_print(token_list), end="")
         exit()
 
-    # print(f"parse token_list: {token_list}\n")
+    # print(f"parse token_list: {pprint(token_list)}\n")
 
 #    # remove LIST from actual lists recursively
 #    def iterdown(token_list):
@@ -58,7 +60,7 @@ def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
 #    tc = iterdown(tc2)
 
     def reduce(li):
-        # print(f"CLEAN {li}\n")
+        # print(f"reduce {li}")
         lic = li.copy()
         for index, i in enumerate(lic):
             if len(i) > 0:
@@ -81,6 +83,7 @@ def get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
                     lic[index][1] = reduced_subitem
                     lic[index].remove("BLOCK")
 
+        # print(f"reduce {li} -> {lic}\n")
         return lic
 
     def remove(li):

@@ -301,9 +301,11 @@ def _sort_autolist(token_list):
 
         if len(ln_content) > 0:
 
-            # the "text" parts must be different
-            ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", f"start ln {ln}"])
-            ln_content.append(["TOKEN", "PAR_CLOSE", '', '', ")", f"end ln {ln}"])
+            # NOTE: the "text" parts must be different
+
+            if ln_content[0][1] != "PAR_CLOSE":
+                ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", f"start ln {ln}"])
+                ln_content.append(["TOKEN", "PAR_CLOSE", '', '', ")", f"end ln {ln}"])
 
         # if starting a new level with tab
         abc = False
@@ -317,7 +319,7 @@ def _sort_autolist(token_list):
             blocked_lines[ln - 1].pop(len(blocked_lines[ln - 1]) - 1)
 
             # insert PAR_OPEN at the start of current line
-            ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", 'start blk {level}'])
+            ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", f"start blk {level} {ln}"])
             # ln_content.insert(0, ["TOKEN", "SPACE", '?', '?', " "])
 
             abc = True
@@ -329,12 +331,12 @@ def _sort_autolist(token_list):
 
                 # ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '#', '#', ")"])
                 for i in reversed(range(0, diff + 1)):
-                    sub = level - i - 1
+                    sub = level - i  # - 1
                     # print(f"ADD BLOCK_END {sub}")
                     # print(f"level {level} diff {diff} i {i}")
                     # ln_content.insert(0, ["TOKEN", "BLOCK_END"])
                     # blocked_lines[ ln-1 ].append(["TOKEN", "BLOCK_END", 0, 0, ")"])
-                    ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '', '', ")", f"end blk {sub}"])
+                    ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '', '', ")", f"end blk {sub} {ln}"])
 
                 level -= diff
                 xyz = True

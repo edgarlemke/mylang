@@ -3,7 +3,10 @@ import re
 
 
 def eval(li, scope):
+    # print(f"\neval {li}")
     # print(f"\neval {li} {scope}")
+
+    old_li = li
 
     if scope is None:
         scope = runtime_scope
@@ -97,7 +100,7 @@ def eval(li, scope):
                 # print(f"struct member? li: {li}")
                 li = _get_struct_member(li, scope)
 
-    # print(f"exiting eval {li}")
+    # print(f"exiting eval {old_li} -> {li}")
     return li
 
 
@@ -163,7 +166,7 @@ def _call_fn(li, fn, scope):
                 # print(f"marg: {marg}")
 
                 if solved_arg[0] != marg[0]:
-                    # print(f"not matching - solved_arg[2] != marg[0]")
+                    # print(f"not matching - solved_arg[0][0] != marg[0] - {solved_arg[0][0]} != {marg[0]}")
                     match = False
                     break
 
@@ -205,11 +208,12 @@ def _call_fn(li, fn, scope):
 
     # if returned value isn't empty list
     if len(retv) > 0:
+        retv = retv[0]
         # if returned value type is different from called function type
-        if not isinstance(retv[0], list) and retv[0] != the_method[1] or isinstance(retv[0], list) and retv[0][0] != the_method[1]:
-            raise Exception(f"Returned value type of function is different from called function type: {retv} {the_method[1]}")
+        if (not isinstance(retv[0], list) and retv[0] != the_method[1]):  # and (isinstance(retv[0], list) and retv[0][0] != the_method[1]):# and (isinstance(retv[0], list) and isinstance(retv[0][0], list) and retv[0][0][0] != the_method[1]):
+            raise Exception(f"Returned value type of function is different from called function type: {retv} {the_method[1]} {retv[0][0][0]}")
 
-    # print(f"exiting _call_fn {li} {retv}")
+    # print(f"exiting _call_fn {li} -> {retv}")
 
     return retv
 
