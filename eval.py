@@ -1,4 +1,3 @@
-import eval_types
 import re
 
 
