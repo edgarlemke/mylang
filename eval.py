@@ -164,10 +164,10 @@ def _call_fn(li, fn, scope):
                 # print(f"solved_arg: {solved_arg}")
                 # print(f"m: {m}")
                 # print(f"m[0]: {m[0][0][arg_i]} {arg_i}")
-                marg = m[0][0][arg_i]
-                # print(f"marg: {marg}")
+                method_arg_type = m[0][0][arg_i][0]
+                # print(f"method_arg_type: {method_arg_type}")
 
-                if solved_arg[0] != marg[0]:
+                if solved_arg[0] != method_arg_type:
                     # print(f"not matching - solved_arg[0][0] != marg[0] - {solved_arg[0][0]} != {marg[0]}")
                     match = False
                     break
@@ -506,7 +506,8 @@ def validate_fn(node, scope):
     types = [t[0] for t in scope[0] if t[2] == "type"]
 
     # check if types of the arguments are valid
-    for arg in args:
+    split_args = _split_fn_args(args)
+    for arg in split_args:
         type_, name = arg
         if type_ not in types:
             raise Exception(f"Function argument has invalid type: {arg} {node}")
@@ -536,6 +537,8 @@ def __set__(node, scope):
 
     if type_ == "fn":
         value = list(data[1:4])
+        value[0][0] = _split_fn_args(value[0][0])
+
         all_fn = [(i, var) for i, var in enumerate(names) if var[1] == "fn" and var[0] == name]
         # print(f"all_fn: {all_fn}")
 
@@ -660,6 +663,28 @@ def _validate_set(node, scope):
 
                 elif v[1] == "mut" and mutdecl == "const":
                     raise Exception("Trying to reassign a constant name over a mutable name: {node}")
+
+
+def _split_fn_args(args):
+    # print(f"args: {args}")
+
+    split_args = []
+    buf = []
+    ct = 0
+
+    for arg in args:
+        buf.append(arg)
+
+        if ct == 1:
+            split_args.append(buf.copy())
+            buf = []
+            ct = 0
+        else:
+            ct += 1
+
+    # print(f"split_args: {split_args}")
+
+    return split_args
 
 
 def __macro__(node, scope):

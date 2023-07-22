@@ -59,9 +59,9 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 def test_fn():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """((fn ((int x) (int y)) int ()))\n""",
+        """((fn (int x int y) int ()))\n""",
         "",
-        "fn ((int x) (int y)) int ()"
+        "fn (int x  int y) int ()"
     )
 
 
@@ -99,7 +99,7 @@ def test_fn_ret_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function return type has invalid type",
-        "fn ((int x) (int y)) wrong ()"
+        "fn (int x  int y) wrong ()"
     )
 
 
@@ -108,8 +108,8 @@ def test_fn_arg_type_infer_int():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( ((int x)) int () ) ))
-(myfn 1234)"""
+        """set const myfn (fn ( (int x) int () ) )
+myfn 1234"""
     )
 
 
@@ -118,7 +118,7 @@ def test_fn_arg_type_infer_float():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( ((float x)) float () ) ))
+        """(set const myfn (fn ( (float x) float () ) ))
 (myfn 3.14)"""
     )
 
@@ -128,7 +128,7 @@ def test_fn_arg_type_infer_bool_true():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( ((bool x)) bool () ) ))
+        """(set const myfn (fn ( (bool x) bool () ) ))
 (myfn true)"""
     )
 
@@ -138,7 +138,7 @@ def test_fn_arg_type_infer_bool_false():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( ((bool x)) bool () ) ))
+        """(set const myfn (fn ( (bool x) bool () ) ))
 (myfn false)"""
     )
 
@@ -148,7 +148,7 @@ def test_fn_arg_name():
         i.getframeinfo(i.currentframe()).function,
         "((bool true))\n",
         "",
-        """set const myfn (fn ( ((bool x)) bool
+        """set const myfn (fn ( (bool x) bool
 	x
 ))
 set const mybool (bool true)
@@ -161,7 +161,7 @@ def test_fn_arg_fncall():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """set const myfn (fn ( ((bool x)) bool () ))
+        """set const myfn (fn ( (bool x) bool () ))
 set const retbool (fn ( () bool ((data (bool true))) ))
 myfn (retbool ())"""
     )
@@ -172,7 +172,7 @@ def test_fn_arg_inside_scope():
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """set const myfn (fn ( ((int x)) int
+        """set const myfn (fn ( (int x) int
 	x
 ) )
 myfn 1
@@ -564,15 +564,76 @@ def test_unlisp_set_fn():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """somefn = fn ((int x) (int y)) ()
+        """somefn = fn (int x  int y) ()
 	ret
 somefn 12 34
 """
-#       """(set mut somefn ( fn ( ((int x) (int y)) int (ret (data (int 56))) ) ))
-# (somefn 12 34)
-# """
-    )
+)
 
+
+def test_unlisp_set_fn_with_return():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((bool false))\n",
+        "",
+        """somefn = fn (int x  int y) bool
+	ret data (bool false)
+somefn 12 34
+"""
+)
+
+
+"""
+somefn = fn (x int  y int) ()
+	ret
+"""
+
+# generic programming
+"""
+somefn = fn (x y int)
+	ret
+"""
+
+"""
+somefn = fn (a Array (Bytes)  otherarg)
+	ret
+"""
+
+# traits or something
+"""
+somefn = fn (x (Show Int))
+	ret
+"""
+
+# optional arguments
+"""
+somefn = fn (x   y = 0   z = File ?   a = Array(Bytes) ?)
+somefn = fn (y  x = File ?)
+"""
+
+# variadic functions
+"""
+print = fn (... Str)
+	nop
+"""
+
+# comma ;_;
+"""
+somefn = fn (x int, y int)
+	ret
+
+somefn = fn (x, y int)
+	ret
+
+somefn = fn (a Array (Bytes), otherarg)
+	ret
+
+somefn = fn (x (Show AbsInt))
+	ret
+
+somefn = fn (x, y , z = File ?, a = Array (Bytes) ?)
+	ret
+"""
 #
 #
 
