@@ -123,7 +123,7 @@ def _call_fn(li, fn, scope):
 
             # break in methods without the arguments
             if len(m[0]) < arg_i + 1 and not (len(m[0]) == 0 and len(li[1:]) == 1 and li[1] == []):
-                print(f"not matching - len(m[0]) < arg_i + 1")
+                # print(f"not matching - len(m[0]) < arg_i + 1")
                 match = False
                 break
 
@@ -161,7 +161,7 @@ def _call_fn(li, fn, scope):
             #
 
             if solved_arg is None:
-                print(f"not matching - solved_arg is None")
+                # print(f"not matching - solved_arg is None")
                 match = False
                 break
 
@@ -179,7 +179,7 @@ def _call_fn(li, fn, scope):
                 # print(f"method_arg_type: {method_arg_type}")
 
                 if solved_arg[0] != method_arg_type:
-                    print(f"not matching - solved_arg[0] != method_arg_type[0] - {solved_arg[0]} != {method_arg_type[0]}")
+                    # print(f"not matching - solved_arg[0] != method_arg_type[0] - {solved_arg[0]} != {method_arg_type[0]}")
                     match = False
                     break
 
