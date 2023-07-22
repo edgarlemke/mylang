@@ -123,7 +123,7 @@ def _call_fn(li, fn, scope):
 
             # break in methods without the arguments
             if len(m[0]) < arg_i + 1 and not (len(m[0]) == 0 and len(li[1:]) == 1 and li[1] == []):
-                # print(f"not matching - len(m[0]) < arg_i + 1")
+                print(f"not matching - len(m[0]) < arg_i + 1")
                 match = False
                 break
 
@@ -133,24 +133,35 @@ def _call_fn(li, fn, scope):
             #    continue
 
             # solve argument
+            #
             solved_arg = None
 
+            # check if argument is a list
             is_list = isinstance(arg, list)
+
+            # if it's a list
             if is_list:
+                # eval it
                 solved_arg = eval(arg, scope)
 
+            # if it's not a list
             else:
+                # get name value
                 name_value = _get_name_value(arg, scope)
                 found_value = list(name_value[2:]) != []
 
+                # if found value, set solved_arg with the value
                 if found_value:
                     solved_arg = name_value[2:]
 
+                # if value not found, try to infer type of argument
                 else:
                     solved_arg = _infer_type(arg)
+            #
+            #
 
             if solved_arg is None:
-                # print(f"not matching - solved_arg is None")
+                print(f"not matching - solved_arg is None")
                 match = False
                 break
 
@@ -164,11 +175,11 @@ def _call_fn(li, fn, scope):
                 # print(f"solved_arg: {solved_arg}")
                 # print(f"m: {m}")
                 # print(f"m[0]: {m[0][0][arg_i]} {arg_i}")
-                method_arg_type = m[0][0][arg_i][0]
+                method_arg_type = m[0][0][arg_i][1]
                 # print(f"method_arg_type: {method_arg_type}")
 
                 if solved_arg[0] != method_arg_type:
-                    # print(f"not matching - solved_arg[0][0] != marg[0] - {solved_arg[0][0]} != {marg[0]}")
+                    print(f"not matching - solved_arg[0] != method_arg_type[0] - {solved_arg[0]} != {method_arg_type[0]}")
                     match = False
                     break
 
@@ -206,7 +217,7 @@ def _call_fn(li, fn, scope):
         # for arg_i, arg in enumerate(li[1:]):
         for arg_i, arg in enumerate(solved_args):
             method_arg = the_method[0][arg_i]
-            fn_scope[0].append([method_arg[1], "const", method_arg[0], arg[1]])
+            fn_scope[0].append([method_arg[0], "const", method_arg[1], arg[1]])
 
     # print(f"fn_scope: {fn_scope}")
 
@@ -225,6 +236,7 @@ def _call_fn(li, fn, scope):
 
 
 def _get_name_value(name, scope):
+    # print(f"name: {name}")
     def iterup(scope):
         # print(f"interup {scope}")
         for n in scope[0]:
@@ -508,7 +520,8 @@ def validate_fn(node, scope):
     # check if types of the arguments are valid
     split_args = _split_fn_args(args)
     for arg in split_args:
-        type_, name = arg
+        # type_, name = arg
+        name, type_ = arg
         if type_ not in types:
             raise Exception(f"Function argument has invalid type: {arg} {node}")
 
