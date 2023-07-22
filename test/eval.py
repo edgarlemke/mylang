@@ -583,61 +583,6 @@ somefn 12 34
 )
 
 
-"""
-somefn = fn (x int  y int) ()
-	ret
-"""
-
-# generic programming
-"""
-somefn = fn (x y int)
-	ret
-"""
-
-"""
-somefn = fn (a Array (Bytes)  otherarg)
-	ret
-"""
-
-# traits or something
-"""
-somefn = fn (x (Show Int))
-	ret
-"""
-
-# optional arguments
-"""
-somefn = fn (x   y = 0   z = File ?   a = Array(Bytes) ?)
-somefn = fn (y  x = File ?)
-"""
-
-# variadic functions
-"""
-print = fn (... Str)
-	nop
-"""
-
-# comma ;_;
-"""
-somefn = fn (x int, y int)
-	ret
-
-somefn = fn (x, y int)
-	ret
-
-somefn = fn (a Array (Bytes), otherarg)
-	ret
-
-somefn = fn (x (Show AbsInt))
-	ret
-
-somefn = fn (x, y , z = File ?, a = Array (Bytes) ?)
-	ret
-"""
-#
-#
-
-
 def _popen(expr):
     cmd = f"/usr/bin/python3 ../lex.py --expr \"{expr}\""
     sp = split(cmd)
