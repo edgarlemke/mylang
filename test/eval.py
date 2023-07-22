@@ -574,10 +574,10 @@ somefn 12 34
 def test_unlisp_set_fn_with_return():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        "((bool false))\n",
+        "()\n",
         "",
-        """somefn = fn (x int  y int) bool
-	ret data (bool false)
+        """somefn = fn (x int  y int)
+	ret
 somefn 12 34
 """
 )

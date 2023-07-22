@@ -221,6 +221,9 @@ def _call_fn(li, fn, scope):
 
     # print(f"fn_scope: {fn_scope}")
 
+    if len(the_method) == 2:
+        return []
+
     retv = eval(the_method[2], fn_scope)
 
     # if returned value isn't empty list

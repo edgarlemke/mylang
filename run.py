@@ -134,7 +134,8 @@ def setup_env():
 
 (macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c)))
 
-(macro op_set_fn ('f = fn 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body))) )
+(macro op_set_fn_with_return ('f = fn 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body))) )
+(macro op_set_fn_without_return ('f = fn 'args 'body) (set mut 'f (fn ('args 'body))) )
 (macro op_set_mut (mut 't 'a = 'b) (set mut 'a ('t 'b)))
 (macro op_set_const ('t 'a = 'b) (set const 'a ('t 'b)))
 
