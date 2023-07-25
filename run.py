@@ -2,8 +2,20 @@
 
 import argparse
 
+import list as list_
 import frontend
 import backend
+
+
+def read_file(src):
+    # create a file descriptor for the src file
+    with open(src, "r") as fd:
+
+        # read all content of the file into an variable
+        code = fd.readlines()
+        expr = "".join(code)
+
+        return expr
 
 
 if __name__ == "__main__":
@@ -40,7 +52,7 @@ if __name__ == "__main__":
         import os
         src = os.path.abspath(src)
 
-        expr = _read_file(src)
+        expr = read_file(src)
 
     # if expr argument was given, just convert expr to str
     elif expr is not None:
@@ -60,24 +72,29 @@ if __name__ == "__main__":
         src,
         args.frontend_print_token_list,
         args.frontend_print_token_tree,
-        args.compile_time_scope
+        args.frontend_compile_time_scope
     )
 
     # run backend on tree
     result = backend.run(frontend_tree)
+
+    print(f"result: {result}")
+
+    # stringfy tree
+    result = list_.list_stringfy(result)
 
     # write result to file
     output_ll = f"{output}.ll"
     with open(output_ll, "w") as output_fd:
         output_fd.write(result)
 
-    # run llvm optimization step
-    opt_output_ll = f"opt_{output_ll}"
-    f"opt -O3 {output_ll} -o {opt_output_ll}"
-
-    # generate assembly code
-    output_s = f"{output}.s"
-    f"llc {opt_output_ll} -o {output_s}"
-
-    # assemble to binary
-    f"llvm-as {output_s} -o {output}"
+#    # run llvm optimization step
+#    opt_output_ll = f"opt_{output_ll}"
+#    f"opt -O3 {output_ll} -o {opt_output_ll}"
+#
+#    # generate assembly code
+#    output_s = f"{output}.s"
+#    f"llc {opt_output_ll} -o {output_s}"
+#
+#    # assemble to binary
+#    f"llvm-as {output_s} -o {output}"

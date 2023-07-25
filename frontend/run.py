@@ -1,10 +1,4 @@
 import argparse
-import lex
-import parse
-import eval
-import list as list_
-import frontend.compiletime as compiletime
-import frontend.runtime as runtime
 import os
 import sys
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -19,6 +13,10 @@ def run(
     print_output=False,
     compile_time_scope=False
 ):
+    import eval
+    import list as list_
+    import frontend.compiletime as compiletime
+    import frontend.runtime as runtime
 
     # print(f"print_token_list: {print_token_list}")
     # print(f"print_token_tree: {print_token_tree}")
@@ -41,7 +39,9 @@ def run(
 
 
 def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
-    from pprint import pprint
+    # from pprint import pprint
+    import lex
+    import parse
 
     token_list = lex.tokenize(expr)
     if print_token_list:
@@ -88,9 +88,9 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
 
                 if i[0] == "LIST":
                     lic[index] = reduced_subitem
-                elif i[0] == "BLOCK":
-                    lic[index][1] = reduced_subitem
-                    lic[index].remove("BLOCK")
+                # elif i[0] == "BLOCK":
+                #    lic[index][1] = reduced_subitem
+                #    lic[index].remove("BLOCK")
 
         # print(f"reduce {li} -> {lic}\n")
         return lic
@@ -125,6 +125,10 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
 
 
 def _setup_env(compiletime_scope=False):
+    import eval
+    import frontend.compiletime as compiletime
+    import frontend.runtime as runtime
+
     scope = runtime.scope if compiletime_scope == False else compiletime.scope
 
     # Macros declared first are matched first...
@@ -164,14 +168,16 @@ def _setup_env(compiletime_scope=False):
 
 
 def _read_file(src):
-    # create a file descriptor for the src file
-    with open(src, "r") as fd:
-
-        # read all content of the file into an variable
-        code = fd.readlines()
-        expr = "".join(code)
-
-        return expr
+    import run
+    return run.read_file(src)
+#    # create a file descriptor for the src file
+#    with open(src, "r") as fd:
+#
+#        # read all content of the file into an variable
+#        code = fd.readlines()
+#        expr = "".join(code)
+#
+#        return expr
 
 
 if __name__ == "__main__":

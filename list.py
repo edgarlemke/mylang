@@ -56,8 +56,7 @@ def list_print(l):
             # join back into str
             cvt = "".join(cvt_li)
 
-        # if there's previous content in to_print list, add a space before our
-        # new content
+        # if there's previous content in to_print list, add a space before our new content
         if len(to_print) > 1 and to_print[len(to_print) - 1] != ")":
             to_print.append(" ")
 
@@ -71,3 +70,8 @@ def list_print(l):
     r = "".join(to_print)
 
     return r
+
+
+def list_stringfy(li):
+    result = []
+    return "\n".join(result)
