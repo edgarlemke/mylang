@@ -7,9 +7,9 @@ echo
 echo "..."
 echo
 
-echo "Eval Tests (fast)"
+echo "Front-end Eval Tests (fast)"
 echo
-./eval.py --fast
+./frontend_eval.py --fast
 echo
 echo "..."
 echo

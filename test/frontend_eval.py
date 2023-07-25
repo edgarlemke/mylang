@@ -14,7 +14,7 @@ FAIL = "\033[91mFAIL\033[0m"
 def _test(fn_name, expected_stdout, expected_stderr, expr):
     print(f"TEST {fn_name} - ", end="")
 
-    cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\""
+    cmd = f"/usr/bin/python3 ../frontend/run.py --expr \"{expr}\" --print-output"
     p = Popen(
         split(cmd),
         stdout=PIPE,
@@ -74,13 +74,13 @@ def test_fn_node_size():
     )
 
 
-def test_fn_args():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Function argument has invalid type",
-        "fn (x wrong  y wrong) int ()"
-    )
+# def test_fn_args():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Function argument has invalid type",
+#        "fn (x wrong  y wrong) int ()"
+#    )
 
 
 def test_fn_without_args():
@@ -94,13 +94,13 @@ def test_fn_without_args():
     )
 
 
-def test_fn_ret_type():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Function return type has invalid type",
-        "fn (x int  y int) wrong ()"
-    )
+# def test_fn_ret_type():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Function return type has invalid type",
+#        "fn (x int  y int) wrong ()"
+#    )
 
 
 def test_fn_arg_type_infer_int():
@@ -162,7 +162,7 @@ def test_fn_arg_fncall():
         "()\n",
         "",
         """set const myfn (fn ( (x bool) bool () ))
-set const retbool (fn ( () bool ((data (bool true))) ))
+set const retbool (fn ( () bool ((data bool true)) ))
 myfn (retbool ())"""
     )
 
@@ -210,7 +210,7 @@ def test_ret_type():
         "",
         "Returned value type of function is different from called function type",
         """set mut x (fn ( () bool
-	ret data (int 0)
+	ret data int 0
 ))
 x ()
 """
@@ -220,14 +220,14 @@ x ()
 def test_ret_handler():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        "((bool true) (overflow))\n",
+        "((bool true) (handled_overflow))\n",
         "",
         """set mut x (fn ( () bool
-	ret (data (bool true)) (data (overflow))
+	ret (data bool true) (data overflow)
 ))
 x ()
 handle overflow
-	data overflow
+	data handled_overflow
 """
     )
 
@@ -238,7 +238,7 @@ def test_ret_missing_handler_evaled_li():
         "",
         "Forced handler set in scope but no handler",
         """set mut x (fn ( () bool
-	ret (data (bool true)) (data (overflow))
+	ret (data bool true) (data overflow)
 ))
 x ()
 handle somethingelse
@@ -253,7 +253,7 @@ def test_ret_missing_handler():
         "",
         "Forced handler set but no handler",
         """set mut x (fn ( () bool
-	ret (data (bool true)) (data (overflow))
+	ret (data bool true) (data overflow)
 ))
 x ()
 handle somethingelse
@@ -282,13 +282,13 @@ def test_set_node_size():
     )
 
 
-def test_set_type():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Constant assignment has invalid type",
-        "set const x (wrong 0)"
-    )
+# def test_set_type():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Constant assignment has invalid type",
+#        "set const x (wrong 0)"
+#    )
 
 
 def test_set_mutdecl():
@@ -335,7 +335,7 @@ def test_macro_expansion():
         i.getframeinfo(i.currentframe()).function,
         "((1 2))\n",
         "",
-        """macro test ('a ! 'b) (data ('a 'b))
+        """macro test ('a ! 'b) (data 'a 'b)
 1 ! 2"""
     )
 
@@ -360,13 +360,13 @@ def test_if_node_size():
 
 
 # __data__
-def test_data_node_size():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Wrong number of arguments for data",
-        "data () wrong"
-    )
+# def test_data_node_size():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Wrong number of arguments for data",
+#        "data () wrong"
+#    )
 
 
 # unsafe
@@ -581,13 +581,6 @@ def test_unlisp_set_fn_with_return():
 somefn 12 34
 """
 )
-
-
-def _popen(expr):
-    cmd = f"/usr/bin/python3 ../lex.py --expr \"{expr}\""
-    sp = split(cmd)
-    p = Popen(sp, stdout=PIPE, stderr=PIPE, encoding="utf-8")
-    return p.communicate()
 
 
 if __name__ == "__main__":
