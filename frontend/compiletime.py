@@ -438,15 +438,23 @@ def _validate_unsafe(node, scope):
 
 
 scope = [
-  [
-#    ["fn", "mut", "internal", __fn__],
-#    ["set", "mut", "internal", __set__],
-#    ["macro", "mut", "internal", __macro__],
-#    ["if", "mut", "internal", __if__],
-#    ["data", "mut", "internal", __data__],
+  [  # names
+    ["fn", "mut", "internal", __fn__],
+    ["handle", "mut", "internal", __handle__],
+    ["set", "mut", "internal", __set__],
+    ["macro", "mut", "internal", __macro__],
+    ["if", "mut", "internal", __if__],
+    ["data", "mut", "internal", __data__],
+    # ["meta", "mut", "internal", __meta__],
+    ["write_ptr", "mut", "internal", __write_ptr__],
+    ["read_ptr", "mut", "internal", __read_ptr__],
+    ["get_ptr", "mut", "internal", __get_ptr__],
+    ["size_of", "mut", "internal", __size_of__],
+    ["unsafe", "mut", "internal", __unsafe__],
   ],
-  [],
-  None,
-  [],
-  True
+  [],    # macros
+  None,  # parent scope
+  [],    # children scope
+  True,  # is safe scope
+  None   # forced handler
 ]

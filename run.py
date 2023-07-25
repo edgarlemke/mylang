@@ -20,6 +20,8 @@ if __name__ == "__main__":
     output_group.add_argument("--frontend-print-token-list", action="store_true")
     output_group.add_argument("--frontend-print-token-tree", action="store_true")
 
+    parser.add_argument("--frontend-compile-time-scope", action="store_true")
+
     args = parser.parse_args()
 
     # get the output file argument
@@ -58,6 +60,7 @@ if __name__ == "__main__":
         src,
         args.frontend_print_token_list,
         args.frontend_print_token_tree,
+        args.compile_time_scope
     )
 
     # run backend on tree

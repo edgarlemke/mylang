@@ -18,9 +18,6 @@ def eval(li, scope, forced_handler_desc=None):
 
     old_li = li
 
-    # if scope is None:
-    #    scope = runtime_scope
-
     # expand macros until there are no more macros to expand
     new_li = None
     macros = scope[1]
@@ -217,13 +214,6 @@ def _call_fn(li, fn, scope):
     # print(f"the_method: {the_method}")
 
     # set new scope
-    # fn_scope = [
-    #    [],      # names
-    #    [],      # macros
-    #    scope,   # parent scope
-    #    []       # children scopes
-    #    scope[4] # is safe scope
-    # ]
     fn_scope = default_scope.copy()
     fn_scope[2] = scope
     fn_scope[4] = scope[4]

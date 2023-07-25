@@ -1,20 +1,14 @@
-# setup sys.path
-import frontend.runtime as runtime
-import list as list_
-import eval
-import parse
-import lex
 import argparse
+import lex
+import parse
+import eval
+import list as list_
+import frontend.compiletime as compiletime
+import frontend.runtime as runtime
 import os
 import sys
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(dir_path)
-#
-
-
-# project root dir modules
-
-# local modules
 
 
 def run(
@@ -22,18 +16,22 @@ def run(
     src=None,
     print_token_list=False,
     print_token_tree=False,
-    print_output=False
+    print_output=False,
+    compile_time_scope=False
 ):
 
     # print(f"print_token_list: {print_token_list}")
     # print(f"print_token_tree: {print_token_tree}")
 
-    _setup_env()
+    _setup_env(compile_time_scope)
 
     expr_li = _get_list_from_expr(expr, print_token_list=print_token_list, print_token_tree=print_token_tree)
     # print(f"expr_li: {expr_li}")
 
-    eval_li = eval.eval(expr_li, runtime.scope, ["handle"])
+    if compile_time_scope:
+        eval_li = eval.eval(expr_li, compiletime.scope, ["handle"])
+    else:
+        eval_li = eval.eval(expr_li, runtime.scope, ["handle"])
 
     if print_output:
         print(list_.list_print(eval_li))
@@ -126,7 +124,9 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     return lic
 
 
-def _setup_env():
+def _setup_env(compiletime_scope=False):
+    scope = runtime.scope if compiletime_scope == False else compiletime.scope
+
     # Macros declared first are matched first...
     default_macros = """
 (macro op_mul ('a * 'b) (mul ('a 'b)))
@@ -155,12 +155,12 @@ def _setup_env():
 
     op_li = _get_list_from_expr(default_macros)
     # print(f"op_li: {op_li}")
-    eval.eval(op_li, runtime.scope)
+    eval.eval(op_li, scope)
 
     default_functions = """
 """
     fn_li = _get_list_from_expr(default_functions)
-    eval.eval(fn_li, runtime.scope)
+    eval.eval(fn_li, scope)
 
 
 def _read_file(src):
@@ -187,6 +187,8 @@ if __name__ == "__main__":
     print_group.add_argument("--print-token-list", action="store_true")
     print_group.add_argument("--print-token-tree", action="store_true")
     print_group.add_argument("--print-output", action="store_true")
+
+    parser.add_argument("--compile-time-scope", action="store_true")
 
     args = parser.parse_args()
 
@@ -216,5 +218,6 @@ if __name__ == "__main__":
         src,
         args.print_token_list,
         args.print_token_tree,
-        args.print_output
+        args.print_output,
+        args.compile_time_scope
     )

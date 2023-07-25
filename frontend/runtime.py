@@ -1,29 +1,35 @@
 from . import compiletime
 
 
-# def __fn__ (node, scope):
-#  return []
+def __fn__(node, scope):
+    compiletime.validate_fn(node, scope)
+    return node
 
 
 def __handle__(node, scope):
     compiletime._validate_handle(node, scope)
-    return []
+    return node
 
 
-# def __set__ (node, scope):
-#  return []
+def __set__(node, scope):
+    # compiletime._validate_set(node, scope)
+    compiletime.__set__(node, scope)
+
+    return node
 
 
-# def __macro__ (node, scope):
-#  return []
+def __macro__(node, scope):
+    # print(f"__macro__ {node}")
+    return compiletime.__macro__(node, scope)
 
 
 def __if__(node, scope):
-    return []
+    compiletime.validate_if(node, scope)
+    return node
 
 
-# def __data__ (node, scope):
-#  return []
+def __data__(node, scope):
+    return node
 
 
 def __meta__(node, scope):
@@ -58,12 +64,12 @@ def __unsafe__(node, scope):
 
 scope = [
   [  # names
-    ["fn", "mut", "internal", compiletime.__fn__],
-    ["handle", "mut", "internal", compiletime.__handle__],
-    ["set", "mut", "internal", compiletime.__set__],
-    ["macro", "mut", "internal", compiletime.__macro__],
-    ["if", "mut", "internal", compiletime.__if__],
-    ["data", "mut", "internal", compiletime.__data__],
+    ["fn", "mut", "internal", __fn__],
+    ["handle", "mut", "internal", __handle__],
+    ["set", "mut", "internal", __set__],
+    ["macro", "mut", "internal", __macro__],
+    ["if", "mut", "internal", __if__],
+    ["data", "mut", "internal", __data__],
     ["meta", "mut", "internal", __meta__],
     ["write_ptr", "mut", "internal", __write_ptr__],
     ["read_ptr", "mut", "internal", __read_ptr__],

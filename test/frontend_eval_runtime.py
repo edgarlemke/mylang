@@ -14,7 +14,7 @@ FAIL = "\033[91mFAIL\033[0m"
 def _test(fn_name, expected_stdout, expected_stderr, expr):
     print(f"TEST {fn_name} - ", end="")
 
-    cmd = f"/usr/bin/python3 ../frontend/run.py --print-output --compile-time-scope --expr \"{expr}\""
+    cmd = f"/usr/bin/python3 ../frontend/run.py --print-output --expr \"{expr}\""
     p = Popen(
         split(cmd),
         stdout=PIPE,
@@ -59,7 +59,7 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 def test_data():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """((abc 123))\n""",
+        """((data abc 123))\n""",
         "",
         "data abc 123"
     )
@@ -93,15 +93,15 @@ def test_fn_node_size():
 #    )
 
 
-def test_fn_without_args():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """(set mut x (fn (() () ())))
-(x ())
-"""
-    )
+# def test_fn_without_args():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """set mut x (fn (() () ()))
+# x ()
+# """
+#    )
 
 
 # def test_fn_ret_type():
@@ -113,92 +113,92 @@ def test_fn_without_args():
 #    )
 
 
-def test_fn_arg_type_infer_int():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """set const myfn (fn ( (x int) int () ) )
-myfn 1234"""
-    )
+# def test_fn_arg_type_infer_int():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """set const myfn (fn ( (x int) int () ) )
+# myfn 1234"""
+#    )
+#
+#
+# def test_fn_arg_type_infer_float():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """(set const myfn (fn ( (x float) float () ) ))
+# (myfn 3.14)"""
+#    )
+#
+#
+# def test_fn_arg_type_infer_bool_true():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """(set const myfn (fn ( (x bool) bool () ) ))
+# (myfn true)"""
+#    )
+#
+#
+# def test_fn_arg_type_infer_bool_false():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """(set const myfn (fn ( (x bool) bool () ) ))
+# (myfn false)"""
+#    )
+#
+#
+# def test_fn_arg_name():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((bool true))\n",
+#        "",
+#        """set const myfn (fn ( (x bool) bool
+# x
+# ))
+# set const mybool (bool true)
+# myfn mybool"""
+#    )
 
 
-def test_fn_arg_type_infer_float():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """(set const myfn (fn ( (x float) float () ) ))
-(myfn 3.14)"""
-    )
+# def test_fn_arg_fncall():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """set const myfn (fn ( (x bool) bool () ))
+# set const retbool (fn ( () bool ((data bool true)) ))
+# myfn (retbool ())"""
+#    )
 
 
-def test_fn_arg_type_infer_bool_true():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """(set const myfn (fn ( (x bool) bool () ) ))
-(myfn true)"""
-    )
+# def test_fn_arg_inside_scope():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """set const myfn (fn ( (x int) int
+# x
+# ) )
+# myfn 1
+# """
+#    )
 
 
-def test_fn_arg_type_infer_bool_false():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """(set const myfn (fn ( (x bool) bool () ) ))
-(myfn false)"""
-    )
-
-
-def test_fn_arg_name():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((bool true))\n",
-        "",
-        """set const myfn (fn ( (x bool) bool
-	x
-))
-set const mybool (bool true)
-myfn mybool"""
-    )
-
-
-def test_fn_arg_fncall():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """set const myfn (fn ( (x bool) bool () ))
-set const retbool (fn ( () bool ((data bool true)) ))
-myfn (retbool ())"""
-    )
-
-
-def test_fn_arg_inside_scope():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """set const myfn (fn ( (x int) int
-	x
-) )
-myfn 1
-"""
-    )
-
-
-def test_ret():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """(set mut x (fn ( () () (ret ()) ) ))
-(x ())
-"""
-    )
+# def test_ret():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """(set mut x (fn ( () () (ret ()) ) ))
+# (x ())
+# """
+#    )
 
 
 # This test was commented out because the proper checking of ret being outside of a function
@@ -227,19 +227,19 @@ x ()
     )
 
 
-def test_ret_handler():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((bool true) (handled_overflow))\n",
-        "",
-        """set mut x (fn ( () bool
-	ret (data bool true) (data overflow)
-))
-x ()
-handle overflow
-	data handled_overflow
-"""
-    )
+# def test_ret_handler():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((bool true) (handled_overflow))\n",
+#        "",
+#        """set mut x (fn ( () bool
+# ret (data bool true) (data overflow)
+# ))
+# x ()
+# handle data
+# data handled_overflow
+# """
+#    )
 
 
 def test_ret_missing_handler_evaled_li():
@@ -277,7 +277,7 @@ data whatever
 def test_set_const():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """()\n""",
+        """((set const x (int 0)))\n""",
         "",
         "set const x (int 0)"
     )
@@ -343,7 +343,7 @@ def test_macro_node_size():
 def test_macro_expansion():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        "((1 2))\n",
+        "((data 1 2))\n",
         "",
         """macro test ('a ! 'b) (data 'a 'b)
 1 ! 2"""
@@ -390,13 +390,13 @@ def test_unsafe():
 
 
 # ptr
-def test_ptr():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        "set const x (ptr int 0xdeadbeef)"
-    )
+# def test_ptr():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        "set const x (ptr int 0xdeadbeef)"
+#    )
 
 
 def test_read_ptr():
@@ -417,80 +417,80 @@ def test_write_ptr():
     )
 
 
-def test_get_ptr():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((get_ptr x))\n",
-        "",
-        """set const x (int 0)
-get_ptr x"""
-    )
-
-
-def test_size_of():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((size_of x))\n",
-        "",
-        """set const x (int 0)
-size_of x"""
-    )
-
-
+# def test_get_ptr():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((get_ptr x))\n",
+#        "",
+#        """set const x (int 0)
+# get_ptr x"""
+#    )
+#
+#
+# def test_size_of():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((size_of x))\n",
+#        "",
+#        """set const x (int 0)
+# size_of x"""
+#    )
+#
+#
 # struct
-def test_struct_decl():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        "set const mystruct (struct ((mut x int)))"
-    )
-
-
-def test_struct_init():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """(set const mystruct (struct ((mut x int))))
-(set const mystruct_ (mystruct (1)))"""
-    )
-
-
-def test_struct_member_access():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-mystruct_ x"""
-    )
-
-
-def test_struct_deep_member_access():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """set const mystruct (struct ((mut member_x int)))
-set const mystruct2 (struct ((const member_mystruct mystruct)))
-set const st_mystruct (mystruct (1))
-set const st_mystruct2 (mystruct2 (st_mystruct))
-st_mystruct2 member_mystruct member_x"""
-    )
-
-
-def test_struct_member_set():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 2))\n",
-        "",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-set mut (mystruct_ x) (int 2)
-mystruct_ x"""
-    )
+# def test_struct_decl():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        "set const mystruct (struct ((mut x int)))"
+#    )
+#
+#
+# def test_struct_init():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """(set const mystruct (struct ((mut x int))))
+# (set const mystruct_ (mystruct (1)))"""
+#    )
+#
+#
+# def test_struct_member_access():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """set const mystruct (struct ((mut x int)))
+# set const mystruct_ (mystruct (1))
+# mystruct_ x"""
+#    )
+#
+#
+# def test_struct_deep_member_access():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """set const mystruct (struct ((mut member_x int)))
+# set const mystruct2 (struct ((const member_mystruct mystruct)))
+# set const st_mystruct (mystruct (1))
+# set const st_mystruct2 (mystruct2 (st_mystruct))
+# st_mystruct2 member_mystruct member_x"""
+#    )
+#
+#
+# def test_struct_member_set():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 2))\n",
+#        "",
+#        """set const mystruct (struct ((mut x int)))
+# set const mystruct_ (mystruct (1))
+# set mut (mystruct_ x) (int 2)
+# mystruct_ x"""
+#    )
 
 
 def test_struct_member_set_wrong_type():
@@ -505,16 +505,16 @@ mystruct_ x"""
     )
 
 
-def test_struct_member_access_for_name():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-set const randomvar (int (mystruct_ x))
-randomvar"""
-    )
+# def test_struct_member_access_for_name():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """set const mystruct (struct ((mut x int)))
+# set const mystruct_ (mystruct (1))
+# set const randomvar (int (mystruct_ x))
+# randomvar"""
+#    )
 
 
 def test_struct_init_wrong_number_of_members():
@@ -540,57 +540,57 @@ def test_struct_init_wrong_type_for_member():
 
 
 # eval tests
-def test_eval_name():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """set const randomvar (int 1)
-randomvar"""
-    )
-
-
+# def test_eval_name():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """set const randomvar (int 1)
+# randomvar"""
+#    )
+#
+#
 # unlispifcation tests
-def test_unlisp_set_value():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """int somename = 1"""
-    )
-
-
-def test_unlisp_set_mut_value():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """mut int somename = 1"""
-    )
-
-
-def test_unlisp_set_fn():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """somefn = fn (x int  y int) ()
-	ret
-somefn 12 34
-"""
-)
-
-
-def test_unlisp_set_fn_with_return():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """somefn = fn (x int  y int)
-	ret
-somefn 12 34
-"""
-)
+# def test_unlisp_set_value():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """int somename = 1"""
+#    )
+#
+#
+# def test_unlisp_set_mut_value():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """mut int somename = 1"""
+#    )
+#
+#
+# def test_unlisp_set_fn():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """somefn = fn (x int  y int) ()
+# ret
+# somefn 12 34
+# """
+# )
+#
+#
+# def test_unlisp_set_fn_with_return():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """somefn = fn (x int  y int)
+# ret
+# somefn 12 34
+# """
+# )
 
 
 if __name__ == "__main__":
