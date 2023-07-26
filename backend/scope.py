@@ -122,9 +122,22 @@ scope = [
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
 
+    ["i8", "const", "type", [1]],
+    ["i16", "const", "type", [2]],
+    ["i32", "const", "type", [4]],
+    ["i64", "const", "type", [8]],
     ["int", "const", "type", [8]],
+
+    ["ui8", "const", "type", [1]],
+    ["ui16", "const", "type", [2]],
+    ["ui32", "const", "type", [4]],
+    ["ui64", "const", "type", [8]],
     ["uint", "const", "type", [8]],
+
+    ["f32", "const", "type", [4]],
+    ["f64", "const", "type", [8]],
     ["float", "const", "type", [8]],
+
     ["byte", "const", "type", [1]],
     ["bool", "const", "type", [1]],
 
