@@ -471,37 +471,3 @@ def _seek_struct_ref(li, scope, fn):
     #    return _get_struct_member([new_li] + li[2:], scope)
     # else:
     #    return new_li
-
-
-# def _add_types():
-#    types = [
-# ["i8", "mut", "type", [1]],
-# ["i16", "mut", "type", [2]],
-# ["i32", "mut", "type", [4]],
-# ["i64", "mut", "type", [8]],
-#      ['int', "mut", 'type', ['?']],  # signed int, register width
-#
-# ["u8", "mut", "type", [1]],
-# ["u16", "mut", "type", [2]],
-# ["u32", "mut", "type", [4]],
-# ["u64", "mut", "type", [8]],
-#      ['uint', "mut", 'type', ['?']],  # unsigned int, register width
-#
-#      ["byte", "mut", "type", [1]],
-#      ["bool", "mut", "type", [1]],
-#
-# ["f32", "mut", "type", [4]],
-# ["f64", "mut", "type", [8]],
-#      ['float', "mut", 'type', ['?']],
-#
-#      ["struct", "mut", "type", ['?']],
-#      ["enum", "mut", "type", ['?']],
-#      ["ptr", "mut", "type", ['?']],  # the size will probably be the same of int, have complementary type
-#    ]
-#
-#    for s in [meta_scope, runtime_scope]:
-#        for t in types:
-#            s[0].append(t)
-#
-#
-# _add_types()

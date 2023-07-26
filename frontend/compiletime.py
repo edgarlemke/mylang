@@ -162,19 +162,10 @@ def _validate_set(node, scope):
     if mutdecl not in ["const", "mut"]:
         raise Exception(f"Assignment with invalid mutability declaration: {node}")
 
-    types = [t[0] for t in scope[0] if t[2] == "type"]
+    # types = [t[0] for t in scope[0] if t[2] == "type"]
     structs = [s[0] for s in scope[0] if s[2] == "struct"]
-    exceptions = ["fn"]
+    # exceptions = ["fn"]
 
-#    # check type
-#    valid_types = (types + structs + exceptions)
-#    # print(f"valid_types: {valid_types}")
-#    if type_ not in valid_types:
-#        raise Exception(f"Constant assignment has invalid type {type_} {node}")
-
-    # check if value is valid for type
-    # print(f"type_ {type_}")
-    # print(f"structs {structs}")
     if type_ in structs:
         struct_type = [st for st in scope[0] if st[2] == "struct" and st[0] == type_][0]
         # print(f"struct_type: {struct_type}")

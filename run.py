@@ -67,7 +67,7 @@ if __name__ == "__main__":
         raise Exception("Either --output, --frontend-print-token-list or --frontend-print-token-tree argument must be provided")
 
     # run frontend to get tree
-    frontend_tree = frontend.run(
+    frontend_tree = frontend.run.run(
         expr,
         src,
         args.frontend_print_token_list,
@@ -77,8 +77,6 @@ if __name__ == "__main__":
 
     # run backend on tree
     result = backend.run(frontend_tree)
-
-    print(f"result: {result}")
 
     # stringfy tree
     result = list_.list_stringfy(result)

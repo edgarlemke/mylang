@@ -5,7 +5,6 @@ import argparse
 import inspect as i
 from subprocess import Popen, PIPE
 from shlex import split
-import unicodedata
 
 OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
@@ -84,15 +83,6 @@ def test_fn_node_size():
     )
 
 
-# def test_fn_args():
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "Function argument has invalid type",
-#        "fn (x wrong  y wrong) int ()"
-#    )
-
-
 def test_fn_without_args():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -102,15 +92,6 @@ def test_fn_without_args():
 (x ())
 """
     )
-
-
-# def test_fn_ret_type():
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "Function return type has invalid type",
-#        "fn (x int  y int) wrong ()"
-#    )
 
 
 def test_fn_arg_type_infer_int():
@@ -290,15 +271,6 @@ def test_set_node_size():
         "Wrong number of arguments for set",
         "set const x (int 0) wrong"
     )
-
-
-# def test_set_type():
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "Constant assignment has invalid type",
-#        "set const x (wrong 0)"
-#    )
 
 
 def test_set_mutdecl():
@@ -606,7 +578,7 @@ if __name__ == "__main__":
 
     if args.f is None:
         fast = args.fast
-        slow = ["test_quoted_unicode"]
+        slow = []
         tests = [t for t in globals() if t[0:5] == "test_" and callable(eval(t))]
         for t in tests:
 

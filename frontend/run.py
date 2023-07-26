@@ -170,14 +170,6 @@ def _setup_env(compiletime_scope=False):
 def _read_file(src):
     import run
     return run.read_file(src)
-#    # create a file descriptor for the src file
-#    with open(src, "r") as fd:
-#
-#        # read all content of the file into an variable
-#        code = fd.readlines()
-#        expr = "".join(code)
-#
-#        return expr
 
 
 if __name__ == "__main__":
