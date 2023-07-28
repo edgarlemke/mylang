@@ -167,11 +167,6 @@ def _setup_env(compiletime_scope=False):
     eval.eval(fn_li, scope)
 
 
-def _read_file(src):
-    import run
-    return run.read_file(src)
-
-
 if __name__ == "__main__":
 
     # set up command line argument parsing
@@ -203,7 +198,8 @@ if __name__ == "__main__":
         import os
         src = os.path.abspath(src)
 
-        expr = _read_file(src)
+        from shared import read_file
+        expr = read_file(src)
 
     elif expr is not None:
         expr = str(expr)

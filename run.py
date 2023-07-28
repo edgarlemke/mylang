@@ -1,21 +1,13 @@
 #!/usr/bin/python3
 
 import argparse
+from subprocess import run
+import shlex
 
 import list as list_
 import frontend
 import backend
-
-
-def read_file(src):
-    # create a file descriptor for the src file
-    with open(src, "r") as fd:
-
-        # read all content of the file into an variable
-        code = fd.readlines()
-        expr = "".join(code)
-
-        return expr
+from shared import read_file
 
 
 if __name__ == "__main__":
@@ -67,7 +59,9 @@ if __name__ == "__main__":
         raise Exception("Either --output, --frontend-print-token-list or --frontend-print-token-tree argument must be provided")
 
     # run frontend to get tree
-    frontend_tree = frontend.run.run(
+    # print("Running frontend on input")
+    from frontend.run import run as frontend_run
+    frontend_tree = frontend_run(
         expr,
         src,
         args.frontend_print_token_list,
@@ -76,13 +70,13 @@ if __name__ == "__main__":
     )
 
     # run backend on tree
-    result = backend.run(frontend_tree)
-
-    # stringfy tree
-    result = list_.list_stringfy(result)
+    # print("Running backend on frontend result...")
+    from backend.run import run_li as backend_run_li
+    result = backend_run_li(frontend_tree)
 
     # write result to file
     output_ll = f"{output}.ll"
+    # print(f"Writing backend result to {output_ll}")
     with open(output_ll, "w") as output_fd:
         output_fd.write(result)
 
@@ -90,9 +84,14 @@ if __name__ == "__main__":
 #    opt_output_ll = f"opt_{output_ll}"
 #    f"opt -O3 {output_ll} -o {opt_output_ll}"
 #
-#    # generate assembly code
-#    output_s = f"{output}.s"
-#    f"llc {opt_output_ll} -o {output_s}"
-#
-#    # assemble to binary
-#    f"llvm-as {output_s} -o {output}"
+
+    # generate assembly code
+    output_s = f"{output}.s"
+    # print(f"Generating assembly code to {output_s}")
+    run(shlex.split(f"llc {output_ll} -o {output_s}"))
+
+    # assemble it
+    # print(f"Running assembler on {output_s}")
+    run(shlex.split(f"as {output_s} -o {output}"))
+
+    # print(f"Done")

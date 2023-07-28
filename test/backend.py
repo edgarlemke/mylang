@@ -51,6 +51,7 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
     return True
 
 
+# Typing tests
 def test_set_type():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -69,9 +70,6 @@ def test_fn_args():
     )
 
 
-def test_fn_llvm():
-
-
 def test_fn_ret_type():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -79,6 +77,22 @@ def test_fn_ret_type():
         "Function return type has invalid type",
         "fn (x int  y int) wrong ()"
     )
+#
+
+
+# LLVM IR generation tests
+def test_llvm_fn_void_ret_type():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        """define void @main() {
+start:
+ret void
+}
+""",
+        "",
+        """((set mut main (fn (() ()))))"""
+    )
+#
 
 
 if __name__ == "__main__":

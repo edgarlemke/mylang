@@ -41,6 +41,7 @@ def __handle__(node, scope):
 
 
 def __set__(node, scope):
+    import eval
     # print(f"back-end __set__: {node}")
 
     # compile-time validation
@@ -53,6 +54,47 @@ def __set__(node, scope):
     names = scope[0]
     set_, mutdecl, name, data = node
     type_ = data[0]
+    fn_content = data[1]
+
+    # if node sets a function
+    if type_ == "fn":
+        # solve function overloaded name to a single function name
+        uname = _unoverload(node, scope)
+
+        # get argument types
+        args = []
+
+        # convert argument types
+        fn_args = fn_content[0]
+        for arg in fn_args:
+            args.append(_cvt_type(arg[1]))
+
+        # get return type and body
+        if len(fn_content) == 2:
+            fn_return_type = None
+            fn_body = fn_content[1]
+
+        elif len(fn_content) == 3:
+            fn_return_type = fn_content[1]
+            fn_body = fn_content[2]
+
+        # convert return type
+        return_type = "void"
+        if fn_return_type is not None:
+            return_type = _cvt_type(fn_return_type)
+
+        # sort out body IR
+        body = f"""
+start:
+ret {return_type}
+"""
+        # result = eval.eval(fn_body, scope)
+        # print(f"result: {result}")
+        # if len(result) > 0:
+        #    pass
+
+        # declaration, definition = _write_fn(uname, args, return_type, body)
+        return _write_fn(uname, args, return_type, body)
 
     return []
 
@@ -74,6 +116,55 @@ def _validate_set(node, scope):
         raise Exception(f"Constant assignment has invalid type {type_} {node}")
 
     return
+
+
+def _unoverload(node, scope):
+    # print(f"_unoverload: {node}")
+
+    # extract node, get function name
+    set_, mutdecl, name, data = node
+    type_ = data[0]
+    fn_content = data[1]
+
+    fn_args = fn_content[0]
+
+    arg_types = []
+    for arg in fn_args:
+        # print(f"arg: {arg}")
+        arg_types.append(arg[1])
+
+    uname = "__".join([name] + arg_types)
+    # print(f"uname: {uname}")
+
+    return uname
+
+
+def _cvt_type(type_):
+    # print(f"_cvt_type: {type_}")
+
+    # convert int
+    if type_ == "int":
+        cvtd_type = "i64"
+
+    # conver uint
+    elif type_ == "uint":
+        cvtd_type = "ui64"
+
+    return cvtd_type
+
+
+def _write_fn(fn, args, return_type, body):
+    # arg_types = [ arg[1] for arg in args ]
+    # decl_args = ", ".join(arg_types)
+    # declaration = f"declare {return_type} @{fn}({decl_args})"
+    # print(f"declaration: {declaration}")
+
+    def_args = ", ".join(args)
+    definition = f"""define {return_type} @{fn}({def_args}) {{{body}}}"""
+    # print(f"definition: {definition}")
+
+    # return [declaration, definition]
+    return definition
 
 
 def __macro__(node, scope):

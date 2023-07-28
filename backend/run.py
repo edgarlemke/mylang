@@ -10,12 +10,14 @@ def run_li(li, print_output=False):
     import backend.scope as scope
 
     eval_li = eval.eval(li, scope.scope, ["handle"])
+    output = _join_lists(eval_li)
 
     if print_output:
-        print(list_.list_print(eval_li))
+        # print(list_.list_print(eval_li))
+        print(output)
         exit()
 
-    return eval_li
+    return output
 
 
 def run(expr, print_output=False):
@@ -25,12 +27,14 @@ def run(expr, print_output=False):
 
     expr_li = _get_list_from_expr(expr)
     eval_li = eval.eval(expr_li, scope.scope, ["handle"])
+    output = _join_lists(eval_li)
 
     if print_output:
-        print(list_.list_print(eval_li))
+        # print(list_.list_print(eval_li))
+        print(output)
         exit()
 
-    return eval_li
+    return output
 
 
 def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
@@ -38,9 +42,23 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     return fer._get_list_from_expr(expr, print_token_list, print_token_tree)
 
 
-def _read_file(src):
-    import run
-    return run.read_file(src)
+def _join_lists(li):
+    # print(f"_join_lists: {li}")
+
+    lines = []
+
+    def iter(li):
+        # print(f"li: {li}")
+        for item in li:
+            if isinstance(item, list):
+                iter(item)
+            else:
+                lines.append(item)
+    iter(li)
+
+    # print(f"lines: {lines}")
+
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
@@ -74,7 +92,8 @@ if __name__ == "__main__":
         import os
         src = os.path.abspath(src)
 
-        expr = _read_file(src)
+        from shared import read_file
+        expr = read_file(src)
 
     elif expr is not None:
         expr = str(expr)
