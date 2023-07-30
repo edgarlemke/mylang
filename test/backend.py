@@ -92,6 +92,51 @@ ret void
         "",
         """((set mut main (fn (() ()))))"""
     )
+
+
+def test_llvm_fn_cvt_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        """define i64 @main() {
+start:
+ret i64
+}
+""",
+        "",
+        """((set mut main (fn (() int ()))))"""
+    )
+
+
+def test_llvm_fn_cvt_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        """define i64 @main() {
+start:
+ret i64
+}
+""",
+        "",
+        """((set mut main (fn (() uint ()))))"""
+    )
+
+
+def test_llvm_fn_unoverload():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        """define i64 @test__int_uint(i64, i64) {
+start:
+ret i64
+}
+define i64 @test__uint_int(i64, i64) {
+start:
+ret i64
+}
+""",
+        "",
+        """((set mut test (fn (((x int)(y uint)) int ()))) (set mut test (fn (((x uint)(y int)) uint ()))))"""
+    )
+
+
 #
 
 

@@ -84,14 +84,15 @@ def __set__(node, scope):
             return_type = _cvt_type(fn_return_type)
 
         # sort out body IR
-        body = f"""
+        result = eval.eval(fn_body, scope)
+        # print(f"result: {result}")
+        if len(result) == 0:
+            body = f"""
 start:
 ret {return_type}
 """
-        # result = eval.eval(fn_body, scope)
-        # print(f"result: {result}")
-        # if len(result) > 0:
-        #    pass
+        else:
+            body = result
 
         # declaration, definition = _write_fn(uname, args, return_type, body)
         return _write_fn(uname, args, return_type, body)
@@ -130,10 +131,13 @@ def _unoverload(node, scope):
 
     arg_types = []
     for arg in fn_args:
-        # print(f"arg: {arg}")
+        # print(f"arg: {arg} {node}")
         arg_types.append(arg[1])
 
-    uname = "__".join([name] + arg_types)
+    unamel = [name]
+    if len(arg_types) > 0:
+        unamel += ["__", "_".join(arg_types)]
+    uname = "".join(unamel)
     # print(f"uname: {uname}")
 
     return uname
@@ -142,13 +146,9 @@ def _unoverload(node, scope):
 def _cvt_type(type_):
     # print(f"_cvt_type: {type_}")
 
-    # convert int
-    if type_ == "int":
+    # convert integers
+    if type_ in ["int", "uint"]:
         cvtd_type = "i64"
-
-    # conver uint
-    elif type_ == "uint":
-        cvtd_type = "ui64"
 
     return cvtd_type
 
