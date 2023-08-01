@@ -198,7 +198,7 @@ def _unoverload(name, fn_args):
     arg_types = []
     for arg in fn_args:
         # print(f"arg: {arg} -  {node}")
-        arg_types.append(arg[1][1])
+        arg_types.append(arg[1])
 
     unamel = [name]
     if len(arg_types) > 0:
@@ -351,16 +351,8 @@ scope = [
 
     ["write_file", "const", "internal", __write_file__],
 
-    ["i8", "const", "type", [1]],
-    ["i16", "const", "type", [2]],
-    ["i32", "const", "type", [4]],
-    ["i64", "const", "type", [8]],
     ["int", "const", "type", [8]],
 
-    ["ui8", "const", "type", [1]],
-    ["ui16", "const", "type", [2]],
-    ["ui32", "const", "type", [4]],
-    ["ui64", "const", "type", [8]],
     ["uint", "const", "type", [8]],
 
     ["ptr", "const", "type", [8]],
@@ -368,8 +360,6 @@ scope = [
     ["byte", "const", "type", [1]],
     ["bool", "const", "type", [1]],
 
-    ["f32", "const", "type", [4]],
-    ["f64", "const", "type", [8]],
     ["float", "const", "type", [8]],
 
     ["array", "const", "type", ['?']],

@@ -123,11 +123,11 @@ ret i64
 def test_llvm_fn_unoverload():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """define i64 @test__int_uint(i64, i64) {
+        """define i64 @test__int_uint(i64 %x, i64 %y) {
 start:
 ret i64
 }
-define i64 @test__uint_int(i64, i64) {
+define i64 @test__uint_int(i64 %x, i64 %y) {
 start:
 ret i64
 }

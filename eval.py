@@ -9,7 +9,7 @@ default_scope = [
     [],    # children scopes
     True,  # is safe scope
     None,  # forced handler
-    False  # eval returns calls
+    None   # eval returns calls
 ]
 
 
@@ -153,14 +153,14 @@ def _call_fn(li, fn, scope):
 
     if len(the_method) == 2:
         if return_calls:
-            # print(f"return_calls {li}")
+            # print(f"the method len 2 return_calls {li}")
             # return " ".join(li)
             return scope[6](li, scope)
         else:
             # print(f"not return_calls []")
             return []
 
-    retv = eval(the_method[2], fn_scope, return_calls=return_calls)
+    retv = eval(the_method[2], fn_scope)
 
     # if returned value isn't empty list
     if len(retv) > 0:
@@ -457,10 +457,18 @@ def _get_struct_member(li, scope):
             # print(f"new_li: {new_li}")
             matches = [name for name in scope[0] if name[0] == n[2] and name[2] == "struct"]
             # print(f"matches: {matches}")
-            member_type = matches[0][3][index][2]
+
+            # member_type = matches[0][3][index][1]
+            member = matches[0][3][index]
+            if len(member) == 3 and member[0] == "mut":
+                member_type = member[2]
+            else:
+                member_type = member[1]
             # print(f"member_type: {member_type}")
 
-            return [member_type, new_li]
+            result = [member_type, new_li]
+            # print(f"result: {result}")
+            return result
 
     return _seek_struct_ref(li, scope, myfn)
 
@@ -480,11 +488,24 @@ def _seek_struct_ref(li, scope, fn):
     # print(f"candidates: {candidates}")
 
     # get the candidate struct
-    c = candidates[0]
+    candidate = candidates[0]
+    # print(f"candidate: {candidate}")
 
     # check if member name exists
     member_name = li[1]
-    members_match = [(index, m) for index, m in enumerate(c[3]) if m[1] == member_name][0]
+    # print(f"member_name: {member_name}")
+
+    members_matches = []
+    for index, m in enumerate(candidate[3]):
+        if m[0] == "mut":
+            if m[1] == member_name:
+                members_matches.append((index, m))
+        elif m[0] == member_name:
+            members_matches.append((index, m))
+
+    # members_matches = [(index, m) for index, m in enumerate(c[3]) if m[0] == member_name]
+
+    members_match = members_matches[0]
     # print(f"members_match: {members_match}")
 
     if len(members_match) == 0:

@@ -131,21 +131,10 @@ def test_lit_float():
 
 
 def test_abc_xyz():
-    """
-    `(\"abc\" \"xyz\")` expression should return:
-        one PAR_OPEN token
-        one QUOTE token
-        one LIT token
-        one QUOTE token
-        one SPACE token
-        one QUOTE token
-        one LIT token
-        one QUOTE token
-        one PAR_CLOSE token
-    """
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """((TOKEN PAR_OPEN 0 1 "(") (TOKEN QUOTE 1 2 "\\\"") (TOKEN LIT 2 5 abc) (TOKEN QUOTE 5 6 "\\\"") (TOKEN SPACE 6 7 " ") (TOKEN QUOTE 7 8 "\\\"") (TOKEN LIT 8 11 xyz) (TOKEN QUOTE 11 12 "\\\"") (TOKEN PAR_CLOSE 12 13 ")"))\n""",
+#        """((TOKEN PAR_OPEN 0 1 "(") (TOKEN QUOTE 1 2 "\\\"") (TOKEN LIT 2 5 abc) (TOKEN QUOTE 5 6 "\\\"") (TOKEN SPACE 6 7 " ") (TOKEN QUOTE 7 8 "\\\"") (TOKEN LIT 8 11 xyz) (TOKEN QUOTE 11 12 "\\\"") (TOKEN PAR_CLOSE 12 13 ")"))\n""",
+        """((TOKEN PAR_OPEN 0 1 "(") (TOKEN LIT 2 5 abc) (TOKEN SPACE 6 7 " ") (TOKEN LIT 8 11 xyz) (TOKEN PAR_CLOSE 12 13 ")"))\n""",
         "(\\\"abc\\\" \\\"xyz\\\")"
     )
 

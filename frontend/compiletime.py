@@ -209,9 +209,15 @@ def _validate_set(node, scope):
                         # value_member_type = value_member[1]
                         pass
 
-                struct_member_type = struct_member[1]
+                if len(struct_member) == 2:
+                    struct_member_type = struct_member[1]
+                elif struct_member[0] == "mut":
+                    struct_member_type = struct_member[2]
+                else:
+                    print(f"struct_member: {struct_member}")
+
                 if value_member_type != struct_member_type:
-                    raise Exception(f"Initializing struct with invalid value type for member: {value_member_type} {struct_member_type}")
+                    raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
 
     # check reassignment over const
     # check const reassignment over mut
@@ -461,5 +467,5 @@ scope = [
   [],    # children scope
   True,  # is safe scope
   None,  # forced handler
-  False  # eval returns calls
+  None   # eval returns calls
 ]
