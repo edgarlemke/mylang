@@ -8,12 +8,13 @@ default_scope = [
     None,  # parent scope
     [],    # children scopes
     True,  # is safe scope
-    None   # forced handler
+    None,  # forced handler
+    False  # eval returns calls
 ]
 
 
 def eval(li, scope, forced_handler_desc=None):
-    # print(f"\neval {li}")
+    # print(f"\neval - li: {li}")
     # print(f"\neval {li} {scope}")
 
     old_li = li
@@ -90,7 +91,9 @@ def eval(li, scope, forced_handler_desc=None):
             # len > 1, so it's a function call
             else:
                 if name_match[2] == "fn":
+                    # print("fn")
                     retv = _call_fn(li, name_match, scope)
+                    # print(f"retv: {retv}")
                     if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
                         scope[5] = retv[1]
                         retv = retv[0]
@@ -99,6 +102,7 @@ def eval(li, scope, forced_handler_desc=None):
                     # print(f"!!! internal")
                     x = name_match[3](li, scope)
                     li = x
+                # print(f"li: {li}")
 
         else:
             if len(li) == 1:
@@ -120,8 +124,62 @@ def eval(li, scope, forced_handler_desc=None):
 
 
 def _call_fn(li, fn, scope):
-    # print(f"_call_fn {li}")
+    # print(f"_call_fn - li: {li} fn: {fn}")
 
+    name = fn[0]
+    methods = fn[3]
+    candidates = []
+
+    the_method, solved_args = find_fn_method(li, fn, scope)
+
+    # set new scope
+    fn_scope = default_scope.copy()
+    fn_scope[2] = scope
+    fn_scope[4] = scope[4]
+
+    # print(f"solved_args: {solved_args}")
+
+    # populate new scope's names with function call arguments
+    if li[1:] != [[]]:
+
+        # for arg_i, arg in enumerate(li[1:]):
+        for arg_i, arg in enumerate(solved_args):
+            method_arg = the_method[0][arg_i]
+            fn_scope[0].append([method_arg[0], "const", method_arg[1], arg[1]])
+
+    # print(f"fn_scope: {fn_scope}")
+    return_calls = scope[6] is not None
+    # print(f"return_calls: {return_calls}")
+
+    if len(the_method) == 2:
+        if return_calls:
+            # print(f"return_calls {li}")
+            # return " ".join(li)
+            return scope[6](li, scope)
+        else:
+            # print(f"not return_calls []")
+            return []
+
+    retv = eval(the_method[2], fn_scope, return_calls=return_calls)
+
+    # if returned value isn't empty list
+    if len(retv) > 0:
+        retv = retv[0]
+        # if returned value type is different from called function type
+        if (not isinstance(retv[0], list) and retv[0] != the_method[1]):  # and (isinstance(retv[0], list) and retv[0][0] != the_method[1]):# and (isinstance(retv[0], list) and isinstance(retv[0][0], list) and retv[0][0][0] != the_method[1]):
+            raise Exception(f"Returned value type of function is different from called function type: {retv} {the_method[1]} {retv[0][0][0]}")
+
+    # return calls if we need the call output
+    if return_calls:
+        # print(f"returning call _call_fn {li}")
+        return li
+
+    else:
+        # print(f"exiting _call_fn {li} -> {retv}")
+        return retv
+
+
+def find_fn_method(li, fn, scope):
     name = fn[0]
     methods = fn[3]
     candidates = []
@@ -158,7 +216,9 @@ def _call_fn(li, fn, scope):
             # if it's a list
             if is_list:
                 # eval it
+                # print(f"!! is_list: {is_list} {arg}")
                 solved_arg = eval(arg, scope)
+                # print(f"!! solved_arg: {solved_arg}")
 
             # if it's not a list
             else:
@@ -204,7 +264,7 @@ def _call_fn(li, fn, scope):
 
     if len(candidates) == 0:
         fns = [n for n in scope[0] if n[2] == "fn"]
-        raise Exception(f"No candidate function found: {name} {fns}")
+        raise Exception(f"No candidate function found - name: {name}  -  fns: {fns}")
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
 
@@ -213,38 +273,7 @@ def _call_fn(li, fn, scope):
     the_method = candidates[0][0]
     # print(f"the_method: {the_method}")
 
-    # set new scope
-    fn_scope = default_scope.copy()
-    fn_scope[2] = scope
-    fn_scope[4] = scope[4]
-
-    # print(f"solved_args: {solved_args}")
-
-    # populate new scope's names with function call arguments
-    if li[1:] != [[]]:
-
-        # for arg_i, arg in enumerate(li[1:]):
-        for arg_i, arg in enumerate(solved_args):
-            method_arg = the_method[0][arg_i]
-            fn_scope[0].append([method_arg[0], "const", method_arg[1], arg[1]])
-
-    # print(f"fn_scope: {fn_scope}")
-
-    if len(the_method) == 2:
-        return []
-
-    retv = eval(the_method[2], fn_scope)
-
-    # if returned value isn't empty list
-    if len(retv) > 0:
-        retv = retv[0]
-        # if returned value type is different from called function type
-        if (not isinstance(retv[0], list) and retv[0] != the_method[1]):  # and (isinstance(retv[0], list) and retv[0][0] != the_method[1]):# and (isinstance(retv[0], list) and isinstance(retv[0][0], list) and retv[0][0][0] != the_method[1]):
-            raise Exception(f"Returned value type of function is different from called function type: {retv} {the_method[1]} {retv[0][0][0]}")
-
-    # print(f"exiting _call_fn {li} -> {retv}")
-
-    return retv
+    return (the_method, solved_args)
 
 
 def _get_name_value(name, scope):
@@ -269,6 +298,8 @@ def _get_name_value(name, scope):
 
 
 def _infer_type(arg):
+    # print(f"_infer_type - arg: {arg}")
+
     candidates = []
 
     int_regexp = "[0-9]+"

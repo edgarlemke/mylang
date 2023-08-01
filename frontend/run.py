@@ -132,38 +132,31 @@ def _setup_env(compiletime_scope=False):
     scope = runtime.scope if compiletime_scope == False else compiletime.scope
 
     # Macros declared first are matched first...
-    default_macros = """
-(macro op_mul ('a * 'b) (mul ('a 'b)))
-(macro op_div ('a / 'b) (div ('a 'b)))
-(macro op_mod ('a % 'b) (mod ('a 'b)))
+    default = """
+macro op_mul ('a * 'b) (mul ('a 'b))
+macro op_div ('a / 'b) (div ('a 'b))
+macro op_mod ('a % 'b) (mod ('a 'b))
 
-(macro op_add ('a + 'b) (add ('a 'b)))
-(macro op_sub ('a - 'b) (sub ('a 'b)))
+macro op_add ('a + 'b) (add ('a 'b))
+macro op_sub ('a - 'b) (sub ('a 'b))
 
-(macro op_eq  ('a == 'b) (eq  ('a 'b)))
-(macro op_neq ('a != 'b) (neq ('a 'b)))
-(macro op_gt  ('a > 'b)  (gt  ('a 'b)))
-(macro op_gte ('a >= 'b) (gte ('a 'b)))
-(macro op_lt  ('a < 'b)  (lt  ('a 'b)))
-(macro op_lte ('a <= 'b) (lte ('a 'b)))
+macro op_eq  ('a == 'b) (eq  ('a 'b))
+macro op_neq ('a != 'b) (neq ('a 'b))
+macro op_gt  ('a > 'b)  (gt  ('a 'b))
+macro op_gte ('a >= 'b) (gte ('a 'b))
+macro op_lt  ('a < 'b)  (lt  ('a 'b))
+macro op_lte ('a <= 'b) (lte ('a 'b))
 
-(macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c)))
+macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c))
 
-(macro op_set_fn_with_return ('f = fn 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body))) )
-(macro op_set_fn_without_return ('f = fn 'args 'body) (set mut 'f (fn ('args 'body))) )
-(macro op_set_mut (mut 't 'a = 'b) (set mut 'a ('t 'b)))
-(macro op_set_const ('t 'a = 'b) (set const 'a ('t 'b)))
+macro op_set_fn_with_return ('f = fn 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body)))
+macro op_set_fn_without_return ('f = fn 'args 'body) (set mut 'f (fn ('args 'body)))
+macro op_set_mut (mut 't 'a = 'b) (set mut 'a ('t 'b))
+macro op_set_const ('t 'a = 'b) (set const 'a ('t 'b))
 
-(macro ret (ret) ())
+macro ret (ret) ()
 """
-
-    op_li = _get_list_from_expr(default_macros)
-    # print(f"op_li: {op_li}")
-    eval.eval(op_li, scope)
-
-    default_functions = """
-"""
-    fn_li = _get_list_from_expr(default_functions)
+    fn_li = _get_list_from_expr(default)
     eval.eval(fn_li, scope)
 
 

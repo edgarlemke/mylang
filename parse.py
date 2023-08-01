@@ -1,6 +1,8 @@
 def parse(token_list):
     token_list = _listfy_par_groups(token_list)
-    # token_list = _listfy_blocks(token_list)
+
+    token_list = _join_quoted_values(token_list)
+
     return token_list
 
 
@@ -83,28 +85,9 @@ def _listfy_par_groups(token_list):
     return tc2
 
 
-def _listfy_blocks(token_list):
-    token_list_copy = token_list.copy()
+def _join_quoted_values(token_list):
+    # print(f"_join_quoted_values - token_list: {token_list}")
+    quotes = []
 
-    block_buf = []
-    for index, token in enumerate(token_list):
-        if len(token) == 0 or token[0] != "TOKEN":
-            continue
-
-        if token[1] == "BLOCK_START":
-            block_buf.append([index, token])
-
-        elif token[1] == "BLOCK_END":
-            block_end = token
-            block_end_index = index
-
-            block_start_index, block_start = block_buf.pop()
-            content = token_list[block_start_index + 1: block_end_index]
-
-            list_ = [block_start] + content + [block_end]
-            for token_to_remove in list_:
-                token_list_copy.remove(token_to_remove)
-
-            token_list_copy.insert(block_start_index, ["BLOCK", content])
-
-    return token_list_copy
+    # for
+    return token_list

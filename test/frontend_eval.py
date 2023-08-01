@@ -550,7 +550,7 @@ def test_unlisp_set_fn():
 	ret
 somefn 12 34
 """
-)
+    )
 
 
 def test_unlisp_set_fn_with_return():
@@ -562,7 +562,19 @@ def test_unlisp_set_fn_with_return():
 	ret
 somefn 12 34
 """
-)
+    )
+
+
+def test_unlisp_struct():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "()\n",
+        "",
+        """struct file =
+	a int
+file xyz = (1)
+"""
+    )
 
 
 if __name__ == "__main__":

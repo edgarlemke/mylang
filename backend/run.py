@@ -6,11 +6,34 @@ sys.path.append(dir_path)
 
 
 def run_li(li, print_output=False):
+    # print(f"!! run_li: {li}")
     import eval
     import backend.scope as scope
 
+    default = """(
+(set const stdin (int 0))
+(set const stdout (int 1))
+(set const stderr (int 2))
+
+(set mut print (fn (((text Str)) ((write_file stdout text)))))
+)
+"""
+    li = _get_list_from_expr(default) + li
+
     eval_li = eval.eval(li, scope.scope, ["handle"])
-    output = _join_lists(eval_li)
+
+    default_llvm_ir = """define void @write_file (i64 %fd, i8* %text, i64 %size) {
+start:
+call void asm sideeffect "syscall",
+        "{rax},{rdi},{rsi},{rdx}"
+        (i64 1, i64 %fd, i8* %text, i64 %size)
+ret void
+}
+
+%struct.Str = type {i8*, i64}
+"""
+
+    output = default_llvm_ir + _join_lists(eval_li)
 
     if print_output:
         # print(list_.list_print(eval_li))

@@ -69,6 +69,10 @@ if __name__ == "__main__":
         args.frontend_compile_time_scope
     )
 
+    output_parse = f"{output}.parse"
+    with open(output_parse, "w") as output_fd:
+        output_fd.write(list_.list_print(frontend_tree))
+
     # run backend on tree
     # print("Running backend on frontend result...")
     from backend.run import run_li as backend_run_li

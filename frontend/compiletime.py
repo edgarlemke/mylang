@@ -75,7 +75,7 @@ def _validate_handle(node, scope):
         raise Exception(f"Wrong number of arguments for handle: {node}")
 
 
-def __set__(node, scope):
+def __set__(node, scope, split_args=True):
     """
     Validate set i.e. constant setting.
 
@@ -95,7 +95,11 @@ def __set__(node, scope):
 
     if type_ == "fn":
         value = list(data[1:4])
-        value[0][0] = _split_fn_args(value[0][0])
+        # print(f"value: {value}")
+
+        if split_args:
+            value[0][0] = _split_fn_args(value[0][0])
+        # print(f"value after split fn args: {value}")
 
         all_fn = [(i, var) for i, var in enumerate(names) if var[1] == "fn" and var[0] == name]
         # print(f"all_fn: {all_fn}")
@@ -135,6 +139,9 @@ def __set__(node, scope):
                     names.remove(v)
                     break
 
+            if type_ == "Str":
+                value = [value, len(value)]
+
             # insert new value into names
             names.append([name, mutdecl, type_, value])
 
@@ -171,7 +178,7 @@ def _validate_set(node, scope):
         # print(f"struct_type: {struct_type}")
 
         if len(value) != len(struct_type[3]):
-            raise Exception("Initializing struct with wrong number of member values: {value} {struct_type[3]}")
+            raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
 
         for value_member in value:
             for struct_member in struct_type[3]:
@@ -196,9 +203,13 @@ def _validate_set(node, scope):
                 else:
                     it_value_member = eval._infer_type(value_member)
                     # print(f"it_value_member: {it_value_member} struct_member: {struct_member}")
-                    value_member_type = it_value_member[0]
+                    if it_value_member is not None:
+                        value_member_type = it_value_member[0]
+                    else:
+                        # value_member_type = value_member[1]
+                        pass
 
-                struct_member_type = struct_member[2]
+                struct_member_type = struct_member[1]
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: {value_member_type} {struct_member_type}")
 
@@ -208,10 +219,10 @@ def _validate_set(node, scope):
         for index, v in enumerate(scope[0]):
             if v[0] == name:
                 if v[1] == "const":
-                    raise Exception("Trying to reassign constant: {node}")
+                    raise Exception(f"Trying to reassign constant: {node}")
 
                 elif v[1] == "mut" and mutdecl == "const":
-                    raise Exception("Trying to reassign a constant name over a mutable name: {node}")
+                    raise Exception(f"Trying to reassign a constant name over a mutable name: {node}")
 
 
 def _set_struct_member(li, scope, value):
@@ -249,9 +260,11 @@ def _split_fn_args(args):
     ct = 0
 
     for arg in args:
+        # print(f"arg: {arg} ct: {ct}")
         buf.append(arg)
 
         if ct == 1:
+            # print(f"buf: {buf}")
             split_args.append(buf.copy())
             buf = []
             ct = 0
@@ -447,5 +460,6 @@ scope = [
   None,  # parent scope
   [],    # children scope
   True,  # is safe scope
-  None   # forced handler
+  None,  # forced handler
+  False  # eval returns calls
 ]

@@ -81,5 +81,6 @@ scope = [
   None,  # parent scope
   [],    # children scope
   True,  # is safe scope
-  None   # forced handler
+  None,  # forced handler
+  False  # eval returns calls
 ]

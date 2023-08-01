@@ -42,11 +42,14 @@ def tokenize(code, autolist=True):
     # match literals tokens
     token_list = _match_lit_tokens(token_list, code)
 
-    # sort outo duplicated tokens
+    # sort out duplicated tokens
+    # print(f"before decide dup - token_list: {token_list}")
     token_list = _decide_dup_tokens(token_list, ["LIT"])
+    # print(f"after decide dup - token_list: {token_list}")
 
     # sort token_list list by start position of the token
     token_list.sort(key=lambda x: x[2])
+
     token_list = _remove_comments(token_list)
 
     # sort autolist if needed
@@ -126,6 +129,7 @@ def _remove_comments(token_list):
 
 
 def _match_lit_tokens(token_list, code):
+    # print(f"token_list: {token_list}")
     quotes = []
     for token in token_list:
         # skip all non-QUOTE tokens
@@ -139,27 +143,37 @@ def _match_lit_tokens(token_list, code):
 
         quotes.append(token)
 
+    # print(f"quotes: {quotes}")
+
     # iter over every two quotes
+    to_add = []
     i = 0
     while i < len(quotes):
         quote = quotes[i]
+        # print(f"i: {i} quote: {quote}")
 
         # get initial lit start and end
         lit_start = quote[2] + 1
         lit_end = len(code)
+        # print(f"lit_start: {lit_start} lit_end: {lit_end}")
 
         # if there's a next QUOTE, get a new literal end
+        # print(f"len(quotes) > (i + 1) - {len(quotes)} > {(i + 1)}")
         if len(quotes) > (i + 1):
+            # print(">")
             end_quote = quotes[i + 1]
             lit_end = end_quote[3] - 1
 
-        # if start is different from end, add LIT token to list
-        if lit_start != lit_end:
-            value = code[lit_start: lit_end]
-            token = ["TOKEN", "LIT", lit_start, lit_end, value]
-            token_list.append(token)
+        # print(f"new lit_end: {lit_end} {lit_start}")
+
+        value = code[lit_start: lit_end]
+        token = ["TOKEN", "LIT", lit_start, lit_end, value]
+        to_add.append(token)
 
         i += 2
+
+    for lit_token in to_add:
+        token_list.append(lit_token)
 
     return token_list
 
@@ -200,6 +214,12 @@ def _decide_dup_tokens(token_list, to_remove):
                 if (token[2] == token2[2] and token[3] > token2[3]) or (
                         token[2] < token2[2] and token[3] == token2[3]):
                     rem(token2)
+
+            if token2[1] == "SPACE" and token[1] == "LIT" and token[2] <= token2[2] and token[3] >= token2[3]:
+                rem(token2)
+
+            if token2[1] == "QUOTE":
+                rem(token2)
 
     return token_list_iter
 

@@ -10,7 +10,7 @@ OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
 
 
-def _test(fn_name, expected_stdout, expected_stderr, src):
+def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expected_stderr_bin, src):
     print(f"TEST {fn_name} - ", end="")
 
     cmd = f"/usr/bin/python3 ../../run.py --src \"{src}\" --output \"{src}.o\""
@@ -52,9 +52,36 @@ def _test(fn_name, expected_stdout, expected_stderr, src):
     run(split(f"gcc {src}.o -o {src}.bin"))
 
     # Running
-    cmd2 = f"{src}.bin"
-    p2 = Popen(split(cmd2), stdout=PIPE, stderr=PIPE)
-    stdout2, stderr2 = p2.communicate()
+    cmd_bin = f"{src}.bin"
+    p_bin = Popen(split(cmd_bin), stdout=PIPE, stderr=PIPE)
+    stdout_bin, stderr_bin = p_bin.communicate()
+
+    stdout_bin_dec = stdout_bin.decode()
+    stdout_bin_ok = (expected_stdout_bin == "" and stdout_bin_dec == "") or (expected_stdout_bin != "" and stdout_bin_dec == expected_stdout_bin)
+
+    stderr_bin_dec = stderr_bin.decode()
+    stderr_bin_ok = (expected_stderr_bin == "" and stderr_bin_dec == "") or (expected_stderr_bin != "" and expected_stderr_bin in stderr_bin_dec)
+
+    if not stderr_bin_ok:
+        print(FAIL)
+
+        print(f"""stderr_bin not correct:
+        expected:   %s
+        got:        %s""" % (expected_stderr_bin, stderr_bin_dec))
+        err = True
+
+    if not stdout_bin_ok:
+        if not err:
+            print(FAIL)
+
+        print("""stdout_bin not correct:
+        expected:   %s
+        got:        %s""" % (expected_stdout_bin, stdout_bin_dec))
+        err = True
+
+    if err:
+        print(f"CMD: %s" % cmd)
+        return False
 
     print(OK)
     return True
@@ -75,7 +102,20 @@ def test_empty_function():
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
+        "",
+        "",
         "./empty_function/main.k"
+    )
+
+
+def test_hello_world():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "Hello world! ❤️",
+        "",
+        "./hello_world/main.k"
     )
 
 
