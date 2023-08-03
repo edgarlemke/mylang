@@ -139,8 +139,16 @@ def __set__(node, scope, split_args=True):
                     names.remove(v)
                     break
 
+            # add string length to output ;)
             if type_ == "Str":
                 value = [value, len(value)]
+
+            # if type(value) == list:
+            #    #print("LIIII")
+            #    skope = scope.copy()
+            #    #skope[6] = None
+            #    value = eval.eval(value, skope)
+            #    print(f"new value: {value}")
 
             # insert new value into names
             names.append([name, mutdecl, type_, value])

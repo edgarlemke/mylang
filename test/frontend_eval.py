@@ -302,6 +302,18 @@ def test_set_const_reassignment():
     )
 
 
+def test_set_call_fn():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 10))\n",
+        "",
+        """somefn = fn () int
+	ret data int 10
+int x = (somefn ())
+x"""
+    )
+
+
 # __macro__
 def test_macro_node_size():
     return _test(

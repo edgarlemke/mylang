@@ -49,6 +49,8 @@ def __set__(node, scope):
     # ct._validate_set(node, scope)
     ct.__set__(node, scope, split_args=False)
 
+    # print(f"\nscope: {scope}\n\n")
+
     # back-end validation
     _validate_set(node, scope)
 
@@ -97,14 +99,16 @@ def __set__(node, scope):
         if len(result) > 0:
             body.append(result)
 
-        body.append([f"ret {return_type}"])
+        # print(f"body: {body}")
+        if "ret" not in body[len(body) - 1][0]:
+            body.append([f"ret {return_type}"])
 
         # declaration, definition = _write_fn(uname, args, return_type, body)
         retv = _write_fn(uname, args, return_type, body)
 
     else:
         if type_ == "Str":
-            str_, size = _convert_str(data[1])
+            str_, size = _cvt_str(data[1])
 
             retv = f"""
 %{name} = alloca %struct.Str, align 8
@@ -121,32 +125,24 @@ store i8* %{name}_str_ptr, i8* %{name}_addr_ptr, align 8
 store i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
-# """
-#
-# %{name}_ptr = getelementptr [{size} x i8], i8* %{name}_str
-#
-# %{name}_addr_ptr = getelementptr %struct.Str, %struct.Str* %{name}
-# %{name}_size = getelementptr %struct.Str, %struct.Str* %{name}, i64 1
-#
-#
-# store i8* %{name}_ptr, i8* %{name}_addr_ptr
-# store i64 2, i64* %{name}_size
-# """
-#            retv = f"""
-
-# %{name} = alloca [{size} x i8], align 1
-# store [{size} x i8] c"{str_}", [{size} x i8]* %{name}, align 1""".split("\n")
-
         elif type_ in ["int", "uint"]:
             t = _cvt_type(type_)
-            retv = f"@{name} = constant {t} {data[1]}"
+            value = data[1]
+
+            if isinstance(value, list):
+                value = return_call(value, scope)
+                retv = f"%{name} = {value}"
+
+            else:
+                retv = f"@{name} = constant {t} {value}"
+
         else:
             raise Exception(f"meh {type_}")
 
     return retv
 
 
-def _convert_str(str_):
+def _cvt_str(str_):
     encoded = str_.encode('utf-8')
 
     buf = []
@@ -268,11 +264,11 @@ def __unsafe__(node, scope):
     return []
 
 
-def __write_file__(node, scope):
-    # print(f"calling __write_file__: {node}")
+def __linux_write__(node, scope):
+    # print(f"calling __linux_write__: {node}")
     # print(f"SCOPE: {scope}")
 
-    _validate_write_file(node, scope)
+    _validate_linux_write(node, scope)
 
     # convert fd
     from eval import eval
@@ -294,15 +290,15 @@ def __write_file__(node, scope):
 %addr = load i8*, %struct.Str* %str_addr_ptr
 %size = load i64, %struct.Str* %str_size_ptr
 
-call void @write_file({fd_arg}, i8* %addr, i64 %size)
+call void @linux_write({fd_arg}, i8* %addr, i64 %size)
 """
 
     return template.split("\n")
 
 
-def _validate_write_file(node, scope):
+def _validate_linux_write(node, scope):
     if len(node) != 3:
-        raise Exception(f"Wrong number of arguments for write_file: {node}")
+        raise Exception(f"Wrong number of arguments for linux_write: {node}")
 
 
 def return_call(node, scope):
@@ -312,10 +308,12 @@ def return_call(node, scope):
     # find out function name
     name = node[0]
     value = eval._get_name_value(name, scope)
-
     # print(f"value: {value}")
 
-    fn_args = value[3][0][0][0]
+    extracted_value = value[3][0][0]
+    # print(f"extracted_value: {extracted_value}")
+
+    fn_args = extracted_value[0]
     fn_name = _unoverload(name, fn_args)
 
     # find out args
@@ -325,14 +323,34 @@ def return_call(node, scope):
         name, type_ = arg
         cvt_type = _cvt_type(type_)
         arg_value = node[arg_i + 1]
-        cvt_args.append(f"{cvt_type} %{arg_value}")
+
+        scope_arg_value = eval._get_name_value(arg_value, scope)
+        if scope_arg_value != []:
+            arg_value = f"%{arg_value}"
+
+        cvt_args.append(f"{cvt_type} {arg_value}")
 
     cvt_fn_args = ", ".join(cvt_args)
 
     # find out return type
-    fn_ret_type = "void"
+    if len(extracted_value) == 2:
+        fn_ret_type = "void"
+
+    elif len(extracted_value) == 3:
+        fn_ret_type = _cvt_type(extracted_value[1])
 
     return f"call {fn_ret_type} @{fn_name}({cvt_fn_args})"
+
+
+def __add_int_int__(node, scope):
+    # print(f"__add_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = add i64 {x}, {y}
+ret i64 %result"""
+    # return f"""call i64 @add_int_int(%x, %y)"""
 
 
 scope = [
@@ -349,7 +367,9 @@ scope = [
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
 
-    ["write_file", "const", "internal", __write_file__],
+    ["linux_write", "const", "internal", __linux_write__],
+
+    ["add_int_int", "const", "internal", __add_int_int__],
 
     ["int", "const", "type", [8]],
 

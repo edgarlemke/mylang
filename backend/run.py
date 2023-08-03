@@ -15,22 +15,24 @@ def run_li(li, print_output=False):
 (set const stdout (int 1))
 (set const stderr (int 2))
 
-(set mut print (fn (((text Str)) ((write_file stdout text)))))
+(set mut print (fn (((text Str)) ((linux_write stdout text)))))
 )
 """
     li = _get_list_from_expr(default) + li
 
     eval_li = eval.eval(li, scope.scope, ["handle"])
 
-    default_llvm_ir = """define void @write_file (i64 %fd, i8* %text, i64 %size) {
+    default_llvm_ir = """define i64 @linux_write (i64 %fildes, i8* %buf, i64 %nbyte) {
 start:
-call void asm sideeffect "syscall",
-        "{rax},{rdi},{rsi},{rdx}"
-        (i64 1, i64 %fd, i8* %text, i64 %size)
-ret void
+%retv = call i64 asm sideeffect "syscall",
+        "={rax},{rax},{rdi},{rsi},{rdx}"
+        (i64 1, i64 %fildes, i8* %buf, i64 %nbyte)
+ret i64 %retv
 }
 
 %struct.Str = type {i8*, i64}
+
+
 """
 
     output = default_llvm_ir + _join_lists(eval_li)

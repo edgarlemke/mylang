@@ -119,6 +119,17 @@ def test_hello_world():
     )
 
 
+def test_add_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "6912",
+        "",
+        "./add_int/main.k"
+    )
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

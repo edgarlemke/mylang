@@ -107,9 +107,10 @@ def eval(li, scope, forced_handler_desc=None):
         else:
             if len(li) == 1:
                 if isinstance(name_match[3], list):
-                    # print(f"evaling {name_match[3]}")
+                    print(f"evaling {name_match[3]}")
                     evaled_n3 = eval(name_match[3], scope, forced_handler_desc)
                     if name_match[2] != evaled_n3[0]:
+                        # method, solved_args = find_fn_method(li, name_match, scope)
                         raise Exception(f"Wrong type! {name_match} {evaled_n3}")
                     li = evaled_n3
 
@@ -162,19 +163,24 @@ def _call_fn(li, fn, scope):
 
     retv = eval(the_method[2], fn_scope)
 
-    # if returned value isn't empty list
-    if len(retv) > 0:
-        retv = retv[0]
-        # if returned value type is different from called function type
-        if (not isinstance(retv[0], list) and retv[0] != the_method[1]):  # and (isinstance(retv[0], list) and retv[0][0] != the_method[1]):# and (isinstance(retv[0], list) and isinstance(retv[0][0], list) and retv[0][0][0] != the_method[1]):
-            raise Exception(f"Returned value type of function is different from called function type: {retv} {the_method[1]} {retv[0][0][0]}")
-
     # return calls if we need the call output
     if return_calls:
         # print(f"returning call _call_fn {li}")
         return li
 
     else:
+        # if returned value isn't empty list
+        if len(retv) > 0:
+            retv = retv[0]
+            # if returned value type is different from called function type
+            if (not isinstance(retv[0], list) and retv[0] != the_method[1]):  # and (isinstance(retv[0], list) and retv[0][0] != the_method[1]):# and (isinstance(retv[0], list) and isinstance(retv[0][0], list) and retv[0][0][0] != the_method[1]):
+                raise Exception(f"""Returned value type of function is different from called function type:
+    retv: {retv}
+
+    the_method[1]: {the_method[1]}
+
+    retv[0][0][0]: {retv[0][0][0]}""")
+
         # print(f"exiting _call_fn {li} -> {retv}")
         return retv
 
