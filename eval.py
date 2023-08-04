@@ -104,15 +104,35 @@ def eval(li, scope, forced_handler_desc=None):
                     li = x
                 # print(f"li: {li}")
 
+        # not function nor internal
         else:
+            # if is list of single item
             if len(li) == 1:
-                if isinstance(name_match[3], list):
-                    print(f"evaling {name_match[3]}")
-                    evaled_n3 = eval(name_match[3], scope, forced_handler_desc)
-                    if name_match[2] != evaled_n3[0]:
-                        # method, solved_args = find_fn_method(li, name_match, scope)
-                        raise Exception(f"Wrong type! {name_match} {evaled_n3}")
-                    li = evaled_n3
+                name_match_value = name_match[3]
+
+                # if name match value is list
+                if isinstance(name_match_value, list):
+
+                    # evaluate the list
+                    # print(f"evaling {name_match[3]}")
+                    evaled_name_match_value = eval(name_match_value, scope, forced_handler_desc)
+                    method_type = evaled_name_match_value[0]
+
+                    # if return_calls is set, get correct method type
+                    return_calls = scope[6] is not None
+                    if return_calls:
+                        evaled_fn = _get_name_value(evaled_name_match_value[0], scope)
+                        method, solved_args = find_fn_method(evaled_name_match_value, evaled_fn, scope)
+                        method_type = method[1]
+
+                    # if type of name match and type of list result are different
+                    if name_match[2] != method_type:
+                        raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]}   -   method_type: {method_type}")
+
+                    if return_calls:
+                        li = ["ret i64 %result"]
+                    else:
+                        li = evaled_name_match_value
 
                 else:
                     li = name_match[2:]
@@ -186,6 +206,8 @@ def _call_fn(li, fn, scope):
 
 
 def find_fn_method(li, fn, scope):
+    # print(f"\n!! find_fn_method - li: {li} fn: {fn} scope: {scope}\n")
+
     name = fn[0]
     methods = fn[3]
     candidates = []

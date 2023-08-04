@@ -100,11 +100,14 @@ def __set__(node, scope):
             body.append(result)
 
         # print(f"body: {body}")
-        if "ret" not in body[len(body) - 1][0]:
-            body.append([f"ret {return_type}"])
+        serialized_body = _serialize_body(body)
+        # print(f"serialized_body: {serialized_body}")
+
+        if "ret" not in serialized_body[len(serialized_body) - 1]:
+            serialized_body.append([f"ret {return_type}"])
 
         # declaration, definition = _write_fn(uname, args, return_type, body)
-        retv = _write_fn(uname, args, return_type, body)
+        retv = _write_fn(uname, args, return_type, serialized_body)
 
     else:
         if type_ == "Str":
@@ -230,6 +233,21 @@ def _write_fn(fn, args, return_type, body):
 
     # return [declaration, definition]
     return definition
+
+
+def _serialize_body(body):
+    serialized = []
+
+    def iter(li):
+        for child in li:
+            if isinstance(child, list):
+                iter(child)
+            else:
+                serialized.append(child)
+
+    iter(body)
+
+    return serialized
 
 
 def __macro__(node, scope):

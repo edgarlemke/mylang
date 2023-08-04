@@ -87,6 +87,72 @@ def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expect
     return True
 
 
+def _test_exit_code(fn_name, expected_stdout, expected_stderr, expected_exit_code, src):
+    print(f"TEST {fn_name} - ", end="")
+
+    cmd = f"/usr/bin/python3 ../../run.py --src \"{src}\" --output \"{src}.o\""
+    p = Popen(
+        split(cmd),
+        stdout=PIPE,
+        stderr=PIPE)
+    stdout, stderr = p.communicate()
+
+    stdout_dec = stdout.decode()
+    stdout_ok = (expected_stdout == "" and stdout_dec == "") or (expected_stdout != "" and stdout_dec == expected_stdout)
+
+    stderr_dec = stderr.decode()
+    stderr_ok = (expected_stderr == "" and stderr_dec == "") or (expected_stderr != "" and expected_stderr in stderr_dec)
+
+    err = False
+    if not stderr_ok:
+        print(FAIL)
+
+        print(f"""stderr not correct:
+        expected:   %s
+        got:        %s""" % (expected_stderr, stderr_dec))
+        err = True
+
+    if not stdout_ok:
+        if not err:
+            print(FAIL)
+
+        print("""stdout not correct:
+        expected:   %s
+        got:        %s""" % (expected_stdout, stdout_dec))
+        err = True
+
+    if err:
+        print(f"CMD: %s" % cmd)
+        return False
+
+    # Linking
+    run(split(f"gcc {src}.o -o {src}.bin"))
+
+    # Running
+    cmd_bin = f"{src}.bin; echo $?"
+    # p_bin = Popen(split(cmd_bin), stdout=PIPE, stderr=PIPE)
+    # stdout_bin, stderr_bin = p_bin.communicate()
+
+    # print(stdout_bin)
+    # print(stderr_bin)
+    result = run(split(cmd_bin), shell=True, capture_output=True, text=True)
+
+    if str(result.returncode) != expected_exit_code:
+        print(FAIL)
+
+        print(f"""stderr_bin not correct:
+        expected:   %s
+        got:        %s""" % (expected_exit_code, str(result.returncode)))
+        err = True
+
+    if err:
+        print(f"CMD: %s" % cmd)
+        return False
+
+    print(OK)
+    return True
+
+
 def _popen(expr):
     cmd = f"/usr/bin/python3 ../run.py --expr \"{expr}\""
     sp = split(cmd)
@@ -120,12 +186,11 @@ def test_hello_world():
 
 
 def test_add_int():
-    return _test(
+    return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
-        "6912",
-        "",
+        "46",
         "./add_int/main.k"
     )
 
