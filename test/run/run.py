@@ -242,6 +242,17 @@ def test_add_float():
     )
 
 
+def test_sub_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./sub_float/main.k"
+    )
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

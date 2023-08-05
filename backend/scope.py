@@ -437,6 +437,16 @@ def __add_float_float__(node, scope):
 ret float %result"""
 
 
+def __sub_float_float__(node, scope):
+    # prfloat(f"__sub_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fsub float {x}, {y}
+ret float %result"""
+
+
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -459,6 +469,7 @@ scope = [
     ["div_int_int", "const", "internal", __div_int_int__],
 
     ["add_float_float", "const", "internal", __add_float_float__],
+    ["sub_float_float", "const", "internal", __sub_float_float__],
 
     ["int", "const", "type", [8]],
 
