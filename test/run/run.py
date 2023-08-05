@@ -253,6 +253,28 @@ def test_sub_float():
     )
 
 
+def test_mul_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./mul_float/main.k"
+    )
+
+
+def test_fdiv_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./fdiv_float/main.k"
+    )
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

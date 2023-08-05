@@ -24,6 +24,8 @@ def run_li(li, print_output=False):
 
 (set mut add (fn (((x float) (y float)) float ((add_float_float x y)))))
 (set mut sub (fn (((x float) (y float)) float ((sub_float_float x y)))))
+(set mut mul (fn (((x float) (y float)) float ((mul_float_float x y)))))
+(set mut div (fn (((x float) (y float)) float ((div_float_float x y)))))
 )
 """
     li = _get_list_from_expr(default) + li
