@@ -21,6 +21,7 @@ def run_li(li, print_output=False):
 (set mut sub (fn (((x int) (y int)) int ((sub_int_int x y)))))
 (set mut mul (fn (((x int) (y int)) int ((mul_int_int x y)))))
 (set mut div (fn (((x int) (y int)) float ((div_int_int x y)))))
+(set mut and (fn (((x int) (y int)) int ((and_int_int x y)))))
 
 (set mut add (fn (((x float) (y float)) float ((add_float_float x y)))))
 (set mut sub (fn (((x float) (y float)) float ((sub_float_float x y)))))

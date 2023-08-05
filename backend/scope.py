@@ -427,6 +427,16 @@ def __div_int_int__(node, scope):
 ret float %result"""
 
 
+def __and_int_int__(node, scope):
+    # print(f"__and_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = and i64 {x}, {y}
+ret i64 %result"""
+
+
 def __add_float_float__(node, scope):
     # prfloat(f"__add_float_float__ {node}")
 
@@ -487,6 +497,7 @@ scope = [
     ["sub_int_int", "const", "internal", __sub_int_int__],
     ["mul_int_int", "const", "internal", __mul_int_int__],
     ["div_int_int", "const", "internal", __div_int_int__],
+    ["and_int_int", "const", "internal", __and_int_int__],
 
     ["add_float_float", "const", "internal", __add_float_float__],
     ["sub_float_float", "const", "internal", __sub_float_float__],

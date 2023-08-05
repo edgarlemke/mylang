@@ -231,6 +231,16 @@ def test_sdiv_int():
     )
 
 
+def test_and_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "42",
+        "./and_int/main.k"
+    )
+
+
 def test_add_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
