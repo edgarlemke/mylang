@@ -271,6 +271,16 @@ def test_not_int():
     )
 
 
+def test_eq_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "./eq_int/main.k"
+    )
+
+
 def test_add_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,

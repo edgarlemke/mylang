@@ -129,7 +129,7 @@ store i8* %{name}_str_ptr, i8* %{name}_addr_ptr, align 8
 store i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
-        elif type_ in ["int", "uint", "float"]:
+        elif type_ in ["int", "uint", "float", "bool"]:
             t = _cvt_type(type_)
             value = data[1]
 
@@ -216,6 +216,10 @@ def _cvt_type(type_):
     # convert integers
     if type_ in ["int", "uint"]:
         cvtd_type = "i64"
+
+    # convert booleans
+    elif type_ == "bool":
+        cvtd_type = "i1"
 
     # convert floats
     elif type_ == "float":
@@ -337,6 +341,10 @@ def return_call(node, scope):
     # print(f"scope[0]: {scope[0]}")
 
     matches = [name for name in scope[0] if name[0] == li_fn_name]
+
+    if len(matches) == 0:
+        raise Exception(f"No name matches for function: {li_fn_name}")
+
     value = matches[0]
     # print(f"value: {value}")
 
@@ -466,6 +474,16 @@ def __not_int__(node, scope):
 ret i64 %result"""
 
 
+def __eq_int_int__(node, scope):
+    # print(f"__eq_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = icmp eq i64 {x}, {y}
+ret i1 %result"""
+
+
 def __add_float_float__(node, scope):
     # prfloat(f"__add_float_float__ {node}")
 
@@ -530,6 +548,7 @@ scope = [
     ["or_int_int", "const", "internal", __or_int_int__],
     ["xor_int_int", "const", "internal", __xor_int_int__],
     ["not_int", "const", "internal", __not_int__],
+    ["eq_int_int", "const", "internal", __eq_int_int__],
 
     ["add_float_float", "const", "internal", __add_float_float__],
     ["sub_float_float", "const", "internal", __sub_float_float__],
