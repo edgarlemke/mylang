@@ -261,6 +261,16 @@ def test_xor_int():
     )
 
 
+def test_not_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "254",
+        "./not_int/main.k"
+    )
+
+
 def test_add_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
