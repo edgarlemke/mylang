@@ -215,6 +215,16 @@ def test_mul_int():
     )
 
 
+def test_sdiv_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "3",
+        "./sdiv_int/main.k"
+    )
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

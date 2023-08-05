@@ -128,7 +128,7 @@ store i8* %{name}_str_ptr, i8* %{name}_addr_ptr, align 8
 store i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
-        elif type_ in ["int", "uint"]:
+        elif type_ in ["int", "uint", "float"]:
             t = _cvt_type(type_)
             value = data[1]
 
@@ -215,6 +215,11 @@ def _cvt_type(type_):
     if type_ in ["int", "uint"]:
         cvtd_type = "i64"
 
+    # convert floats
+    elif type_ == "float":
+        cvtd_type = "float"
+
+    # convert Str (strings)
     elif type_ == "Str":
         cvtd_type = "%struct.Str*"
 
@@ -390,6 +395,21 @@ def __mul_int_int__(node, scope):
 ret i64 %result"""
 
 
+def __div_int_int__(node, scope):
+    # print(f"__div_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""
+%x_float = sitofp i64 {x} to float
+%y_float = sitofp i64 {y} to float
+
+%result = fdiv float %x_float, %y_float
+
+ret float %result"""
+
+
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -409,6 +429,7 @@ scope = [
     ["add_int_int", "const", "internal", __add_int_int__],
     ["sub_int_int", "const", "internal", __sub_int_int__],
     ["mul_int_int", "const", "internal", __mul_int_int__],
+    ["div_int_int", "const", "internal", __div_int_int__],
 
     ["int", "const", "type", [8]],
 
