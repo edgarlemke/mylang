@@ -26,11 +26,20 @@ def run_li(li, print_output=False):
 (set mut xor (fn (((x int) (y int)) int ((xor_int_int x y)))))
 (set mut not (fn (((x int)) int ((not_int x)))))
 (set mut eq (fn (((x int) (y int)) bool ((eq_int_int x y)))))
+(set mut gt (fn (((x int) (y int)) bool ((gt_int_int x y)))))
+(set mut ge (fn (((x int) (y int)) bool ((ge_int_int x y)))))
+(set mut lt (fn (((x int) (y int)) bool ((lt_int_int x y)))))
+(set mut le (fn (((x int) (y int)) bool ((le_int_int x y)))))
 
 (set mut add (fn (((x float) (y float)) float ((add_float_float x y)))))
 (set mut sub (fn (((x float) (y float)) float ((sub_float_float x y)))))
 (set mut mul (fn (((x float) (y float)) float ((mul_float_float x y)))))
 (set mut div (fn (((x float) (y float)) float ((div_float_float x y)))))
+(set mut eq (fn (((x float) (y float)) bool ((eq_float_float x y)))))
+(set mut gt (fn (((x float) (y float)) bool ((gt_float_float x y)))))
+(set mut ge (fn (((x float) (y float)) bool ((ge_float_float x y)))))
+(set mut lt (fn (((x float) (y float)) bool ((lt_float_float x y)))))
+(set mut le (fn (((x float) (y float)) bool ((le_float_float x y)))))
 )
 """
     li = _get_list_from_expr(default) + li

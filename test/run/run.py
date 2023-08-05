@@ -272,12 +272,57 @@ def test_not_int():
 
 
 def test_eq_int():
-    return _test_exit_code(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
+        "",
         "./eq_int/main.k"
+    )
+
+
+def test_gt_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./gt_int/main.k"
+    )
+
+
+def test_ge_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./ge_int/main.k"
+    )
+
+
+def test_lt_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./lt_int/main.k"
+    )
+
+
+def test_le_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./le_int/main.k"
     )
 
 
@@ -322,6 +367,61 @@ def test_fdiv_float():
         "",
         "",
         "./fdiv_float/main.k"
+    )
+
+
+def test_eq_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./eq_float/main.k"
+    )
+
+
+def test_gt_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./gt_float/main.k"
+    )
+
+
+def test_ge_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./ge_float/main.k"
+    )
+
+
+def test_lt_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./lt_float/main.k"
+    )
+
+
+def test_le_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./le_float/main.k"
     )
 
 

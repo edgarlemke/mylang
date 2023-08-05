@@ -484,6 +484,46 @@ def __eq_int_int__(node, scope):
 ret i1 %result"""
 
 
+def __gt_int_int__(node, scope):
+    # print(f"__gt_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = icmp sgt i64 {x}, {y}
+ret i1 %result"""
+
+
+def __ge_int_int__(node, scope):
+    # print(f"__ge_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = icmp sge i64 {x}, {y}
+ret i1 %result"""
+
+
+def __lt_int_int__(node, scope):
+    # print(f"__lt_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = icmp slt i64 {x}, {y}
+ret i1 %result"""
+
+
+def __le_int_int__(node, scope):
+    # print(f"__le_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = icmp sle i64 {x}, {y}
+ret i1 %result"""
+
+
 def __add_float_float__(node, scope):
     # prfloat(f"__add_float_float__ {node}")
 
@@ -524,6 +564,56 @@ def __div_float_float__(node, scope):
 ret float %result"""
 
 
+def __eq_float_float__(node, scope):
+    # prfloat(f"__eq_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fcmp oeq float {x}, {y}
+ret i1 %result"""
+
+
+def __gt_float_float__(node, scope):
+    # prfloat(f"__gt_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fcmp ogt float {x}, {y}
+ret i1 %result"""
+
+
+def __ge_float_float__(node, scope):
+    # prfloat(f"__ge_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fcmp oge float {x}, {y}
+ret i1 %result"""
+
+
+def __lt_float_float__(node, scope):
+    # prfloat(f"__lt_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fcmp olt float {x}, {y}
+ret i1 %result"""
+
+
+def __le_float_float__(node, scope):
+    # prfloat(f"__le_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fcmp ole float {x}, {y}
+ret i1 %result"""
+
+
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -549,11 +639,20 @@ scope = [
     ["xor_int_int", "const", "internal", __xor_int_int__],
     ["not_int", "const", "internal", __not_int__],
     ["eq_int_int", "const", "internal", __eq_int_int__],
+    ["gt_int_int", "const", "internal", __gt_int_int__],
+    ["ge_int_int", "const", "internal", __ge_int_int__],
+    ["lt_int_int", "const", "internal", __lt_int_int__],
+    ["le_int_int", "const", "internal", __le_int_int__],
 
     ["add_float_float", "const", "internal", __add_float_float__],
     ["sub_float_float", "const", "internal", __sub_float_float__],
     ["mul_float_float", "const", "internal", __mul_float_float__],
     ["div_float_float", "const", "internal", __div_float_float__],
+    ["eq_float_float", "const", "internal", __eq_float_float__],
+    ["gt_float_float", "const", "internal", __gt_float_float__],
+    ["ge_float_float", "const", "internal", __ge_float_float__],
+    ["lt_float_float", "const", "internal", __lt_float_float__],
+    ["le_float_float", "const", "internal", __le_float_float__],
 
     ["int", "const", "type", [8]],
 
