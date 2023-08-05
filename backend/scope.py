@@ -380,6 +380,16 @@ def __sub_int_int__(node, scope):
 ret i64 %result"""
 
 
+def __mul_int_int__(node, scope):
+    # print(f"__mul_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = mul i64 {x}, {y}
+ret i64 %result"""
+
+
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -398,6 +408,7 @@ scope = [
 
     ["add_int_int", "const", "internal", __add_int_int__],
     ["sub_int_int", "const", "internal", __sub_int_int__],
+    ["mul_int_int", "const", "internal", __mul_int_int__],
 
     ["int", "const", "type", [8]],
 

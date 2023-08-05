@@ -19,6 +19,7 @@ def run_li(li, print_output=False):
 
 (set mut add (fn (((x int) (y int)) int ((add_int_int x y)))))
 (set mut sub (fn (((x int) (y int)) int ((sub_int_int x y)))))
+(set mut mul (fn (((x int) (y int)) int ((mul_int_int x y)))))
 )
 """
     li = _get_list_from_expr(default) + li
