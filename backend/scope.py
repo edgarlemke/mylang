@@ -87,6 +87,7 @@ def __set__(node, scope):
         return_type = "void"
         if fn_return_type is not None:
             return_type = _cvt_type(fn_return_type)
+        # print(f"return_type: {return_type}")
 
         # sort out body IR
         result = eval.eval(fn_body, scope)
@@ -135,6 +136,7 @@ store i64 {size}, i64* %{name}_size_ptr, align 8
             if isinstance(value, list):
                 value = return_call(value, scope)
                 retv = f"%{name} = {value}"
+                # print(f"retv: {retv}")
 
             else:
                 retv = f"@{name} = constant {t} {value}"
@@ -326,41 +328,56 @@ def _validate_linux_write(node, scope):
 
 def return_call(node, scope):
     import eval
-    # print(f"!! return_call: {node} {scope}")
+    # print(f"return_call: {node}")
 
     # find out function name
-    name = node[0]
-    value = eval._get_name_value(name, scope)
+    li_fn_name = node[0]
+
+    # value = eval._get_name_value(name, scope)
+    # print(f"scope[0]: {scope[0]}")
+
+    matches = [name for name in scope[0] if name[0] == li_fn_name]
+    value = matches[0]
     # print(f"value: {value}")
 
-    extracted_value = value[3][0][0]
-    # print(f"extracted_value: {extracted_value}")
+    method, solved_args = eval.find_fn_method(node, value, scope)
+    # print(f"method: {method}")
 
-    fn_args = extracted_value[0]
-    fn_name = _unoverload(name, fn_args)
+    fn_args = method[0]
+    # print(f"fn_args: {fn_args}")
+
+    fn_name = _unoverload(li_fn_name, fn_args)
 
     # find out args
-    # print(f"fn_args: {fn_args}")
+
     cvt_args = []
     for arg_i, arg in enumerate(fn_args):
+        # print(f"arg: {arg}")
         name, type_ = arg
         cvt_type = _cvt_type(type_)
+
+        # fulfill llvm requirement to convert float values types to doubles
+        if cvt_type == "float":
+            cvt_type = "double"
+
         arg_value = node[arg_i + 1]
 
         scope_arg_value = eval._get_name_value(arg_value, scope)
         if scope_arg_value != []:
             arg_value = f"%{arg_value}"
 
-        cvt_args.append(f"{cvt_type} {arg_value}")
+        cvt_arg = f"{cvt_type} {arg_value}"
+        # print(f"cvt_arg: {cvt_arg}")
+        cvt_args.append(cvt_arg)
 
     cvt_fn_args = ", ".join(cvt_args)
 
     # find out return type
-    if len(extracted_value) == 2:
+    if len(method) == 2:
         fn_ret_type = "void"
 
-    elif len(extracted_value) == 3:
-        fn_ret_type = _cvt_type(extracted_value[1])
+    elif len(method) == 3:
+        fn_ret_type = _cvt_type(method[1])
 
     return f"call {fn_ret_type} @{fn_name}({cvt_fn_args})"
 
@@ -410,6 +427,16 @@ def __div_int_int__(node, scope):
 ret float %result"""
 
 
+def __add_float_float__(node, scope):
+    # prfloat(f"__add_float_float__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = fadd float {x}, {y}
+ret float %result"""
+
+
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -430,6 +457,8 @@ scope = [
     ["sub_int_int", "const", "internal", __sub_int_int__],
     ["mul_int_int", "const", "internal", __mul_int_int__],
     ["div_int_int", "const", "internal", __div_int_int__],
+
+    ["add_float_float", "const", "internal", __add_float_float__],
 
     ["int", "const", "type", [8]],
 

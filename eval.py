@@ -130,7 +130,14 @@ def eval(li, scope, forced_handler_desc=None):
                         raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]}   -   method_type: {method_type}")
 
                     if return_calls:
-                        li = ["ret i64 %result"]
+                        # get type
+                        type_return_call = "i64"
+
+                        # get var name
+                        name_return_call = "%result"
+
+                        li = [f"ret {type_return_call} {name_return_call}"]
+
                     else:
                         li = evaled_name_match_value
 
@@ -152,6 +159,7 @@ def _call_fn(li, fn, scope):
     candidates = []
 
     the_method, solved_args = find_fn_method(li, fn, scope)
+    # print(f"the_method: {the_method} - solved_args: {solved_args}")
 
     # set new scope
     fn_scope = default_scope.copy()
@@ -165,6 +173,7 @@ def _call_fn(li, fn, scope):
 
         # for arg_i, arg in enumerate(li[1:]):
         for arg_i, arg in enumerate(solved_args):
+            # print(f"the_method[0]: {the_method[0]} arg_i: {arg_i} arg: {arg}")
             method_arg = the_method[0][arg_i]
             fn_scope[0].append([method_arg[0], "const", method_arg[1], arg[1]])
 
@@ -206,7 +215,12 @@ def _call_fn(li, fn, scope):
 
 
 def find_fn_method(li, fn, scope):
-    # print(f"\n!! find_fn_method - li: {li} fn: {fn} scope: {scope}\n")
+    """
+    li    - the list calling the function
+    fn    - the function name
+    scope - scope list
+    """
+    # print(f"\nfind_fn_method - li: {li} fn: {fn}\n")
 
     name = fn[0]
     methods = fn[3]
@@ -217,6 +231,9 @@ def find_fn_method(li, fn, scope):
 
     for m in methods:
         # print(f"method: {m}")
+
+        # clean solved_args from previous functions
+        solved_args = []
 
         # match types
         match = True

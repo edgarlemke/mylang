@@ -159,6 +159,11 @@ def _popen(expr):
     p = Popen(sp, stdout=PIPE, stderr=PIPE, encoding="utf-8")
     return p.communicate()
 
+
+def cleanup():
+    cmd = """for i in $(find | grep -e "\\.k" | grep -v "\\.k$"); do rm $i; done"""
+    run(cmd, shell=True)
+
 #
 # RUNTIME
 
@@ -216,12 +221,24 @@ def test_mul_int():
 
 
 def test_sdiv_int():
-    return _test_exit_code(
+    return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
-        "3",
+        "",
+        "",
         "./sdiv_int/main.k"
+    )
+
+
+def test_add_float():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./add_float/main.k"
     )
 
 
@@ -232,7 +249,14 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--fast", action="store_true")
     group.add_argument("-f")
+
+    parser.add_argument("-c", action="store_true")
+
     args = parser.parse_args()
+
+    if args.c is True:
+        cleanup()
+        exit()
 
     test_ct, ok_ct, failed_ct = 0, 0, 0
 

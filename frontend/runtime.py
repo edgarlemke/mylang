@@ -12,6 +12,8 @@ def __handle__(node, scope):
 
 
 def __set__(node, scope):
+    # print(f"calling runtime __set__")
+
     # compiletime._validate_set(node, scope)
     compiletime.__set__(node, scope)
 

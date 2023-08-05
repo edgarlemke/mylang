@@ -85,7 +85,7 @@ def __set__(node, scope, split_args=True):
     mutablity values can be "const" or "mut", without the quotes
     """
 
-    # print(f"calling __set__ {node}")
+    # print(f"calling compile time __set__ {node}")
 
     _validate_set(node, scope)
 
@@ -101,7 +101,9 @@ def __set__(node, scope, split_args=True):
             value[0][0] = _split_fn_args(value[0][0])
         # print(f"value after split fn args: {value}")
 
-        all_fn = [(i, var) for i, var in enumerate(names) if var[1] == "fn" and var[0] == name]
+        all_fn = [(i, var) for i, var in enumerate(names) if var[2] == "fn" and var[0] == name]
+        # for i, var in enumerate(names):
+        #    print(f"var: {var}")
         # print(f"all_fn: {all_fn}")
 
         if all_fn == []:
@@ -157,7 +159,7 @@ def __set__(node, scope, split_args=True):
             # print(f"name: {name}")
             _set_struct_member(name, scope, value)
 
-    # print(f"names after set: {names}")
+    # print(f"\nnames after set: {names}\n")
 
     # retv = ["data", [type_, value]]
     # print(f"returning {retv}")
