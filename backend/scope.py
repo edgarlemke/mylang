@@ -437,6 +437,26 @@ def __and_int_int__(node, scope):
 ret i64 %result"""
 
 
+def __or_int_int__(node, scope):
+    # print(f"__or_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = or i64 {x}, {y}
+ret i64 %result"""
+
+
+def __xor_int_int__(node, scope):
+    # print(f"__xor_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = xor i64 {x}, {y}
+ret i64 %result"""
+
+
 def __add_float_float__(node, scope):
     # prfloat(f"__add_float_float__ {node}")
 
@@ -498,6 +518,8 @@ scope = [
     ["mul_int_int", "const", "internal", __mul_int_int__],
     ["div_int_int", "const", "internal", __div_int_int__],
     ["and_int_int", "const", "internal", __and_int_int__],
+    ["or_int_int", "const", "internal", __or_int_int__],
+    ["xor_int_int", "const", "internal", __xor_int_int__],
 
     ["add_float_float", "const", "internal", __add_float_float__],
     ["sub_float_float", "const", "internal", __sub_float_float__],

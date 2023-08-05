@@ -241,6 +241,26 @@ def test_and_int():
     )
 
 
+def test_or_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "6",
+        "./or_int/main.k"
+    )
+
+
+def test_xor_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "42",
+        "./xor_int/main.k"
+    )
+
+
 def test_add_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
