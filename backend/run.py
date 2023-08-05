@@ -31,6 +31,20 @@ def run_li(li, print_output=False):
 (set mut lt (fn (((x int) (y int)) bool ((lt_int_int x y)))))
 (set mut le (fn (((x int) (y int)) bool ((le_int_int x y)))))
 
+(set mut add (fn (((x int) (y int)) int ((add_int_int x y)))))
+(set mut sub (fn (((x int) (y int)) int ((sub_int_int x y)))))
+(set mut mul (fn (((x int) (y int)) int ((mul_int_int x y)))))
+(set mut div (fn (((x int) (y int)) float ((div_int_int x y)))))
+(set mut and (fn (((x int) (y int)) int ((and_int_int x y)))))
+(set mut or (fn (((x int) (y int)) int ((or_int_int x y)))))
+(set mut xor (fn (((x int) (y int)) int ((xor_int_int x y)))))
+(set mut not (fn (((x int)) int ((not_int x)))))
+(set mut eq (fn (((x int) (y int)) bool ((eq_int_int x y)))))
+(set mut gt (fn (((x int) (y int)) bool ((gt_int_int x y)))))
+(set mut ge (fn (((x int) (y int)) bool ((ge_int_int x y)))))
+(set mut lt (fn (((x int) (y int)) bool ((lt_int_int x y)))))
+(set mut le (fn (((x int) (y int)) bool ((le_int_int x y)))))
+
 (set mut add (fn (((x float) (y float)) float ((add_float_float x y)))))
 (set mut sub (fn (((x float) (y float)) float ((sub_float_float x y)))))
 (set mut mul (fn (((x float) (y float)) float ((mul_float_float x y)))))
@@ -40,6 +54,13 @@ def run_li(li, print_output=False):
 (set mut ge (fn (((x float) (y float)) bool ((ge_float_float x y)))))
 (set mut lt (fn (((x float) (y float)) bool ((lt_float_float x y)))))
 (set mut le (fn (((x float) (y float)) bool ((le_float_float x y)))))
+
+(set mut eq (fn (((x bool) (y bool)) bool ((eq_bool_bool x y)))))
+(set mut and (fn (((x bool) (y bool)) bool ((and_bool_bool x y)))))
+(set mut or (fn (((x bool) (y bool)) bool ((or_bool_bool x y)))))
+(set mut xor (fn (((x bool) (y bool)) bool ((xor_bool_bool x y)))))
+(set mut not (fn (((x bool)) bool ((not_bool x)))))
+
 )
 """
     li = _get_list_from_expr(default) + li

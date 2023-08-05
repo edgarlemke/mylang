@@ -425,6 +425,61 @@ def test_le_float():
     )
 
 
+def test_and_bool():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./and_bool/main.k"
+    )
+
+
+def test_or_bool():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./or_bool/main.k"
+    )
+
+
+def test_xor_bool():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./xor_bool/main.k"
+    )
+
+
+def test_not_bool():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./not_bool/main.k"
+    )
+
+
+def test_eq_bool():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./eq_bool/main.k"
+    )
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

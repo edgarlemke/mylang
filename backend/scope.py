@@ -678,3 +678,23 @@ scope = [
   None,  # forced handler
   return_call   # eval return call handler
 ]
+
+
+def _setup_scope():
+    from . import bool as bool_
+
+    names = [
+
+    ["and_bool_bool", "const", "internal", bool_.__and_bool_bool__],
+    ["or_bool_bool", "const", "internal", bool_.__or_bool_bool__],
+    ["xor_bool_bool", "const", "internal", bool_.__xor_bool_bool__],
+    ["not_bool", "const", "internal", bool_.__not_bool__],
+    ["eq_bool_bool", "const", "internal", bool_.__eq_bool_bool__],
+
+    ]
+
+    for name in names:
+        scope[0].append(name)
+
+
+_setup_scope()
