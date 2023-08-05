@@ -18,6 +18,7 @@ def run_li(li, print_output=False):
 (set mut print (fn (((text Str)) ((linux_write stdout text)))))
 
 (set mut add (fn (((x int) (y int)) int ((add_int_int x y)))))
+(set mut sub (fn (((x int) (y int)) int ((sub_int_int x y)))))
 )
 """
     li = _get_list_from_expr(default) + li

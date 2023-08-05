@@ -368,7 +368,16 @@ def __add_int_int__(node, scope):
 
     return f"""%result = add i64 {x}, {y}
 ret i64 %result"""
-    # return f"""call i64 @add_int_int(%x, %y)"""
+
+
+def __sub_int_int__(node, scope):
+    # print(f"__sub_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = sub i64 {x}, {y}
+ret i64 %result"""
 
 
 scope = [
@@ -388,6 +397,7 @@ scope = [
     ["linux_write", "const", "internal", __linux_write__],
 
     ["add_int_int", "const", "internal", __add_int_int__],
+    ["sub_int_int", "const", "internal", __sub_int_int__],
 
     ["int", "const", "type", [8]],
 

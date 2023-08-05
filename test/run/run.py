@@ -195,6 +195,16 @@ def test_add_int():
     )
 
 
+def test_sub_int():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "4",
+        "./sub_int/main.k"
+    )
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
