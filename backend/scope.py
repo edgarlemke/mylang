@@ -440,230 +440,6 @@ def return_call(node, scope):
     return f"call {fn_ret_type} @{fn_name}({cvt_fn_args})"
 
 
-def __add_int_int__(node, scope):
-    # print(f"__add_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = add i64 {x}, {y}
-ret i64 %result"""
-
-
-def __sub_int_int__(node, scope):
-    # print(f"__sub_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = sub i64 {x}, {y}
-ret i64 %result"""
-
-
-def __mul_int_int__(node, scope):
-    # print(f"__mul_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = mul i64 {x}, {y}
-ret i64 %result"""
-
-
-def __div_int_int__(node, scope):
-    # print(f"__div_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""
-%x_float = sitofp i64 {x} to float
-%y_float = sitofp i64 {y} to float
-
-%result = fdiv float %x_float, %y_float
-
-ret float %result"""
-
-
-def __and_int_int__(node, scope):
-    # print(f"__and_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = and i64 {x}, {y}
-ret i64 %result"""
-
-
-def __or_int_int__(node, scope):
-    # print(f"__or_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = or i64 {x}, {y}
-ret i64 %result"""
-
-
-def __xor_int_int__(node, scope):
-    # print(f"__xor_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = xor i64 {x}, {y}
-ret i64 %result"""
-
-
-def __not_int__(node, scope):
-    # print(f"__not_int_int__ {node}")
-
-    x = f"%{node[1]}"
-
-    return f"""%result = xor i64 {x}, -1
-ret i64 %result"""
-
-
-def __eq_int_int__(node, scope):
-    # print(f"__eq_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = icmp eq i64 {x}, {y}
-ret i1 %result"""
-
-
-def __gt_int_int__(node, scope):
-    # print(f"__gt_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = icmp sgt i64 {x}, {y}
-ret i1 %result"""
-
-
-def __ge_int_int__(node, scope):
-    # print(f"__ge_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = icmp sge i64 {x}, {y}
-ret i1 %result"""
-
-
-def __lt_int_int__(node, scope):
-    # print(f"__lt_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = icmp slt i64 {x}, {y}
-ret i1 %result"""
-
-
-def __le_int_int__(node, scope):
-    # print(f"__le_int_int__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = icmp sle i64 {x}, {y}
-ret i1 %result"""
-
-
-def __add_float_float__(node, scope):
-    # prfloat(f"__add_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fadd float {x}, {y}
-ret float %result"""
-
-
-def __sub_float_float__(node, scope):
-    # prfloat(f"__sub_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fsub float {x}, {y}
-ret float %result"""
-
-
-def __mul_float_float__(node, scope):
-    # prfloat(f"__mul_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fmul float {x}, {y}
-ret float %result"""
-
-
-def __div_float_float__(node, scope):
-    # prfloat(f"__div_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fdiv float {x}, {y}
-ret float %result"""
-
-
-def __eq_float_float__(node, scope):
-    # prfloat(f"__eq_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fcmp oeq float {x}, {y}
-ret i1 %result"""
-
-
-def __gt_float_float__(node, scope):
-    # prfloat(f"__gt_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fcmp ogt float {x}, {y}
-ret i1 %result"""
-
-
-def __ge_float_float__(node, scope):
-    # prfloat(f"__ge_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fcmp oge float {x}, {y}
-ret i1 %result"""
-
-
-def __lt_float_float__(node, scope):
-    # prfloat(f"__lt_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fcmp olt float {x}, {y}
-ret i1 %result"""
-
-
-def __le_float_float__(node, scope):
-    # prfloat(f"__le_float_float__ {node}")
-
-    x = f"%{node[1]}"
-    y = f"%{node[2]}"
-
-    return f"""%result = fcmp ole float {x}, {y}
-ret i1 %result"""
-
-
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -679,30 +455,6 @@ scope = [
     ["unsafe", "mut", "internal", __unsafe__],
 
     ["linux_write", "const", "internal", __linux_write__],
-
-    ["add_int_int", "const", "internal", __add_int_int__],
-    ["sub_int_int", "const", "internal", __sub_int_int__],
-    ["mul_int_int", "const", "internal", __mul_int_int__],
-    ["div_int_int", "const", "internal", __div_int_int__],
-    ["and_int_int", "const", "internal", __and_int_int__],
-    ["or_int_int", "const", "internal", __or_int_int__],
-    ["xor_int_int", "const", "internal", __xor_int_int__],
-    ["not_int", "const", "internal", __not_int__],
-    ["eq_int_int", "const", "internal", __eq_int_int__],
-    ["gt_int_int", "const", "internal", __gt_int_int__],
-    ["ge_int_int", "const", "internal", __ge_int_int__],
-    ["lt_int_int", "const", "internal", __lt_int_int__],
-    ["le_int_int", "const", "internal", __le_int_int__],
-
-    ["add_float_float", "const", "internal", __add_float_float__],
-    ["sub_float_float", "const", "internal", __sub_float_float__],
-    ["mul_float_float", "const", "internal", __mul_float_float__],
-    ["div_float_float", "const", "internal", __div_float_float__],
-    ["eq_float_float", "const", "internal", __eq_float_float__],
-    ["gt_float_float", "const", "internal", __gt_float_float__],
-    ["ge_float_float", "const", "internal", __ge_float_float__],
-    ["lt_float_float", "const", "internal", __lt_float_float__],
-    ["le_float_float", "const", "internal", __le_float_float__],
 
     ["int", "const", "type", [8]],
 
@@ -734,6 +486,8 @@ scope = [
 def _setup_scope():
     from . import bool as bool_
     from . import uint as uint
+    from . import int as int_
+    from . import float as float_
 
     names = [
 
@@ -742,6 +496,20 @@ def _setup_scope():
     ["xor_bool_bool", "const", "internal", bool_.__xor_bool_bool__],
     ["not_bool", "const", "internal", bool_.__not_bool__],
     ["eq_bool_bool", "const", "internal", bool_.__eq_bool_bool__],
+
+    ["add_int_int", "const", "internal", int_.__add_int_int__],
+    ["sub_int_int", "const", "internal", int_.__sub_int_int__],
+    ["mul_int_int", "const", "internal", int_.__mul_int_int__],
+    ["div_int_int", "const", "internal", int_.__div_int_int__],
+    ["and_int_int", "const", "internal", int_.__and_int_int__],
+    ["or_int_int", "const", "internal", int_.__or_int_int__],
+    ["xor_int_int", "const", "internal", int_.__xor_int_int__],
+    ["not_int", "const", "internal", int_.__not_int__],
+    ["eq_int_int", "const", "internal", int_.__eq_int_int__],
+    ["gt_int_int", "const", "internal", int_.__gt_int_int__],
+    ["ge_int_int", "const", "internal", int_.__ge_int_int__],
+    ["lt_int_int", "const", "internal", int_.__lt_int_int__],
+    ["le_int_int", "const", "internal", int_.__le_int_int__],
 
     ["add_uint_uint", "const", "internal", uint.__add_uint_uint__],
     ["sub_uint_uint", "const", "internal", uint.__sub_uint_uint__],
@@ -756,6 +524,16 @@ def _setup_scope():
     ["ge_uint_uint", "const", "internal", uint.__ge_uint_uint__],
     ["lt_uint_uint", "const", "internal", uint.__lt_uint_uint__],
     ["le_uint_uint", "const", "internal", uint.__le_uint_uint__],
+
+    ["add_float_float", "const", "internal", float_.__add_float_float__],
+    ["sub_float_float", "const", "internal", float_.__sub_float_float__],
+    ["mul_float_float", "const", "internal", float_.__mul_float_float__],
+    ["div_float_float", "const", "internal", float_.__div_float_float__],
+    ["eq_float_float", "const", "internal", float_.__eq_float_float__],
+    ["gt_float_float", "const", "internal", float_.__gt_float_float__],
+    ["ge_float_float", "const", "internal", float_.__ge_float_float__],
+    ["lt_float_float", "const", "internal", float_.__lt_float_float__],
+    ["le_float_float", "const", "internal", float_.__le_float_float__],
 
     ]
 
