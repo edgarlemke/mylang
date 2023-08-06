@@ -477,5 +477,6 @@ scope = [
   [],    # children scope
   True,  # is safe scope
   None,  # forced handler
-  None   # eval returns calls
+  None,  # eval returns calls
+  False,  # backend scope
 ]

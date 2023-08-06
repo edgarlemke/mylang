@@ -164,8 +164,8 @@ def cleanup():
     cmd = """for i in $(find | grep -e "\\.k" | grep -v "\\.k$"); do rm $i; done"""
     run(cmd, shell=True)
 
-#
 # RUNTIME
+#
 
 
 def test_empty_function():
@@ -188,6 +188,11 @@ def test_hello_world():
         "",
         "./hello_world/main.k"
     )
+#
+#
+
+# SIGNED INTEGER TESTS
+#
 
 
 def test_add_int():
@@ -324,8 +329,152 @@ def test_le_int():
         "",
         "./le_int/main.k"
     )
+#
+#
 
 
+# UNSIGNED INTEGER TESTS
+#
+def test_add_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        "./add_uint/main.k"
+    )
+
+
+def test_sub_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "4",
+        "./sub_uint/main.k"
+    )
+
+
+def test_mul_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "15",
+        "./mul_uint/main.k"
+    )
+
+
+def test_div_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./div_uint/main.k"
+    )
+
+
+def test_and_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "42",
+        "./and_uint/main.k"
+    )
+
+
+def test_or_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "6",
+        "./or_uint/main.k"
+    )
+
+
+def test_xor_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "0",
+        "./xor_uint/main.k"
+    )
+
+
+def test_not_uint():
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "254",
+        "./not_uint/main.k"
+    )
+
+
+def test_eq_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./eq_uint/main.k"
+    )
+
+
+def test_gt_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./gt_uint/main.k"
+    )
+
+
+def test_ge_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./ge_uint/main.k"
+    )
+
+
+def test_lt_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./lt_uint/main.k"
+    )
+
+
+def test_le_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./le_uint/main.k"
+    )
+#
+#
+
+
+# FLOAT TESTS
+#
 def test_add_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -478,6 +627,8 @@ def test_eq_bool():
         "",
         "./eq_bool/main.k"
     )
+#
+#
 
 
 if __name__ == "__main__":

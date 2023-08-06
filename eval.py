@@ -9,7 +9,8 @@ default_scope = [
     [],    # children scopes
     True,  # is safe scope
     None,  # forced handler
-    None   # eval returns calls
+    None,  # eval returns calls
+    False,  # backend scope
 ]
 
 
@@ -190,28 +191,31 @@ def _call_fn(li, fn, scope):
             # print(f"not return_calls []")
             return []
 
-    retv = eval(the_method[2], fn_scope)
+    return_value = eval(the_method[2], fn_scope)
 
     # return calls if we need the call output
     if return_calls:
         # print(f"returning call _call_fn {li}")
-        return li
+        return_value = li
 
     else:
         # if returned value isn't empty list
-        if len(retv) > 0:
-            retv = retv[0]
+        if len(return_value) > 0:
+            return_value = return_value[0]
+
             # if returned value type is different from called function type
-            if (not isinstance(retv[0], list) and retv[0] != the_method[1]):  # and (isinstance(retv[0], list) and retv[0][0] != the_method[1]):# and (isinstance(retv[0], list) and isinstance(retv[0][0], list) and retv[0][0][0] != the_method[1]):
+            if (not isinstance(return_value[0], list) and return_value[0] != the_method[1]):
                 raise Exception(f"""Returned value type of function is different from called function type:
-    retv: {retv}
+    return_value: {return_value}
 
     the_method[1]: {the_method[1]}
 
-    retv[0][0][0]: {retv[0][0][0]}""")
+    return_value[0]: {return_value[0]}""")
 
-        # print(f"exiting _call_fn {li} -> {retv}")
-        return retv
+        # print(f"exiting _call_fn {li} -> {return_value}")
+        # return return_value
+
+    return return_value
 
 
 def find_fn_method(li, fn, scope):

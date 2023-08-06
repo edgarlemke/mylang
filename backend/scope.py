@@ -89,8 +89,25 @@ def __set__(node, scope):
             return_type = _cvt_type(fn_return_type)
         # print(f"return_type: {return_type}")
 
+        # create function body scope
+        function_body_scope = eval.default_scope.copy()
+
+        # set scope child
+        scope[3].append(function_body_scope)
+
+        # set function body scope parent
+        function_body_scope[2] = scope
+
+        # set scope return calls
+        function_body_scope[6] = scope[6]
+
+        # set scope as backend scope
+        function_body_scope[7] = True
+
+        # print(f"function_body_scope: {function_body_scope}")
+
         # sort out body IR
-        result = eval.eval(fn_body, scope)
+        result = eval.eval(fn_body, function_body_scope)
         # print(f"result: {result}")
         # if len(result) == 0:
         body = ["start:"]
@@ -139,7 +156,17 @@ store i64 {size}, i64* %{name}_size_ptr, align 8
                 # print(f"retv: {retv}")
 
             else:
-                retv = f"@{name} = constant {t} {value}"
+                # check if it's at global backend scope
+                if scope[2] is None:
+                    retv = f"@{name} = global {t} {value}"
+
+                # not global backend scope
+                else:
+                    # allocate space in stack and set value
+                    retv = f"""%{name}_stack = alloca {t}
+store {t} {value}, {t}* %{name}_stack
+%{name} = load {t}, {t}* %{name}_stack
+"""
 
         else:
             raise Exception(f"meh {type_}")
@@ -167,20 +194,40 @@ def _cvt_str(str_):
 
 
 def _validate_set(node, scope):
+    # print(f"backend _validate_set - node: {node}")
 
     set_, mutdecl, name, data = node
     type_ = data[0]
     value = data[1]
 
-    # check type
-    types = [t[0] for t in scope[0] if t[2] == "type"]
-    structs = [s[0] for s in scope[0] if s[2] == "struct"]
-    exceptions = ["fn"]
+    # get types and structs from scope and parent scopes
+    all_types = []
+    all_structs = []
 
-    valid_types = (types + structs + exceptions)
-    # print(f"valid_types: {valid_types}")
+    def iterup(scope, all_types, all_structs):
+        # print(f"\n!! iterup - scope: {scope}\n")
+
+        parent_scope = scope[2]
+        children_scopes = scope[3]
+
+        if parent_scope is not None:
+            iterup(parent_scope, all_types, all_structs)
+
+        types = [t[0] for t in scope[0] if t[2] == "type" and t[0] not in all_types]
+        all_types += types
+        # print(f"types: {types}")
+
+        structs = [s[0] for s in scope[0] if s[2] == "struct" and s[0] not in all_structs]
+        all_structs += structs
+        # print(f"structs: {structs}")
+
+    iterup(scope, all_types, all_structs)
+
+    # validate type
+    exceptions = ["fn"]
+    valid_types = (all_types + all_structs + exceptions)
     if type_ not in valid_types:
-        raise Exception(f"Constant assignment has invalid type {type_} {node}")
+        raise Exception(f"Constant assignment has invalid type - type_: {type_} - valid_types: {valid_types} - node: {node}")
 
     return
 
@@ -337,16 +384,19 @@ def return_call(node, scope):
     # find out function name
     li_fn_name = node[0]
 
-    # value = eval._get_name_value(name, scope)
-    # print(f"scope[0]: {scope[0]}")
+    value = eval._get_name_value(li_fn_name, scope)
+    # print(f"value1: {value}")
 
-    matches = [name for name in scope[0] if name[0] == li_fn_name]
+    # matches = [name for name in scope[0] if name[0] == li_fn_name]
 
-    if len(matches) == 0:
+    # if len(matches) == 0:
+    #    raise Exception(f"No name matches for function: {li_fn_name}")
+
+    # value = matches[0]
+    # print(f"value2: {value}")
+
+    if value == False:
         raise Exception(f"No name matches for function: {li_fn_name}")
-
-    value = matches[0]
-    # print(f"value: {value}")
 
     method, solved_args = eval.find_fn_method(node, value, scope)
     # print(f"method: {method}")
@@ -676,12 +726,14 @@ scope = [
   [],    # children scope
   True,  # is safe scope
   None,  # forced handler
-  return_call   # eval return call handler
+  return_call,   # eval return call handler
+  True   # backend scope
 ]
 
 
 def _setup_scope():
     from . import bool as bool_
+    from . import uint as uint
 
     names = [
 
@@ -690,6 +742,20 @@ def _setup_scope():
     ["xor_bool_bool", "const", "internal", bool_.__xor_bool_bool__],
     ["not_bool", "const", "internal", bool_.__not_bool__],
     ["eq_bool_bool", "const", "internal", bool_.__eq_bool_bool__],
+
+    ["add_uint_uint", "const", "internal", uint.__add_uint_uint__],
+    ["sub_uint_uint", "const", "internal", uint.__sub_uint_uint__],
+    ["mul_uint_uint", "const", "internal", uint.__mul_uint_uint__],
+    ["div_uint_uint", "const", "internal", uint.__div_uint_uint__],
+    ["and_uint_uint", "const", "internal", uint.__and_uint_uint__],
+    ["or_uint_uint", "const", "internal", uint.__or_uint_uint__],
+    ["xor_uint_uint", "const", "internal", uint.__xor_uint_uint__],
+    ["not_uint", "const", "internal", uint.__not_uint__],
+    ["eq_uint_uint", "const", "internal", uint.__eq_uint_uint__],
+    ["gt_uint_uint", "const", "internal", uint.__gt_uint_uint__],
+    ["ge_uint_uint", "const", "internal", uint.__ge_uint_uint__],
+    ["lt_uint_uint", "const", "internal", uint.__lt_uint_uint__],
+    ["le_uint_uint", "const", "internal", uint.__le_uint_uint__],
 
     ]
 
