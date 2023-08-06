@@ -1,3 +1,3 @@
 main = fn () int
-	int result = (mul 3 5)
+	int result = 3 * 5
 	result

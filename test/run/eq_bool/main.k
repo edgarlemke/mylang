@@ -1,2 +1,2 @@
 main = fn ()
-	bool result = (eq true true)
+	bool result = true == true

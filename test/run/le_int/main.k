@@ -1,2 +1,2 @@
 main = fn ()
-	int result = (le 12 34)
+	int result = 12 <= 34

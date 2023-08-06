@@ -1,3 +1,4 @@
-main = fn () int
-	int result = (add 12 34)
-	result
+main = fn ()
+	uint x = 12
+	uint y = 34
+	bool result = x == y

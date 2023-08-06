@@ -1,2 +1,2 @@
 main = fn ()
-	float result = (div 1.0 2.0)
+	float result = 1.0 / 2.0

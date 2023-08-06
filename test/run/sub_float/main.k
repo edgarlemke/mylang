@@ -1,2 +1,2 @@
 main = fn ()
-	float result = (sub 3.5 2.3)
+	float result = 3.5 - 2.3

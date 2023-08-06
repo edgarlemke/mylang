@@ -1,2 +1,2 @@
 main = fn ()
-	float result = (mul 1.5 2.0)
+	float result = 1.5 * 2.0

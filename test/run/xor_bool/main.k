@@ -1,2 +1,2 @@
 main = fn ()
-	bool result = (xor true false)
+	bool result = true xor false

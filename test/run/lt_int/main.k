@@ -1,2 +1,2 @@
 main = fn ()
-	bool result = (lt 12 34)
+	bool result = 12 < 34

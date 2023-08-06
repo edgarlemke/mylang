@@ -1,3 +1,2 @@
-main = fn () int
-	int result = (add 12 34)
-	result
+main = fn ()
+	bool result = true != false

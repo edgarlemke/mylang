@@ -1,2 +1,2 @@
 main = fn ()
-	bool result = (gt 2 1)
+	bool result = 2 > 1

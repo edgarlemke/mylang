@@ -1,3 +1,3 @@
 main = fn () int
-	int result = (add 12 34)
+	int result = 12 + 34
 	result

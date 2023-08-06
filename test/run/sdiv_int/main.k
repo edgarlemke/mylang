@@ -1,2 +1,2 @@
 main = fn ()
-	float result = (div 15 3)
+	float result = 15 / 3

@@ -133,19 +133,23 @@ def _setup_env(compiletime_scope=False):
 
     # Macros declared first are matched first...
     default = """
-macro op_mul ('a * 'b) (mul ('a 'b))
-macro op_div ('a / 'b) (div ('a 'b))
-macro op_mod ('a % 'b) (mod ('a 'b))
+macro op_mul ('a * 'b) ((mul 'a 'b))
+macro op_div ('a / 'b) ((div 'a 'b))
+macro op_mod ('a % 'b) ((mod 'a 'b))
 
-macro op_add ('a + 'b) (add ('a 'b))
-macro op_sub ('a - 'b) (sub ('a 'b))
+macro op_add ('a + 'b) ((add 'a 'b))
+macro op_sub ('a - 'b) ((sub 'a 'b))
 
-macro op_eq  ('a == 'b) (eq  ('a 'b))
-macro op_neq ('a != 'b) (neq ('a 'b))
-macro op_gt  ('a > 'b)  (gt  ('a 'b))
-macro op_gte ('a >= 'b) (gte ('a 'b))
-macro op_lt  ('a < 'b)  (lt  ('a 'b))
-macro op_lte ('a <= 'b) (lte ('a 'b))
+macro op_and ('a and 'b) ((and 'a 'b))
+macro op_or  ('a or 'b) ((or 'a 'b))
+macro op_xor ('a xor 'b) ((xor 'a 'b))
+
+macro op_eq  ('a == 'b) ((eq 'a 'b))
+macro op_neq ('a != 'b) ((not (eq 'a 'b)))
+macro op_gt  ('a > 'b)  ((gt 'a 'b))
+macro op_gte ('a >= 'b) ((ge 'a 'b))
+macro op_lt  ('a < 'b)  ((lt 'a 'b))
+macro op_lte ('a <= 'b) ((le 'a 'b))
 
 macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c))
 

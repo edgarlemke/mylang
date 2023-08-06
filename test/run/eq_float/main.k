@@ -1,2 +1,2 @@
 main = fn ()
-	bool result = (eq 3.5 2.3)
+	bool result = 3.5 == 2.3

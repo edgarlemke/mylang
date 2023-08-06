@@ -15,7 +15,9 @@ default_scope = [
 
 
 def eval(li, scope, forced_handler_desc=None):
-    # print(f"\neval - li: {li}")
+    is_backend_scope = scope[7] == True
+    end_str = "backend" if is_backend_scope else "frontend"
+    # print(f"""\neval {end_str} - li: {li}""")
     # print(f"\neval {li} {scope}")
 
     old_li = li
@@ -148,7 +150,7 @@ def eval(li, scope, forced_handler_desc=None):
                 # print(f"struct member? li: {li}")
                 li = _get_struct_member(li, scope)
 
-    # print(f"exiting eval {old_li} -> {li}")
+    # print(f"exiting eval {end_str}: {old_li}  ->  {li}")
     return li
 
 
@@ -164,8 +166,9 @@ def _call_fn(li, fn, scope):
 
     # set new scope
     fn_scope = default_scope.copy()
-    fn_scope[2] = scope
-    fn_scope[4] = scope[4]
+    fn_scope[2] = scope  # parent scope
+    fn_scope[4] = scope[4]  # handler descriptor
+    fn_scope[7] = scope[7]  # backend scope
 
     # print(f"solved_args: {solved_args}")
 
@@ -394,11 +397,13 @@ def _expand_macro(li, scope):
         # print(f"LI index: {index} item: {item}")
 
         if isinstance(item, list):
-            sub_new_li, sub_found_macro = _expand_macro(item, scope)
-            if sub_found_macro:
-                # print(f"sub_found_macro! {item} -> {sub_new_li}")
-                item = sub_new_li
-                li[index] = sub_new_li
+            sub_found_macro = True
+            while sub_found_macro:
+                sub_new_li, sub_found_macro = _expand_macro(item, scope)
+                if sub_found_macro:
+                    # print(f"sub_found_macro! {item} -> {sub_new_li}")
+                    item = sub_new_li
+                    li[index] = sub_new_li
 
         found_macro = False
         for macro in scope[1]:
@@ -445,7 +450,9 @@ def _expand_macro(li, scope):
         if found_macro:
             break
 
-    return [new_li, found_macro]
+    return_value = [new_li, found_macro]
+    # print(f"_expand_macro - return_value: {return_value}")
+    return return_value
 
 
 def match_macro(li, index, macro):

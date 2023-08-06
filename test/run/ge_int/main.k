@@ -1,2 +1,2 @@
 main = fn ()
-	bool result = (ge 12 12)
+	bool result = 12 >= 12
