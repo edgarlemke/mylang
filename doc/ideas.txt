@@ -1,0 +1,6 @@
+-> validate SQL queries on compile time
+ -> check for syntax correctness
+ -> check for table schema existence, offer suggestions when a table schema name is wrong
+ -> check for tables existence, offer suggestions when a table name is wrong
+ -> check for columns existence, offer suggestions when a column name is wrong
+ -> check for columns type
