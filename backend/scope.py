@@ -448,7 +448,10 @@ def return_call(node, scope, stack=[]):
         if isinstance(argument_value, list):
             scope_argument_value = eval.get_name_value(argument_value[0], scope)
             result, stack = return_call(argument_value, scope, stack)
-            tmp = "tmp0"  # TODO: get a proper temporary name generator
+
+            tmp = _get_tmp_name(function_name)
+
+            # tmp = "tmp0"  # TODO: get a proper temporary name generator
             call_ = f"%{tmp} = {result}"
             stack.append(call_)
             argument_value = f"%{tmp}"
@@ -480,6 +483,19 @@ def return_call(node, scope, stack=[]):
     value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
 
     return value, stack
+
+
+_tmp_names = {}
+
+
+def _get_tmp_name(function_name):
+    if function_name not in _tmp_names.keys():
+        _tmp_names[function_name] = 0
+
+    tmp_name = f"tmp{_tmp_names[function_name]}"
+    _tmp_names[function_name] += 1
+
+    return tmp_name
 
 
 scope = [
