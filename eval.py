@@ -3,21 +3,25 @@ import re
 
 # default scope is given for creating copies
 default_scope = [
-    [],    # names
-    [],    # macros
-    None,  # parent scope
-    [],    # children scopes
-    True,  # is safe scope
-    None,  # forced handler
-    None,  # eval returns calls
-    False,  # backend scope
+    [],    # 0 names
+    [],    # 1 macros
+    None,  # 2 parent scope
+    [],    # 3 children scopes
+    True,  # 4 is safe scope
+    None,  # 5 forced handler
+    None,  # 6 eval returns calls
+    False,  # 7 backend scope
 ]
 
 
 def eval(li, scope, forced_handler_desc=None):
+    DEBUG = False
+
     is_backend_scope = scope[7] == True
     end_str = "backend" if is_backend_scope else "frontend"
-    # print(f"""\neval {end_str} - li: {li}""")
+
+    if DEBUG:
+        print(f"""\neval():  {end_str} - li: {li}""")
     # print(f"\neval {li} {scope}")
 
     old_li = li
@@ -73,10 +77,8 @@ def eval(li, scope, forced_handler_desc=None):
             raise Exception(f"Forced handler set in scope but no handler - forced handler: {scope[5]} - li: {li}")
 
     else:
-        # get all names matching list's first value
-        # name_matches = [n for n in scope[0] if n[0] == li[0]]
-        name_match = _get_name_value(li[0], scope)
-        # print(f"name_match: {name_match}")
+        # get name value from scope
+        name_match = get_name_value(li[0], scope)
 
         # check name_matches size
         if name_match == []:
@@ -117,15 +119,16 @@ def eval(li, scope, forced_handler_desc=None):
                 if isinstance(name_match_value, list):
 
                     # evaluate the list
-                    # print(f"evaling {name_match[3]}")
+                    if DEBUG:
+                        print(f"eval():  evaluating list: {name_match[3]}")
                     evaled_name_match_value = eval(name_match_value, scope, forced_handler_desc)
                     method_type = evaled_name_match_value[0]
 
                     # if return_calls is set, get correct method type
                     return_calls = scope[6] is not None
                     if return_calls:
-                        evaled_fn = _get_name_value(evaled_name_match_value[0], scope)
-                        method, solved_args = find_fn_method(evaled_name_match_value, evaled_fn, scope)
+                        evaled_fn = get_name_value(evaled_name_match_value[0], scope)
+                        method, solved_arguments = find_function_method(evaled_name_match_value, evaled_fn, scope)
                         method_type = method[1]
 
                     # if type of name match and type of list result are different
@@ -147,10 +150,13 @@ def eval(li, scope, forced_handler_desc=None):
                 else:
                     li = name_match[2:]
             else:
-                # print(f"struct member? li: {li}")
+                if DEBUG:
+                    print(f"eval():  struct member li: {li}")
                 li = _get_struct_member(li, scope)
 
-    # print(f"exiting eval {end_str}: {old_li}  ->  {li}")
+    if DEBUG:
+        print(f"eval():  exiting {end_str}: {old_li}  ->  {li}")
+
     return li
 
 
@@ -161,8 +167,8 @@ def _call_fn(li, fn, scope):
     methods = fn[3]
     candidates = []
 
-    the_method, solved_args = find_fn_method(li, fn, scope)
-    # print(f"the_method: {the_method} - solved_args: {solved_args}")
+    found_method, solved_arguments = find_function_method(li, fn, scope)
+    # print(f"found_method: {found_method} - solved_arguments: {solved_arguments}")
 
     # set new scope
     fn_scope = default_scope.copy()
@@ -170,22 +176,22 @@ def _call_fn(li, fn, scope):
     fn_scope[4] = scope[4]  # handler descriptor
     fn_scope[7] = scope[7]  # backend scope
 
-    # print(f"solved_args: {solved_args}")
+    # print(f"solved_arguments: {solved_arguments}")
 
     # populate new scope's names with function call arguments
     if li[1:] != [[]]:
 
         # for arg_i, arg in enumerate(li[1:]):
-        for arg_i, arg in enumerate(solved_args):
-            # print(f"the_method[0]: {the_method[0]} arg_i: {arg_i} arg: {arg}")
-            method_arg = the_method[0][arg_i]
+        for arg_i, arg in enumerate(solved_arguments):
+            # print(f"found_method[0]: {found_method[0]} arg_i: {arg_i} arg: {arg}")
+            method_arg = found_method[0][arg_i]
             fn_scope[0].append([method_arg[0], "const", method_arg[1], arg[1]])
 
     # print(f"fn_scope: {fn_scope}")
     return_calls = scope[6] is not None
     # print(f"return_calls: {return_calls}")
 
-    if len(the_method) == 2:
+    if len(found_method) == 2:
         if return_calls:
             # print(f"the method len 2 return_calls {li}")
             # return " ".join(li)
@@ -194,7 +200,7 @@ def _call_fn(li, fn, scope):
             # print(f"not return_calls []")
             return []
 
-    return_value = eval(the_method[2], fn_scope)
+    return_value = eval(found_method[2], fn_scope)
 
     # return calls if we need the call output
     if return_calls:
@@ -207,11 +213,11 @@ def _call_fn(li, fn, scope):
             return_value = return_value[0]
 
             # if returned value type is different from called function type
-            if (not isinstance(return_value[0], list) and return_value[0] != the_method[1]):
+            if (not isinstance(return_value[0], list) and return_value[0] != found_method[1]):
                 raise Exception(f"""Returned value type of function is different from called function type:
     return_value: {return_value}
 
-    the_method[1]: {the_method[1]}
+    found_method[1]: {found_method[1]}
 
     return_value[0]: {return_value[0]}""")
 
@@ -221,114 +227,160 @@ def _call_fn(li, fn, scope):
     return return_value
 
 
-def find_fn_method(li, fn, scope):
+def find_function_method(li, fn, scope):
     """
     li    - the list calling the function
     fn    - the function name
     scope - scope list
     """
-    # print(f"\nfind_fn_method - li: {li} fn: {fn}\n")
+    DEBUG = False
+    if DEBUG:
+        print(f"\nfind_function_method - li: {li} fn: {fn}\n")
 
     name = fn[0]
     methods = fn[3]
     candidates = []
 
-    # print(f"methods: {methods}")
-    solved_args = []
+    if DEBUG:
+        print(f"methods: {methods}")
 
-    for m in methods:
-        # print(f"method: {m}")
+    solved_arguments = []
 
-        # clean solved_args from previous functions
-        solved_args = []
+    for method in methods:
+        if DEBUG:
+            print(f"\nmethod: {method}")
+
+        # clean solved_arguments from previous functions
+        solved_arguments = []
 
         # match types
         match = True
         for arg_i, arg in enumerate(li[1:]):
-            # print(f"argument: {arg_i} {arg}")
+            if DEBUG:
+                print(f"\nargument - arg_i: {arg_i} arg: {arg}")
 
             # break in methods without the arguments
-            if len(m[0]) < arg_i + 1 and not (len(m[0]) == 0 and len(li[1:]) == 1 and li[1] == []):
-                # print(f"not matching - len(m[0]) < arg_i + 1")
+            if len(method[0]) < arg_i + 1 and not (len(method[0]) == 0 and len(li[1:]) == 1 and li[1] == []):
+                if DEBUG:
+                    print(f"not matching - len(method[0]) < arg_i + 1")
+
                 match = False
                 break
 
-            # if an argument name starts with ', consider anything a match
-            # print(f"m0: {m[0][arg_i]}")
-            # if m[0][arg_i][0][0][0] == "'":
-            #    continue
-
             # solve argument
             #
-            solved_arg = None
+            solved_argument = None
 
             # check if argument is a list
             is_list = isinstance(arg, list)
 
             # if it's a list
             if is_list:
-                # eval it
-                # print(f"!! is_list: {is_list} {arg}")
-                solved_arg = eval(arg, scope)
-                # print(f"!! solved_arg: {solved_arg}")
+                if DEBUG:
+                    print(f"is_list: {is_list} {arg}")
+                    print(f"is backend scope: {scope[7]}")
+
+                # if it's a backend scope
+                if scope[7] == True:
+                    # get function
+                    list_function = get_name_value(arg[0], scope)
+                    if DEBUG:
+                        print(f"list_function: {list_function}")
+
+                    # if found function
+                    if len(list_function) > 0:
+                        # find function method for argument
+                        argument_method, argument_solved_arguments = find_function_method(arg, list_function, scope)
+                        if DEBUG:
+                            print(f"argument_method: {argument_method} argument_solved_arguments: {argument_solved_arguments}")
+
+                        # set a dummy solved_argument just with the correct type
+                        solved_argument = [argument_method[1], '?']
+
+                # if it's a frontend scope, eval argument
+                else:
+                    # eval it
+                    if DEBUG:
+                        print(f"calling eval() to solve argument {arg}")
+
+                    solved_argument = eval(arg, scope)
+
+                if DEBUG:
+                    print(f"list solved_argument: {solved_argument}")
 
             # if it's not a list
             else:
                 # get name value
-                name_value = _get_name_value(arg, scope)
+                name_value = get_name_value(arg, scope)
                 found_value = list(name_value[2:]) != []
 
-                # if found value, set solved_arg with the value
+                # if found value, set solved_argument with the value
                 if found_value:
-                    solved_arg = name_value[2:]
+                    solved_argument = name_value[2:]
 
                 # if value not found, try to infer type of argument
                 else:
-                    solved_arg = _infer_type(arg)
+                    solved_argument = _infer_type(arg)
             #
             #
 
-            if solved_arg is None:
-                # print(f"not matching - solved_arg is None")
+            if solved_argument is None:
+                if DEBUG:
+                    print(f"not matching - solved_argument is None")
+
                 match = False
                 break
 
-            solved_args.append(solved_arg)
+            solved_arguments.append(solved_argument)
 
-            if len(solved_arg) == 0:
-                # print("len(sorved_arg) == 0")
+            if len(solved_argument) == 0:
+                if DEBUG:
+                    print("len(sorved_arg) == 0")
                 pass
 
             else:
-                # print(f"solved_arg: {solved_arg}")
-                # print(f"m: {m}")
-                # print(f"m[0]: {m[0][0][arg_i]} {arg_i}")
-                method_arg_type = m[0][0][arg_i][1]
-                # print(f"method_arg_type: {method_arg_type}")
+                if DEBUG:
+                    print(f"solved_argument: {solved_argument}")
+                    print(f"method: {method}")
+                    print(f"method[0]: {method[0][0][arg_i]} - arg_i: {arg_i}")
 
-                if solved_arg[0] != method_arg_type:
-                    # print(f"not matching - solved_arg[0] != method_arg_type[0] - {solved_arg[0]} != {method_arg_type[0]}")
+                # get the type of the method argument
+                method_argument_type = method[0][0][arg_i][1]
+
+                if DEBUG:
+                    print(f"method_argument_type: {method_argument_type}")
+
+                # if the type of the solved argument is different from the type of the method argument, don't match
+                if solved_argument[0] != method_argument_type:
+                    if DEBUG:
+                        print(f"not matching - solved_argument[0] != method_argument_type - {solved_argument[0]} != {method_argument_type}")
+
                     match = False
                     break
 
         if match:
-            candidates.append(m)
+            if DEBUG:
+                print(f"matching - appending to candidates: {method}")
+            candidates.append(method)
 
     if len(candidates) == 0:
-        fns = [n for n in scope[0] if n[2] == "fn"]
-        raise Exception(f"No candidate function found - name: {name}  -  fns: {fns}")
+        functions = [n for n in scope[0] if n[2] == "fn"]
+        raise Exception(f"No candidate function found - name: {name}  -  functions: {functions}  - li: {li} ")
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
 
-    # print(f"candidates: {candidates}")
+    if DEBUG:
+        print(f"candidates: {candidates}")
 
-    the_method = candidates[0][0]
-    # print(f"the_method: {the_method}")
+    found_method = candidates[0][0]
 
-    return (the_method, solved_args)
+    if DEBUG:
+        print(f"exiting find_function_method - li: {li} -> found_method: {found_method} solved_arguments: {solved_arguments}\n")
+
+    return (found_method, solved_arguments)
 
 
-def _get_name_value(name, scope):
+def get_name_value(name, scope):
     # print(f"name: {name}")
     def iterup(scope):
         # print(f"interup {scope}")

@@ -287,6 +287,17 @@ def test_eq_int():
     )
 
 
+def test_neq_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./neq_int/main.k"
+    )
+
+
 def test_gt_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
@@ -424,6 +435,17 @@ def test_eq_uint():
         "",
         "",
         "./eq_uint/main.k"
+    )
+
+
+def test_neq_uint():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./neq_uint/main.k"
     )
 
 
@@ -628,6 +650,18 @@ def test_eq_bool():
         "./eq_bool/main.k"
     )
 #
+#
+
+
+def test_eq_bool():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./eq_bool/main.k"
+    )
 #
 
 

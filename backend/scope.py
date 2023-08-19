@@ -24,7 +24,7 @@ def _validate_fn(node, scope):
     types = [t[0] for t in scope[0] if t[2] == "type"]
 
     # check if types of the arguments are valid
-    split_args = ct._split_fn_args(args)
+    split_args = ct._split_function_arguments(args)
     for arg in split_args:
         # type_, name = arg
         name, type_ = arg
@@ -41,15 +41,19 @@ def __handle__(node, scope):
 
 
 def __set__(node, scope):
+    DEBUG = False
+
     import eval
-    # print(f"back-end __set__: {node}")
+
+    if DEBUG:
+        print(f"back-end __set__: {node}")
 
     # compile-time validation
     import frontend.compiletime as ct
-    # ct._validate_set(node, scope)
     ct.__set__(node, scope, split_args=False)
 
-    # print(f"\nscope: {scope}\n\n")
+    # if DEBUG:
+    #    print(f"\nscope: {scope}\n\n")
 
     # back-end validation
     _validate_set(node, scope)
@@ -68,11 +72,11 @@ def __set__(node, scope):
         args = []
 
         # convert argument types
-        fn_args = fn_content[0]
-        # print(f"fn_args: {fn_args}")
-        for arg in fn_args:
+        function_arguments = fn_content[0]
+        # print(f"function_arguments: {function_arguments}")
+        for arg in function_arguments:
             # print(f"arg: {arg}")
-            args.append(f"{_cvt_type(arg[1])} %{arg[0]}")
+            args.append(f"{_converted_type(arg[1])} %{arg[0]}")
 
         # get return type and body
         if len(fn_content) == 2:
@@ -86,8 +90,10 @@ def __set__(node, scope):
         # convert return type
         return_type = "void"
         if fn_return_type is not None:
-            return_type = _cvt_type(fn_return_type)
-        # print(f"return_type: {return_type}")
+            return_type = _converted_type(fn_return_type)
+
+        if DEBUG:
+            print(f"return_type: {return_type}")
 
         # create function body scope
         function_body_scope = eval.default_scope.copy()
@@ -104,7 +110,8 @@ def __set__(node, scope):
         # set scope as backend scope
         function_body_scope[7] = True
 
-        # print(f"function_body_scope: {function_body_scope}")
+        if DEBUG:
+            print(f"function_body_scope: {function_body_scope}")
 
         # sort out body IR
         result = eval.eval(fn_body, function_body_scope)
@@ -117,9 +124,13 @@ def __set__(node, scope):
         if len(result) > 0:
             body.append(result)
 
-        # print(f"body: {body}")
+        if DEBUG:
+            print(f"body: {body}")
+
         serialized_body = _serialize_body(body)
-        # print(f"serialized_body: {serialized_body}")
+
+        if DEBUG:
+            print(f"serialized_body: {serialized_body}")
 
         if "ret" not in serialized_body[len(serialized_body) - 1]:
             serialized_body.append([f"ret {return_type}"])
@@ -129,7 +140,7 @@ def __set__(node, scope):
 
     else:
         if type_ == "Str":
-            str_, size = _cvt_str(data[1])
+            str_, size = _converted_str(data[1])
 
             retv = f"""
 %{name} = alloca %struct.Str, align 8
@@ -147,13 +158,15 @@ store i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
         elif type_ in ["int", "uint", "float", "bool"]:
-            t = _cvt_type(type_)
+            t = _converted_type(type_)
             value = data[1]
 
             if isinstance(value, list):
-                value = return_call(value, scope)
-                retv = f"%{name} = {value}"
-                # print(f"retv: {retv}")
+                value, stack = return_call(value, scope)
+                stack.append(f"%{name} = {value}")
+                retv = "\n".join(stack)
+                if DEBUG:
+                    print(f"retv: {retv}")
 
             else:
                 # check if it's at global backend scope
@@ -174,7 +187,7 @@ store {t} {value}, {t}* %{name}_stack
     return retv
 
 
-def _cvt_str(str_):
+def _converted_str(str_):
     encoded = str_.encode('utf-8')
 
     buf = []
@@ -232,7 +245,7 @@ def _validate_set(node, scope):
     return
 
 
-def _unoverload(name, fn_args):
+def _unoverload(name, function_arguments):
     # print(f"_unoverload: {node}")
 
     # extract node, get function name
@@ -240,11 +253,11 @@ def _unoverload(name, fn_args):
     # type_ = data[0]
     # fn_content = data[1]
 
-    # fn_args = fn_content[0]
-    # print(f"fn_args: {fn_args}")
+    # function_arguments = fn_content[0]
+    # print(f"function_arguments: {function_arguments}")
 
     arg_types = []
-    for arg in fn_args:
+    for arg in function_arguments:
         # print(f"arg: {arg} -  {node}")
         arg_types.append(arg[1])
 
@@ -257,26 +270,26 @@ def _unoverload(name, fn_args):
     return uname
 
 
-def _cvt_type(type_):
-    # print(f"_cvt_type: {type_}")
+def _converted_type(type_):
+    # print(f"_converted_type: {type_}")
 
     # convert integers
     if type_ in ["int", "uint"]:
-        cvtd_type = "i64"
+        convertedd_type = "i64"
 
     # convert booleans
     elif type_ == "bool":
-        cvtd_type = "i1"
+        convertedd_type = "i1"
 
     # convert floats
     elif type_ == "float":
-        cvtd_type = "float"
+        convertedd_type = "float"
 
     # convert Str (strings)
     elif type_ == "Str":
-        cvtd_type = "%struct.Str*"
+        convertedd_type = "%struct.Str*"
 
-    return cvtd_type
+    return convertedd_type
 
 
 def _write_fn(fn, args, return_type, body):
@@ -349,7 +362,7 @@ def __linux_write__(node, scope):
     # convert fd
     from eval import eval
     fd = eval([node[1]], scope)
-    fd[0] = _cvt_type(fd[0])
+    fd[0] = _converted_type(fd[0])
     fd_arg = " ".join(fd)
     # print(f"fd: {fd}")
 
@@ -377,67 +390,96 @@ def _validate_linux_write(node, scope):
         raise Exception(f"Wrong number of arguments for linux_write: {node}")
 
 
-def return_call(node, scope):
+def return_call(node, scope, stack=[]):
+    DEBUG = False
+
     import eval
-    # print(f"return_call: {node}")
+
+    if DEBUG:
+        print(f"return_call():  {node}")
 
     # find out function name
-    li_fn_name = node[0]
+    li_function_name = node[0]
 
-    value = eval._get_name_value(li_fn_name, scope)
-    # print(f"value1: {value}")
+    value = eval.get_name_value(li_function_name, scope)
+    if DEBUG:
+        print(f"return_call():  value: {value}")
 
-    # matches = [name for name in scope[0] if name[0] == li_fn_name]
+    # matches = [name for name in scope[0] if name[0] == li_function_name]
 
     # if len(matches) == 0:
-    #    raise Exception(f"No name matches for function: {li_fn_name}")
+    #    raise Exception(f"No name matches for function: {li_function_name}")
 
     # value = matches[0]
     # print(f"value2: {value}")
 
     if value == False:
-        raise Exception(f"No name matches for function: {li_fn_name}")
+        raise Exception(f"No name matches for function: {li_function_name}")
 
-    method, solved_args = eval.find_fn_method(node, value, scope)
-    # print(f"method: {method}")
+    method, solved_arguments = eval.find_function_method(node, value, scope)
+    if DEBUG:
+        print(f"return_call():  method: {method}")
 
-    fn_args = method[0]
-    # print(f"fn_args: {fn_args}")
+    function_arguments = method[0]
+    if DEBUG:
+        print(f"return_call():  function_arguments: {function_arguments}")
 
-    fn_name = _unoverload(li_fn_name, fn_args)
+    function_name = _unoverload(li_function_name, function_arguments)
+    if DEBUG:
+        print(f"return_call():  function_name: {function_name}")
 
-    # find out args
+    # find out arguments
+    converted_arguments = []
+    for argument_index, argument in enumerate(function_arguments):
+        if DEBUG:
+            print(f"return_call():  argument: {argument}")
 
-    cvt_args = []
-    for arg_i, arg in enumerate(fn_args):
-        # print(f"arg: {arg}")
-        name, type_ = arg
-        cvt_type = _cvt_type(type_)
+        name, type_ = argument
+        converted_type = _converted_type(type_)
 
         # fulfill llvm requirement to convert float values types to doubles
-        if cvt_type == "float":
-            cvt_type = "double"
+        if converted_type == "float":
+            converted_type = "double"
 
-        arg_value = node[arg_i + 1]
+        argument_value = node[argument_index + 1]
+        if DEBUG:
+            print(f"return_call():  argument_value: {argument_value}")
 
-        scope_arg_value = eval._get_name_value(arg_value, scope)
-        if scope_arg_value != []:
-            arg_value = f"%{arg_value}"
+        if isinstance(argument_value, list):
+            scope_argument_value = eval.get_name_value(argument_value[0], scope)
+            result, stack = return_call(argument_value, scope, stack)
+            tmp = "tmp0"  # TODO: get a proper temporary name generator
+            call_ = f"%{tmp} = {result}"
+            stack.append(call_)
+            argument_value = f"%{tmp}"
 
-        cvt_arg = f"{cvt_type} {arg_value}"
-        # print(f"cvt_arg: {cvt_arg}")
-        cvt_args.append(cvt_arg)
+        else:
+            scope_argument_value = eval.get_name_value(argument_value, scope)
+            if DEBUG:
+                print(f"return_call():  scope_argument_value: {scope_argument_value}")
 
-    cvt_fn_args = ", ".join(cvt_args)
+            if scope_argument_value != []:
+                argument_value = f"%{argument_value}"
+
+        converted_argument = f"{converted_type} {argument_value}"
+
+        if DEBUG:
+            print(f"return_call():  converted_argument: {converted_argument}")
+
+        converted_arguments.append(converted_argument)
+
+    converted_function_arguments = ", ".join(converted_arguments)
 
     # find out return type
     if len(method) == 2:
-        fn_ret_type = "void"
+        function_return_type = "void"
 
     elif len(method) == 3:
-        fn_ret_type = _cvt_type(method[1])
+        function_return_type = _converted_type(method[1])
 
-    return f"call {fn_ret_type} @{fn_name}({cvt_fn_args})"
+    value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
+
+    return value, stack
 
 
 scope = [
