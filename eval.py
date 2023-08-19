@@ -43,11 +43,14 @@ def eval(li, scope, forced_handler_desc=None):
 
         li = new_li
 
-    # print(f"macro expanded li: {li}")
+    if DEBUG:
+        print(f"macro expanded li: {li}")
 
     # if the list is empty, return it
     if len(li) == 0:
-        # print(f"exiting eval {li}")
+        if DEBUG:
+            print(f"exiting eval {li}")
+
         return li
 
     # if there's a forced handler descriptor
@@ -69,7 +72,8 @@ def eval(li, scope, forced_handler_desc=None):
                 evaled_li.append(e)
 
         li = evaled_li
-        # print(f"evaled_li: {evaled_li}")
+        if DEBUG:
+            print(f"evaled_li: {evaled_li}")
 
         # check if li has evaled with forced handler in scope but no handler
         if forced_handler_desc is not None and scope[5] is not None:
@@ -87,7 +91,9 @@ def eval(li, scope, forced_handler_desc=None):
         #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
 
         if name_match[2] in ["fn", "internal"]:
-            # print(f"fn/internal")
+            if DEBUG:
+                print(f"fn/internal")
+
             # len == 1, so it's a reference
             if len(li) == 1:
                 # print(f"fn ref {li}")
@@ -96,9 +102,14 @@ def eval(li, scope, forced_handler_desc=None):
             # len > 1, so it's a function call
             else:
                 if name_match[2] == "fn":
-                    # print("fn")
+                    if DEBUG:
+                        print("eval():  name_match is function")
+
                     retv = _call_fn(li, name_match, scope)
-                    # print(f"retv: {retv}")
+
+                    if DEBUG:
+                        print(f"eval():  retv: {retv}")
+
                     if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
                         scope[5] = retv[1]
                         retv = retv[0]
@@ -161,7 +172,10 @@ def eval(li, scope, forced_handler_desc=None):
 
 
 def _call_fn(li, fn, scope):
-    # print(f"_call_fn - li: {li} fn: {fn}")
+    DEBUG = False
+
+    if DEBUG:
+        print(f"_call_fn():  li: {li} fn: {fn}")
 
     name = fn[0]
     methods = fn[3]
@@ -191,11 +205,13 @@ def _call_fn(li, fn, scope):
     return_calls = scope[6] is not None
     # print(f"return_calls: {return_calls}")
 
+    # check for functions without return value
     if len(found_method) == 2:
         if return_calls:
-            # print(f"the method len 2 return_calls {li}")
-            # return " ".join(li)
-            return scope[6](li, scope)
+            return_call_function = scope[6]
+            value, stack = return_call_function(li, scope)
+            stack.append(value)
+            return stack
         else:
             # print(f"not return_calls []")
             return []
@@ -204,7 +220,8 @@ def _call_fn(li, fn, scope):
 
     # return calls if we need the call output
     if return_calls:
-        # print(f"returning call _call_fn {li}")
+        if DEBUG:
+            print(f"returning call _call_fn {li}")
         return_value = li
 
     else:
@@ -221,8 +238,8 @@ def _call_fn(li, fn, scope):
 
     return_value[0]: {return_value[0]}""")
 
-        # print(f"exiting _call_fn {li} -> {return_value}")
-        # return return_value
+    if DEBUG:
+        print(f"_call_fn:  exiting {li} -> {return_value}")
 
     return return_value
 

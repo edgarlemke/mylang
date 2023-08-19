@@ -24,7 +24,7 @@ def _validate_fn(node, scope):
     types = [t[0] for t in scope[0] if t[2] == "type"]
 
     # check if types of the arguments are valid
-    split_args = ct._split_function_arguments(args)
+    split_args = ct.split_function_arguments(args)
     for arg in split_args:
         # type_, name = arg
         name, type_ = arg
@@ -46,7 +46,7 @@ def __set__(node, scope):
     import eval
 
     if DEBUG:
-        print(f"back-end __set__: {node}")
+        print(f"__set__():  backend {node}")
 
     # compile-time validation
     import frontend.compiletime as ct
@@ -93,7 +93,7 @@ def __set__(node, scope):
             return_type = _converted_type(fn_return_type)
 
         if DEBUG:
-            print(f"return_type: {return_type}")
+            print(f"__set__():  backend return_type: {return_type}")
 
         # create function body scope
         function_body_scope = eval.default_scope.copy()

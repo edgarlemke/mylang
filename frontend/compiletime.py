@@ -29,7 +29,7 @@ def validate_fn(node, scope):
     types = [t[0] for t in scope[0] if t[2] == "type"]
 
 #    # check if types of the arguments are valid
-#    split_args = _split_fn_args(args)
+#    split_args = split_function_arguments(args)
 #    for arg in split_args:
 #        # type_, name = arg
 #        name, type_ = arg
@@ -98,7 +98,7 @@ def __set__(node, scope, split_args=True):
         # print(f"value: {value}")
 
         if split_args:
-            value[0][0] = _split_fn_args(value[0][0])
+            value[0][0] = split_function_arguments(value[0][0])
         # print(f"value after split fn args: {value}")
 
         all_fn = [(i, var) for i, var in enumerate(names) if var[2] == "fn" and var[0] == name]
@@ -268,7 +268,7 @@ def _set_struct_member(li, scope, value):
     return eval._seek_struct_ref(li, scope, myfn)
 
 
-def _split_fn_args(args):
+def split_function_arguments(args):
     # print(f"args: {args}")
 
     split_args = []

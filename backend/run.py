@@ -94,8 +94,14 @@ def run(expr, print_output=False):
     import backend.scope as scope
     import list as list_
 
+    DEBUG = False
+
     expr_li = _get_list_from_expr(expr)
     eval_li = eval.eval(expr_li, scope.scope, ["handle"])
+
+    if DEBUG:
+        print(f"run():  eval_li: {eval_li}")
+
     output = _join_lists(eval_li)
 
     if print_output:
@@ -114,6 +120,8 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
 def _join_lists(li):
     # print(f"_join_lists: {li}")
 
+    DEBUG = False
+
     lines = []
 
     def iter(li):
@@ -125,7 +133,8 @@ def _join_lists(li):
                 lines.append(item)
     iter(li)
 
-    # print(f"lines: {lines}")
+    if DEBUG:
+        print(f"lines: {lines}")
 
     return "\n".join(lines)
 
