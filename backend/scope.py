@@ -489,10 +489,14 @@ _tmp_names = {}
 
 
 def _get_tmp_name(function_name):
+    # initialize key in _tmp_names for function_name
     if function_name not in _tmp_names.keys():
         _tmp_names[function_name] = 0
 
+    # get name
     tmp_name = f"tmp{_tmp_names[function_name]}"
+
+    # increment counter
     _tmp_names[function_name] += 1
 
     return tmp_name
