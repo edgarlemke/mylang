@@ -65,15 +65,15 @@ def test_data():
 
 
 # __fn__
-# def test_fn():
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        """((fn (x int y int) int ()))\n""",
-#        "",
-#        "fn (x int  y int) int ()"
-#    )
-#
-#
+def test_fn():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        """()\n""",
+        "",
+        "fn main (x int  y int) int ()"
+    )
+
+
 # def test_fn_node_size():
 #    return _test(
 #        i.getframeinfo(i.currentframe()).function,
@@ -307,7 +307,7 @@ def test_set_call_fn():
         i.getframeinfo(i.currentframe()).function,
         "((int 10))\n",
         "",
-        """somefn = fn () int
+        """fn somefn () int
 	ret data int 10
 int x = (somefn ())
 x"""
@@ -558,7 +558,7 @@ def test_unlisp_set_fn():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """somefn = fn (x int  y int) ()
+        """fn somefn (x int  y int) ()
 	ret
 somefn 12 34
 """
@@ -570,7 +570,7 @@ def test_unlisp_set_fn_with_return():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """somefn = fn (x int  y int)
+        """fn somefn (x int  y int)
 	ret
 somefn 12 34
 """
