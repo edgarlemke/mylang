@@ -65,22 +65,22 @@ def test_data():
 
 
 # __fn__
-def test_fn():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        """((fn (x int y int) int ()))\n""",
-        "",
-        "fn (x int  y int) int ()"
-    )
-
-
-def test_fn_node_size():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Wrong number of arguments for fn",
-        "fn (x uint) int () wrong"
-    )
+# def test_fn():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        """((fn (x int y int) int ()))\n""",
+#        "",
+#        "fn (x int  y int) int ()"
+#    )
+#
+#
+# def test_fn_node_size():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Wrong number of arguments for fn",
+#        "fn (x uint) int () wrong"
+#    )
 
 
 def test_fn_without_args():

@@ -1,2 +1,2 @@
-main = fn ()
+fn main ()
 	bool result = (not false)

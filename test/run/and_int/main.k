@@ -1,3 +1,3 @@
-main = fn () int
+fn main () int
 	int result = (and 42 42)
 	result

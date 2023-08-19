@@ -459,7 +459,7 @@ def _validate_unsafe(node, scope):
 
 scope = [
   [  # names
-    ["fn", "mut", "internal", __fn__],
+    # ["fn", "mut", "internal", __fn__],
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
