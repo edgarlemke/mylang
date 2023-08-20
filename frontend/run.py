@@ -140,6 +140,8 @@ macro op_mod ('a % 'b) ((mod 'a 'b))
 macro op_add ('a + 'b) ((add 'a 'b))
 macro op_sub ('a - 'b) ((sub 'a 'b))
 
+macro op_shl ('a << 'b) ((shl 'a 'b))
+
 macro op_and ('a and 'b) ((and 'a 'b))
 macro op_or  ('a or 'b) ((or 'a 'b))
 macro op_xor ('a xor 'b) ((xor 'a 'b))

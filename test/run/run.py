@@ -340,6 +340,19 @@ def test_le_int_int():
         "",
         "./le_int_int/main.k"
     )
+
+
+def test_shl_int_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./shl_int_int/main.k"
+    )
+
+
 #
 #
 

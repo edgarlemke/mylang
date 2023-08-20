@@ -572,6 +572,7 @@ def _setup_scope():
     ["ge_int_int", "const", "internal", int_.__ge_int_int__],
     ["lt_int_int", "const", "internal", int_.__lt_int_int__],
     ["le_int_int", "const", "internal", int_.__le_int_int__],
+    ["shl_int_int", "const", "internal", int_.__shl_int_int__],
 
     ["add_uint_uint", "const", "internal", uint.__add_uint_uint__],
     ["sub_uint_uint", "const", "internal", uint.__sub_uint_uint__],

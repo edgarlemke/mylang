@@ -30,6 +30,7 @@ def run_li(li, print_output=False):
 (set mut ge (fn (((x int) (y int)) bool ((ge_int_int x y)))))
 (set mut lt (fn (((x int) (y int)) bool ((lt_int_int x y)))))
 (set mut le (fn (((x int) (y int)) bool ((le_int_int x y)))))
+(set mut shl (fn (((x int) (y int)) int ((shl_int_int x y)))))
 
 (set mut add (fn (((x uint) (y uint)) uint ((add_uint_uint x y)))))
 (set mut sub (fn (((x uint) (y uint)) uint ((sub_uint_uint x y)))))

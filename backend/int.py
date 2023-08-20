@@ -130,3 +130,13 @@ def __le_int_int__(node, scope):
 
     return f"""%result = icmp sle i64 {x}, {y}
 ret i1 %result"""
+
+
+def __shl_int_int__(node, scope):
+    # print(f"__shl_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = shl i64 {x}, {y}
+ret i64 %result"""
