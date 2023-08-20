@@ -363,6 +363,16 @@ def test_if_node_size():
 #    )
 
 
+# __repeat__
+def test_repeat():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "(((0 0 0 0 0)))\n",
+        "",
+        "5 ** 0"
+    )
+
+
 # unsafe
 def test_unsafe():
     return _test(

@@ -195,150 +195,150 @@ def test_hello_world():
 #
 
 
-def test_add_int():
+def test_add_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "46",
-        "./add_int/main.k"
+        "./add_int_int/main.k"
     )
 
 
-def test_sub_int():
+def test_sub_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "4",
-        "./sub_int/main.k"
+        "./sub_int_int/main.k"
     )
 
 
-def test_mul_int():
+def test_mul_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "15",
-        "./mul_int/main.k"
+        "./mul_int_int/main.k"
     )
 
 
-def test_sdiv_int():
+def test_sdiv_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./sdiv_int/main.k"
+        "./sdiv_int_int/main.k"
     )
 
 
-def test_and_int():
+def test_and_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "42",
-        "./and_int/main.k"
+        "./and_int_int/main.k"
     )
 
 
-def test_or_int():
+def test_or_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "6",
-        "./or_int/main.k"
+        "./or_int_int/main.k"
     )
 
 
-def test_xor_int():
+def test_xor_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "42",
-        "./xor_int/main.k"
+        "./xor_int_int/main.k"
     )
 
 
-def test_not_int():
+def test_not_int_int():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "254",
-        "./not_int/main.k"
+        "./not_int_int/main.k"
     )
 
 
-def test_eq_int():
+def test_eq_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_int/main.k"
+        "./eq_int_int/main.k"
     )
 
 
-def test_neq_int():
+def test_neq_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./neq_int/main.k"
+        "./neq_int_int/main.k"
     )
 
 
-def test_gt_int():
+def test_gt_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./gt_int/main.k"
+        "./gt_int_int/main.k"
     )
 
 
-def test_ge_int():
+def test_ge_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./ge_int/main.k"
+        "./ge_int_int/main.k"
     )
 
 
-def test_lt_int():
+def test_lt_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./lt_int/main.k"
+        "./lt_int_int/main.k"
     )
 
 
-def test_le_int():
+def test_le_int_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./le_int/main.k"
+        "./le_int_int/main.k"
     )
 #
 #
@@ -346,150 +346,150 @@ def test_le_int():
 
 # UNSIGNED INTEGER TESTS
 #
-def test_add_uint():
+def test_add_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "46",
-        "./add_uint/main.k"
+        "./add_uint_uint/main.k"
     )
 
 
-def test_sub_uint():
+def test_sub_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "4",
-        "./sub_uint/main.k"
+        "./sub_uint_uint/main.k"
     )
 
 
-def test_mul_uint():
+def test_mul_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "15",
-        "./mul_uint/main.k"
+        "./mul_uint_uint/main.k"
     )
 
 
-def test_div_uint():
+def test_div_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./div_uint/main.k"
+        "./div_uint_uint/main.k"
     )
 
 
-def test_and_uint():
+def test_and_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "42",
-        "./and_uint/main.k"
+        "./and_uint_uint/main.k"
     )
 
 
-def test_or_uint():
+def test_or_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "6",
-        "./or_uint/main.k"
+        "./or_uint_uint/main.k"
     )
 
 
-def test_xor_uint():
+def test_xor_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "0",
-        "./xor_uint/main.k"
+        "./xor_uint_uint/main.k"
     )
 
 
-def test_not_uint():
+def test_not_uint_uint():
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "254",
-        "./not_uint/main.k"
+        "./not_uint_uint/main.k"
     )
 
 
-def test_eq_uint():
+def test_eq_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_uint/main.k"
+        "./eq_uint_uint/main.k"
     )
 
 
-def test_neq_uint():
+def test_neq_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./neq_uint/main.k"
+        "./neq_uint_uint/main.k"
     )
 
 
-def test_gt_uint():
+def test_gt_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./gt_uint/main.k"
+        "./gt_uint_uint/main.k"
     )
 
 
-def test_ge_uint():
+def test_ge_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./ge_uint/main.k"
+        "./ge_uint_uint/main.k"
     )
 
 
-def test_lt_uint():
+def test_lt_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./lt_uint/main.k"
+        "./lt_uint_uint/main.k"
     )
 
 
-def test_le_uint():
+def test_le_uint_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./le_uint/main.k"
+        "./le_uint_uint/main.k"
     )
 #
 #
@@ -497,171 +497,160 @@ def test_le_uint():
 
 # FLOAT TESTS
 #
-def test_add_float():
+def test_add_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./add_float/main.k"
+        "./add_float_float/main.k"
     )
 
 
-def test_sub_float():
+def test_sub_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./sub_float/main.k"
+        "./sub_float_float/main.k"
     )
 
 
-def test_mul_float():
+def test_mul_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./mul_float/main.k"
+        "./mul_float_float/main.k"
     )
 
 
-def test_fdiv_float():
+def test_fdiv_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./fdiv_float/main.k"
+        "./fdiv_float_float/main.k"
     )
 
 
-def test_eq_float():
+def test_eq_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_float/main.k"
+        "./eq_float_float/main.k"
     )
 
 
-def test_gt_float():
+def test_gt_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./gt_float/main.k"
+        "./gt_float_float/main.k"
     )
 
 
-def test_ge_float():
+def test_ge_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./ge_float/main.k"
+        "./ge_float_float/main.k"
     )
 
 
-def test_lt_float():
+def test_lt_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./lt_float/main.k"
+        "./lt_float_float/main.k"
     )
 
 
-def test_le_float():
+def test_le_float_float():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./le_float/main.k"
+        "./le_float_float/main.k"
     )
 
 
-def test_and_bool():
+# BOOL TESTS
+def test_and_bool_bool():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./and_bool/main.k"
+        "./and_bool_bool/main.k"
     )
 
 
-def test_or_bool():
+def test_or_bool_bool():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./or_bool/main.k"
+        "./or_bool_bool/main.k"
     )
 
 
-def test_xor_bool():
+def test_xor_bool_bool():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./xor_bool/main.k"
+        "./xor_bool_bool/main.k"
     )
 
 
-def test_not_bool():
+def test_not_bool_bool():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./not_bool/main.k"
+        "./not_bool_bool/main.k"
     )
 
 
-def test_eq_bool():
+def test_eq_bool_bool():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_bool/main.k"
+        "./eq_bool_bool/main.k"
     )
 #
-#
-
-
-def test_eq_bool():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "",
-        "",
-        "",
-        "./eq_bool/main.k"
-    )
 #
 
 

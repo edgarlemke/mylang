@@ -457,6 +457,24 @@ def _validate_unsafe(node, scope):
         raise Exception(f"Wrong number of arguments for unsafe: {node}")
 
 
+def __repeat__(node, scope):
+    _validate_repeat(node, scope)
+
+    times = node[1]
+    content = node[2]
+
+    buffer = []
+    for time in range(0, int(times)):
+        buffer.append(content)
+
+    return buffer
+
+
+def _validate_repeat(node, scope):
+    if len(node) != 3:
+        raise Exception(f"Wrong number of arguments for repeat: {node}")
+
+
 scope = [
   [  # names
     # ["fn", "mut", "internal", __fn__],
@@ -471,6 +489,7 @@ scope = [
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
+    ["repeat", "mut", "internal", __repeat__],
   ],
   [],    # macros
   None,  # parent scope

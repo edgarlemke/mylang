@@ -64,6 +64,10 @@ def __unsafe__(node, scope):
     return node[1]
 
 
+def __repeat__(node, scope):
+    return compiletime.repeat(node, scope)
+
+
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -78,6 +82,7 @@ scope = [
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
+    ["repeat", "mut", "internal", __repeat__],
   ],
   [],    # macros
   None,  # parent scope
