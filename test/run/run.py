@@ -700,6 +700,20 @@ def test_eq_bool_bool():
 #
 
 
+# ARRAY TESTS
+def test_array_byte_init():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./array_byte_init/main.k"
+    )
+#
+#
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

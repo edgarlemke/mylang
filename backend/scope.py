@@ -42,6 +42,7 @@ def __handle__(node, scope):
 
 def __set__(node, scope):
     DEBUG = False
+    # DEBUG = True
 
     import eval
 
@@ -76,7 +77,7 @@ def __set__(node, scope):
         # print(f"function_arguments: {function_arguments}")
         for arg in function_arguments:
             # print(f"arg: {arg}")
-            args.append(f"{_converted_type(arg[1])} %{arg[0]}")
+            args.append(f"{_convert_type(arg[1])} %{arg[0]}")
 
         # get return type and body
         if len(fn_content) == 2:
@@ -90,7 +91,7 @@ def __set__(node, scope):
         # convert return type
         return_type = "void"
         if fn_return_type is not None:
-            return_type = _converted_type(fn_return_type)
+            return_type = _convert_type(fn_return_type)
 
         if DEBUG:
             print(f"__set__():  backend return_type: {return_type}")
@@ -158,7 +159,7 @@ store i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
         elif type_ in ["int", "uint", "float", "bool"]:
-            t = _converted_type(type_)
+            t = _convert_type(type_)
             value = data[1]
 
             if isinstance(value, list):
@@ -181,8 +182,106 @@ store {t} {value}, {t}* %{name}_stack
 %{name} = load {t}, {t}* %{name}_stack
 """
 
+        elif type_ == "struct":
+            if len(data) == 1:
+                value = data[0]
+                converted_member_types = []
+
+                if DEBUG:
+                    print(f"value: {value}")
+
+                for struct_member in value:
+                    if DEBUG:
+                        print(f"struct_member: {struct_member}")
+                    converted_member_types.append(_convert_type(struct_member[1]))
+
+                joined_converted_member_types = ", ".join(converted_member_types)
+                retv = f"%{name} = type {{ {joined_converted_member_types} }}"
+
+            elif len(data) == 2:
+                value = data[1]
+                retv = ""
+
+            else:
+                raise Exception("Invalid size of struct")
+
         else:
-            raise Exception(f"meh {type_}")
+            # print("AQUI")
+
+            # if it's simple unknown type
+            if len(type_) == 1:
+                raise Exception(f"meh {type_}")
+
+            # else, test for generic struct
+            else:
+                type_value = eval.get_name_value(type_[0], scope)
+                if DEBUG:
+                    print(f"type_value: {type_value}")
+
+                # check for arrays
+                if type_value[0] == "Array":
+                    # print(f"ARRAY")
+                    array_struct_name = "_".join([type_value[0]] + type_[1:])
+
+                    array_size = len(data[1])
+                    array_members_type = _convert_type(type_[1])
+
+                    stack = [f"""
+; start of initialization of {name} Array
+%{name}_Array = alloca %{array_struct_name}
+%{name}_Array_members = alloca [{array_size} x {array_members_type}]
+"""]
+
+                    for member_index in range(0, array_size):
+                        stack.append(f"""%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
+store {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
+""")
+
+                    stack.append(f"""%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
+
+%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
+store [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
+
+%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 1
+store i64 {array_size}, i64* %{name}_Array_size_ptr
+; end of initialization of {name} Array
+""")
+
+                    retv = "\n".join(stack)
+
+#                if type_value[2] == "struct":
+#                    # if not a generic struct
+#                    if len(type_value[3][0]) == 0:
+#                        retv = 555
+#
+#                    # else, it's a generic struct
+#                    else:
+#                        # assemble name from type variables
+#                        generic_struct_name = "_".join([type_value[0]] + type_[1:])
+#
+#                        if DEBUG:
+#                            print(f"generic_struct_name: {generic_struct_name}")
+#
+#                        stack = [f"%{name}_stack = alloca %struct.{generic_struct_name}"]
+#
+#                        if type_value[0] == "Array":
+#                            print("ARRAY")
+#
+#                        for member_index, member_value in enumerate(data[1]):
+#                            print(f"member_value: {member_value}")
+#
+#                            # convert value type
+#                            # converted_type = _convert_type(type_value[3][1][member_index][1])
+#                            infered_type_argument = eval._infer_type(member_value)
+#                            converted_type = _convert_type(infered_type_argument[0])
+#
+#                            # append alloca to stack
+#                            stack.append(f"%{name}_{member_index} = alloca {converted_type}")
+#
+#                   retv = "\n".join(stack)
+
+                if DEBUG:
+                    print(f"type_value: {type_value}")
 
     return retv
 
@@ -213,34 +312,9 @@ def _validate_set(node, scope):
     type_ = data[0]
     value = data[1]
 
-    # get types and structs from scope and parent scopes
-    all_types = []
-    all_structs = []
-
-    def iterup(scope, all_types, all_structs):
-        # print(f"\n!! iterup - scope: {scope}\n")
-
-        parent_scope = scope[2]
-        children_scopes = scope[3]
-
-        if parent_scope is not None:
-            iterup(parent_scope, all_types, all_structs)
-
-        types = [t[0] for t in scope[0] if t[2] == "type" and t[0] not in all_types]
-        all_types += types
-        # print(f"types: {types}")
-
-        structs = [s[0] for s in scope[0] if s[2] == "struct" and s[0] not in all_structs]
-        all_structs += structs
-        # print(f"structs: {structs}")
-
-    iterup(scope, all_types, all_structs)
-
     # validate type
-    exceptions = ["fn"]
-    valid_types = (all_types + all_structs + exceptions)
-    if type_ not in valid_types:
-        raise Exception(f"Constant assignment has invalid type - type_: {type_} - valid_types: {valid_types} - node: {node}")
+    if not _validate_type(type_, scope):
+        raise Exception(f"Constant assignment has invalid type - type_: {type_} - node: {node}")
 
     return
 
@@ -270,26 +344,88 @@ def _unoverload(name, function_arguments):
     return uname
 
 
-def _converted_type(type_):
-    # print(f"_converted_type: {type_}")
+def _convert_type(type_):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_convert_type: {type_}")
 
     # convert integers
     if type_ in ["int", "uint"]:
-        convertedd_type = "i64"
+        converted_type = "i64"
+
+    # convert bytes
+    if type_ == "byte":
+        converted_type = "i8"
 
     # convert booleans
     elif type_ == "bool":
-        convertedd_type = "i1"
+        converted_type = "i1"
 
     # convert floats
     elif type_ == "float":
-        convertedd_type = "float"
+        converted_type = "float"
+
+    # convert pointers
+    elif type_[0] == "ptr":
+        converted_type = f"{_convert_type(type_[1])}*"
 
     # convert Str (strings)
     elif type_ == "Str":
-        convertedd_type = "%struct.Str*"
+        converted_type = "%struct.Str*"
 
-    return convertedd_type
+    return converted_type
+
+
+def _validate_type(type_, scope):
+    DEBUG = False
+
+    # get types and structs from scope and parent scopes
+    all_types = []
+    all_structs = []
+
+    def iterup(scope, all_types, all_structs):
+        # print(f"\n!! iterup - scope: {scope}\n")
+
+        parent_scope = scope[2]
+        children_scopes = scope[3]
+
+        if parent_scope is not None:
+            iterup(parent_scope, all_types, all_structs)
+
+        types = [t[0] for t in scope[0] if t[2] == "type" and t[0] not in all_types]
+        all_types += types
+        # print(f"types: {types}")
+
+        structs = [s[0] for s in scope[0] if s[2] == "struct" and s[0] not in all_structs]
+        all_structs += structs
+        # print(f"structs: {structs}")
+
+    iterup(scope, all_types, all_structs)
+    exceptions = ["fn"]
+    valid_types = (all_types + all_structs + exceptions)
+
+    def loop(current_type):
+        for each_type in current_type:
+            if DEBUG:
+                print(f"loop():  each_type: {each_type}")
+
+            if isinstance(each_type, list):
+                return loop(each_type)
+
+            else:
+                if each_type not in valid_types:
+                    return False
+
+        return True
+
+    if isinstance(type_, list):
+        return_value = loop(type_)
+    else:
+        return_value = loop([type_])
+
+    return return_value
 
 
 def _write_fn(fn, args, return_type, body):
@@ -362,7 +498,7 @@ def __linux_write__(node, scope):
     # convert fd
     from eval import eval
     fd = eval([node[1]], scope)
-    fd[0] = _converted_type(fd[0])
+    fd[0] = _convert_type(fd[0])
     fd_arg = " ".join(fd)
     # print(f"fd: {fd}")
 
@@ -435,7 +571,7 @@ def return_call(node, scope, stack=[]):
             print(f"return_call():  argument: {argument}")
 
         name, type_ = argument
-        converted_type = _converted_type(type_)
+        converted_type = _convert_type(type_)
 
         # fulfill llvm requirement to convert float values types to doubles
         if converted_type == "float":
@@ -478,7 +614,7 @@ def return_call(node, scope, stack=[]):
         function_return_type = "void"
 
     elif len(method) == 3:
-        function_return_type = _converted_type(method[1])
+        function_return_type = _convert_type(method[1])
 
     value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
 
@@ -529,7 +665,7 @@ scope = [
 
     ["float", "const", "type", [8]],
 
-    ["array", "const", "type", ['?']],
+    ["Array", "const", "type", ['?']],
     ["struct", "const", "type", ['?']],
     ["enum", "const", "type", ['?']],
 

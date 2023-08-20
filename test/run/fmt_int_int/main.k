@@ -1,7 +1,7 @@
 fn bin (i int  base uint) Str
         # initialized arrays
         #(Array byte) buffer = (1 2 3)
-        #(Array byte) buffer = (20 ** 0)
+        #(Array byte) buffer = (20 ** 0x00)
 
         # arrays with Opt with default value
         #(Array (Opt byte)) buffer = (20 ** 0)

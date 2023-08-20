@@ -64,7 +64,6 @@ def run_li(li, print_output=False):
 (set mut or (fn (((x bool) (y bool)) bool ((or_bool_bool x y)))))
 (set mut xor (fn (((x bool) (y bool)) bool ((xor_bool_bool x y)))))
 (set mut not (fn (((x bool)) bool ((not_bool x)))))
-
 )
 """
     li = _get_list_from_expr(default) + li
@@ -81,6 +80,7 @@ ret i64 %retv
 
 %struct.Str = type {i8*, i64}
 
+%Array_byte = type {i8*, i64}
 """
 
     output = default_llvm_ir + _join_lists(eval_li)
