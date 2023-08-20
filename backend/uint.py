@@ -130,3 +130,23 @@ def __le_uint_uint__(node, scope):
 
     return f"""%result = icmp ule i64 {x}, {y}
 ret i1 %result"""
+
+
+def __shl_uint_int__(node, scope):
+    # pruint(f"__shl_uint_uint__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = shl i64 {x}, {y}
+ret i64 %result"""
+
+
+def __shr_uint_int__(node, scope):
+    # pruint(f"__shr_uint_uint__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = lshr i64 {x}, {y}
+ret i64 %result"""

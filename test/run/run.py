@@ -515,6 +515,28 @@ def test_le_uint_uint():
         "",
         "./le_uint_uint/main.k"
     )
+
+
+def test_shl_uint_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./shl_uint_int/main.k"
+    )
+
+
+def test_shr_uint_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./shr_uint_int/main.k"
+    )
 #
 #
 

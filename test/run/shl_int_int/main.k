@@ -1,2 +1,2 @@
 fn main ()
-	bool result = 42 << 1
+	int result = 42 << 1

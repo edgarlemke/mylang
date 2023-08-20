@@ -588,6 +588,8 @@ def _setup_scope():
     ["ge_uint_uint", "const", "internal", uint.__ge_uint_uint__],
     ["lt_uint_uint", "const", "internal", uint.__lt_uint_uint__],
     ["le_uint_uint", "const", "internal", uint.__le_uint_uint__],
+    ["shl_uint_int", "const", "internal", uint.__shl_uint_int__],
+    ["shr_uint_int", "const", "internal", uint.__shr_uint_int__],
 
     ["add_float_float", "const", "internal", float_.__add_float_float__],
     ["sub_float_float", "const", "internal", float_.__sub_float_float__],

@@ -46,6 +46,8 @@ def run_li(li, print_output=False):
 (set mut ge (fn (((x uint) (y uint)) bool ((ge_uint_uint x y)))))
 (set mut lt (fn (((x uint) (y uint)) bool ((lt_uint_uint x y)))))
 (set mut le (fn (((x uint) (y uint)) bool ((le_uint_uint x y)))))
+(set mut shl (fn (((x uint) (y int)) int ((shl_uint_int x y)))))
+(set mut shr (fn (((x uint) (y int)) int ((shr_uint_int x y)))))
 
 (set mut add (fn (((x float) (y float)) float ((add_float_float x y)))))
 (set mut sub (fn (((x float) (y float)) float ((sub_float_float x y)))))
