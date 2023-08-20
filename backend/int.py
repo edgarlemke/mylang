@@ -140,3 +140,13 @@ def __shl_int_int__(node, scope):
 
     return f"""%result = shl i64 {x}, {y}
 ret i64 %result"""
+
+
+def __shr_int_int__(node, scope):
+    # print(f"__shr_int_int__ {node}")
+
+    x = f"%{node[1]}"
+    y = f"%{node[2]}"
+
+    return f"""%result = lshr i64 {x}, {y}
+ret i64 %result"""

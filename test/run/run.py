@@ -353,6 +353,17 @@ def test_shl_int_int():
     )
 
 
+def test_shr_int_int():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./shr_int_int/main.k"
+    )
+
+
 #
 #
 
