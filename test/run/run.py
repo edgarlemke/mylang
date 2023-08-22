@@ -710,6 +710,19 @@ def test_array_byte_init():
         "",
         "./array_byte_init/main.k"
     )
+
+
+def test_array_byte_init_repeat():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./array_byte_init_repeat/main.k"
+    )
+
+
 #
 #
 

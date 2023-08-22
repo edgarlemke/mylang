@@ -16,6 +16,7 @@ default_scope = [
 
 def eval(li, scope, forced_handler_desc=None):
     DEBUG = False
+    # DEBUG = True
 
     is_backend_scope = scope[7] == True
     end_str = "backend" if is_backend_scope else "frontend"
@@ -29,17 +30,26 @@ def eval(li, scope, forced_handler_desc=None):
     # expand macros until there are no more macros to expand
     new_li = None
     macros = scope[1]
-    # print(f"macros: {macros}")
+
+    if DEBUG:
+        print(f"macros: {macros} {scope[5]}")
+
     if len(macros):
         expand = True
         new_li = li.copy()
         while expand:
-            # print(f"will try to expand macros in {new_li}")
+            if DEBUG:
+                print(f"will try to expand macros in {new_li}")
+
             new_li, found_macro = _expand_macro(new_li, scope)
-            # print(f"expand new_li: {new_li}")
+
+            if DEBUG:
+                print(f"expand new_li: {new_li}")
+
             expand = found_macro
 
-        # print(f"over new_li: {new_li}")
+        if DEBUG:
+            print(f"over new_li: {new_li}")
 
         li = new_li
 

@@ -168,8 +168,6 @@ macro op_set_struct (struct 'a = 'b) (set const 'a (struct (() 'b)))
 macro op_set_mut (mut 't 'a = 'b) (set mut 'a ('t 'b))
 macro op_set_const ('t 'a = 'b) (set const 'a ('t 'b))
 
-macro op_repeat ('a ** 'b) ((repeat 'a 'b))
-
 macro ret (ret) ()
 """
     fn_li = _get_list_from_expr(default)

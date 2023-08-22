@@ -12,7 +12,9 @@ def __handle__(node, scope):
 
 
 def __set__(node, scope):
-    # print(f"calling runtime __set__")
+    DEBUG = False
+    if DEBUG:
+        print(f"calling runtime __set__")
 
     # compiletime._validate_set(node, scope)
     compiletime.__set__(node, scope)
@@ -64,10 +66,6 @@ def __unsafe__(node, scope):
     return node[1]
 
 
-def __repeat__(node, scope):
-    return compiletime.repeat(node, scope)
-
-
 scope = [
   [  # names
     ["fn", "mut", "internal", __fn__],
@@ -82,7 +80,6 @@ scope = [
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
-    ["repeat", "mut", "internal", __repeat__],
   ],
   [],    # macros
   None,  # parent scope

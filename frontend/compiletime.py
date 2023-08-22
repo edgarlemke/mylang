@@ -76,16 +76,9 @@ def _validate_handle(node, scope):
 
 
 def __set__(node, scope, split_args=True):
-    """
-    Validate set i.e. constant setting.
-
-    Syntax:
-    set name mutability (type value)
-
-    mutablity values can be "const" or "mut", without the quotes
-    """
-
-    # print(f"calling compile time __set__ {node}")
+    DEBUG = True
+    if DEBUG:
+        print(f"__set__():  calling compile time __set__ {node}")
 
     _validate_set(node, scope)
 
@@ -94,22 +87,28 @@ def __set__(node, scope, split_args=True):
     type_ = data[0]
 
     if type_ == "fn":
+        # get function arguments, return type and body
         value = list(data[1:4])
-        # print(f"value: {value}")
+        if DEBUG:
+            print(f"__set__():  fn value: {value}")
 
+        # split arguments if needed
         if split_args:
             value[0][0] = split_function_arguments(value[0][0])
-        # print(f"value after split fn args: {value}")
+        if DEBUG:
+            print(f"value after split fn args: {value}")
 
+        # get all functions with the function-to-be-set name
         all_fn = [(i, var) for i, var in enumerate(names) if var[2] == "fn" and var[0] == name]
-        # for i, var in enumerate(names):
-        #    print(f"var: {var}")
-        # print(f"all_fn: {all_fn}")
 
+        # if there's no function with the function-to-be-set name, create a new function value in scope
         if all_fn == []:
-            # print(f"empty all_fn")
+            if DEBUG:
+                print(f"empty all_fn")
+
             names.append([name, mutdecl, type_, [value]])
 
+        # else, add a method to the existing function value
         else:
             match_fn = all_fn[0]
             i, var = match_fn
@@ -120,20 +119,8 @@ def __set__(node, scope, split_args=True):
         value = data[1]
 
         if not isinstance(name, list):
-            # print(f"value: {value}")
-            # print(f"typeof {name} not list")
-
-            # valid_value = None
-            # types = [t for t in scope[0] if t[2] == "type"]
-            # structs = [s for s in scope[0] if s[2] == "struct"]
-            # valid_types = types + structs
-
-            # for T in valid_types:
-            #    # print(f"T[0]: {T[0]} type_: {type_}")
-            #    if T[0] == type_:
-            #        valid_value = _validate_value(type_, value, scope)
-            #        #print(f"valid_value: {valid_value}")
-            #        break
+            if DEBUG:
+                print(f"__set__():  value: {value} - typeof {name} not list")
 
             # remove old value from names
             for index, v in enumerate(names):
@@ -145,13 +132,6 @@ def __set__(node, scope, split_args=True):
             if type_ == "Str":
                 value = [value, len(value)]
 
-            # if type(value) == list:
-            #    #print("LIIII")
-            #    skope = scope.copy()
-            #    #skope[6] = None
-            #    value = eval.eval(value, skope)
-            #    print(f"new value: {value}")
-
             # insert new value into names
             names.append([name, mutdecl, type_, value])
 
@@ -159,7 +139,8 @@ def __set__(node, scope, split_args=True):
             # print(f"name: {name}")
             _set_struct_member(name, scope, value)
 
-    # print(f"\nnames after set: {names}\n")
+    if DEBUG:
+        print(f"\nnames after set: {names}\n")
 
     # retv = ["data", [type_, value]]
     # print(f"returning {retv}")
@@ -457,24 +438,6 @@ def _validate_unsafe(node, scope):
         raise Exception(f"Wrong number of arguments for unsafe: {node}")
 
 
-def __repeat__(node, scope):
-    _validate_repeat(node, scope)
-
-    times = node[1]
-    content = node[2]
-
-    buffer = []
-    for time in range(0, int(times)):
-        buffer.append(content)
-
-    return buffer
-
-
-def _validate_repeat(node, scope):
-    if len(node) != 3:
-        raise Exception(f"Wrong number of arguments for repeat: {node}")
-
-
 scope = [
   [  # names
     # ["fn", "mut", "internal", __fn__],
@@ -489,7 +452,6 @@ scope = [
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
-    ["repeat", "mut", "internal", __repeat__],
   ],
   [],    # macros
   None,  # parent scope
