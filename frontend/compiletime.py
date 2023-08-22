@@ -76,7 +76,9 @@ def _validate_handle(node, scope):
 
 
 def __set__(node, scope, split_args=True):
-    DEBUG = True
+    DEBUG = False
+    # DEBUG = True
+
     if DEBUG:
         print(f"__set__():  calling compile time __set__ {node}")
 

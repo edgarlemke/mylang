@@ -216,11 +216,13 @@ store {t} {value}, {t}* %{name}_stack
             else:
                 type_value = eval.get_name_value(type_[0], scope)
                 if DEBUG:
-                    print(f"type_value: {type_value}")
+                    print(f"__set__():  backend - type_value: {type_value}")
 
                 # check for arrays
                 if type_value[0] == "Array":
-                    # print(f"ARRAY")
+                    if DEBUG:
+                        print(f"__set__():  backend - Array found!")
+
                     array_struct_name = "_".join([type_value[0]] + type_[1:])
 
                     array_size = len(data[1])
@@ -232,7 +234,14 @@ store {t} {value}, {t}* %{name}_stack
 %{name}_Array_members = alloca [{array_size} x {array_members_type}]
 """]
 
+                    # initialize array members
                     for member_index in range(0, array_size):
+                        value_to_store = data[1][member_index]
+
+                        # if value is ?, keep array members uninitialized - unsafer but cheaper
+                        if value_to_store == "?":
+                            continue
+
                         stack.append(f"""%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
 store {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
 """)
