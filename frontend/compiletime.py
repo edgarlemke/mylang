@@ -339,9 +339,11 @@ def validate_macro(node, scope):
 
 
 def __if__(node, scope):
-    """
-    """
-#    print(f"calling __if__: {node}")
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"calling __if__: {node}")
 
     validate_if(node, scope)
 

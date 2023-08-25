@@ -163,7 +163,12 @@ store i64 {size}, i64* %{name}_size_ptr, align 8
             value = data[1]
 
             if isinstance(value, list):
+                if DEBUG:
+                    print(f"__set__():  CALLING return_call()")
                 value, stack = return_call(value, scope)
+                if DEBUG:
+                    print(f"__set__():  backend  value: {value} stack: {stack}")
+
                 stack.append(f"%{name} = {value}")
                 retv = "\n".join(stack)
                 if DEBUG:
@@ -205,48 +210,43 @@ store {t} {value}, {t}* %{name}_stack
             else:
                 raise Exception("Invalid size of struct")
 
-        else:
-            # print("AQUI")
+        # test for composite types
+        elif len(type_) > 1:
+            type_value = eval.get_name_value(type_[0], scope)
+            if DEBUG:
+                print(f"__set__():  backend - type_value: {type_value}")
 
-            # if it's simple unknown type
-            if len(type_) == 1:
-                raise Exception(f"meh {type_}")
-
-            # else, test for generic struct
-            else:
-                type_value = eval.get_name_value(type_[0], scope)
+            # check for arrays
+            if type_value[0] == "Array":
                 if DEBUG:
-                    print(f"__set__():  backend - type_value: {type_value}")
+                    print(f"__set__():  backend - Array found!")
 
-                # check for arrays
-                if type_value[0] == "Array":
-                    if DEBUG:
-                        print(f"__set__():  backend - Array found!")
+                array_struct_name = "_".join([type_value[0]] + type_[1:])
 
-                    array_struct_name = "_".join([type_value[0]] + type_[1:])
+                array_size = len(data[1])
+                array_members_type = _convert_type(type_[1])
 
-                    array_size = len(data[1])
-                    array_members_type = _convert_type(type_[1])
-
-                    stack = [f"""
+                # setup stack with start of array initialization
+                stack = [f"""
 ; start of initialization of {name} Array
 %{name}_Array = alloca %{array_struct_name}
 %{name}_Array_members = alloca [{array_size} x {array_members_type}]
 """]
 
-                    # initialize array members
-                    for member_index in range(0, array_size):
-                        value_to_store = data[1][member_index]
+                # initialize array members
+                for member_index in range(0, array_size):
+                    value_to_store = data[1][member_index]
 
-                        # if value is ?, keep array members uninitialized - unsafer but cheaper
-                        if value_to_store == "?":
-                            continue
+                    # if value is ?, keep array members uninitialized - unsafer but cheaper
+                    if value_to_store == "?":
+                        continue
 
-                        stack.append(f"""%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
+                    stack.append(f"""%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
 store {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
 """)
 
-                    stack.append(f"""%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
+                # end of array initialization
+                stack.append(f"""%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
 
 %{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
 store [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
@@ -256,7 +256,7 @@ store i64 {array_size}, i64* %{name}_Array_size_ptr
 ; end of initialization of {name} Array
 """)
 
-                    retv = "\n".join(stack)
+                retv = "\n".join(stack)
 
 #                if type_value[2] == "struct":
 #                    # if not a generic struct
@@ -288,9 +288,15 @@ store i64 {array_size}, i64* %{name}_Array_size_ptr
 #                            stack.append(f"%{name}_{member_index} = alloca {converted_type}")
 #
 #                   retv = "\n".join(stack)
+            else:
+                raise Exception(f"Unknown composite type {type_}")
 
-                if DEBUG:
-                    print(f"type_value: {type_value}")
+        else:
+            # print("AQUI")
+
+            # if it's simple unknown type
+            if len(type_) == 1:
+                raise Exception(f"Unknown type {type_}")
 
     return retv
 
@@ -452,16 +458,37 @@ def _write_fn(fn, args, return_type, body):
 
 
 def _serialize_body(body):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_serialize_body():  {body}")
+
     serialized = []
 
     def iter(li):
+        if DEBUG:
+            print(f"iter():  li: {li}")
+
         for child in li:
+            if DEBUG:
+                print(f"\niter():  child: {child}")
             if isinstance(child, list):
+                if DEBUG:
+                    print(f"iter():  gonna iter over {child}")
                 iter(child)
             else:
+                if DEBUG:
+                    print(f"iter():  appending {child}")
                 serialized.append(child)
 
+        if DEBUG:
+            print(f"\niter():  exiting {li}\n\n -> serialized: {serialized}\n")
+
     iter(body)
+
+    if DEBUG:
+        print(f"_serialize_body():  - exiting -> serialized: {serialized}\n")
 
     return serialized
 
@@ -471,7 +498,84 @@ def __macro__(node, scope):
 
 
 def __if__(node, scope):
-    return []
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"__if__():  backend - node: {node}")
+
+    import eval
+
+    condition_name = _get_var_name("if", "condition_")
+
+    stack = ["; if start"]
+    cond_0_label = _get_var_name("if", "if_condition_block_")
+    end_label = _get_var_name("if", "if_end_")
+
+    if isinstance(node[1], list):
+        condition_function = eval.get_name_value(node[1], scope)
+        condition_call = return_call(node[1], scope)
+        if DEBUG:
+            print(f"__if__():  backend - condition_call: {condition_call}")
+
+        stack.append(f"""%{condition_name}  = {condition_call[0]}
+br i1 %{condition_name}, label %{cond_0_label}, label %{end_label}\n""")
+
+    else:
+        # try to infer type
+        infered_type_value = eval._infer_type(node[1])
+        if DEBUG:
+            print(f"infered_type_value: {infered_type_value}")
+
+        value = None
+
+        if infered_type_value is not None:
+            if infered_type_value[0] != "bool":
+                raise Exception("Invalid value for if test: {node}")
+
+            value = "1" if node[1] == "true" else "0"
+
+        else:
+            # try to get value
+            name_value = eval.get_name_value(node[1], scope)
+            if DEBUG:
+                print(f"__if__():  backend - name_value: {name_value}")
+
+            if len(name_value) == 0:
+                raise Exception(f"Unassigned name: {node[1]}")
+
+            if name_value[2] != "bool":
+                raise Exception("Invalid value for if test: {node}")
+
+            value = "1" if name_value[3] == "true" else "0"
+
+        stack.append(f"br i1 {value}, label %{cond_0_label}, label %{end_label}\n")
+
+    cond_0_code = eval.eval(node[2], scope)
+    if DEBUG:
+        print(f"__if__():  backend - cond_0_code: {cond_0_code}")
+
+    stack += [f"{cond_0_label}:"] + cond_0_code + [f"""
+br label %{end_label}
+
+{end_label}:
+;
+
+; if end
+"""]
+
+    if DEBUG:
+        print(f"__if__():  backend - stack: {stack}")
+
+    S = _serialize_body(stack)
+    # print(f"S: {S}")
+
+    result = "\n".join(S)
+    # result = "\n".join(stack)
+    if DEBUG:
+        print(f"__if__():  backend - result: {result}")
+
+    return result
 
 
 def __data__(node, scope):
@@ -537,11 +641,12 @@ def _validate_linux_write(node, scope):
 
 def return_call(node, scope, stack=[]):
     DEBUG = False
+    # DEBUG = True
 
     import eval
 
     if DEBUG:
-        print(f"return_call():  {node}")
+        print(f"return_call():  node: {node} stack: {stack}")
 
     # find out function name
     li_function_name = node[0]
@@ -592,11 +697,16 @@ def return_call(node, scope, stack=[]):
 
         if isinstance(argument_value, list):
             scope_argument_value = eval.get_name_value(argument_value[0], scope)
+
+            if DEBUG:
+                print(f"CALLING return_call():  before return_call() call - stack: {stack}")
             result, stack = return_call(argument_value, scope, stack)
 
-            tmp = _get_tmp_name(function_name)
+            if DEBUG:
+                print(f"return_call():  result: {result} stack: {stack}")
 
-            # tmp = "tmp0"  # TODO: get a proper temporary name generator
+            tmp = _get_var_name(function_name, "tmp")
+
             call_ = f"%{tmp} = {result}"
             stack.append(call_)
             argument_value = f"%{tmp}"
@@ -630,21 +740,21 @@ def return_call(node, scope, stack=[]):
     return value, stack
 
 
-_tmp_names = {}
+_var_names = {}
 
 
-def _get_tmp_name(function_name):
-    # initialize key in _tmp_names for function_name
-    if function_name not in _tmp_names.keys():
-        _tmp_names[function_name] = 0
+def _get_var_name(function_name, prefix):
+    # initialize key in _var_names for function_name
+    if function_name not in _var_names.keys():
+        _var_names[function_name] = 0
 
     # get name
-    tmp_name = f"tmp{_tmp_names[function_name]}"
+    var_name = f"{prefix}{_var_names[function_name]}"
 
     # increment counter
-    _tmp_names[function_name] += 1
+    _var_names[function_name] += 1
 
-    return tmp_name
+    return var_name
 
 
 scope = [

@@ -183,6 +183,7 @@ def eval(li, scope, forced_handler_desc=None):
 
 def _call_fn(li, fn, scope):
     DEBUG = False
+    # DEBUG = True
 
     if DEBUG:
         print(f"_call_fn():  li: {li} fn: {fn}")
@@ -219,9 +220,17 @@ def _call_fn(li, fn, scope):
     if len(found_method) == 2:
         if return_calls:
             return_call_function = scope[6]
+
+            if DEBUG:
+                print(f"_call_fn():  CALLING return_call() - li: {li}")
             value, stack = return_call_function(li, scope)
-            stack.append(value)
-            return stack
+
+            if DEBUG:
+                print(f"_call_fn():  value: {value}  stack: {stack}")
+
+            # stack.append(value)
+            # return stack
+            return value
         else:
             # print(f"not return_calls []")
             return []
@@ -260,7 +269,10 @@ def find_function_method(li, fn, scope):
     fn    - the function name
     scope - scope list
     """
+
     DEBUG = False
+    # DEBUG = True
+
     if DEBUG:
         print(f"\nfind_function_method - li: {li} fn: {fn}\n")
 
@@ -287,7 +299,7 @@ def find_function_method(li, fn, scope):
                 print(f"\nargument - arg_i: {arg_i} arg: {arg}")
 
             # break in methods without the arguments
-            if len(method[0]) < arg_i + 1 and not (len(method[0]) == 0 and len(li[1:]) == 1 and li[1] == []):
+            if len(method[0][0]) < arg_i + 1 and not (len(method[0][0]) == 0 and len(li[1:]) == 1 and li[1] == []):
                 if DEBUG:
                     print(f"not matching - len(method[0]) < arg_i + 1")
 
@@ -304,8 +316,12 @@ def find_function_method(li, fn, scope):
             # if it's a list
             if is_list:
                 if DEBUG:
-                    print(f"is_list: {is_list} {arg}")
+                    print(f"is_list: {is_list} arg: {arg} method[0][0]: {method[0][0]}")
                     print(f"is backend scope: {scope[7]}")
+
+                # if it's calling a function without arguments with a single empty list as argument
+                if len(arg) == 0 and len(method[0][0]) == 0:
+                    continue
 
                 # if it's a backend scope
                 if scope[7] == True:
@@ -337,9 +353,19 @@ def find_function_method(li, fn, scope):
 
             # if it's not a list
             else:
+                if DEBUG:
+                    print(f"find_function_method():  argument {arg} isn't a list")
+
                 # get name value
                 name_value = get_name_value(arg, scope)
+                if DEBUG:
+                    print(f"find_function_method():  name_value: {name_value} arg: {arg}")
+                    print(f"find_function_method():  names: {[i[0] for i in scope[0]]}")
+
                 found_value = list(name_value[2:]) != []
+
+                if DEBUG:
+                    print(f"find_function_method():  found_value: {found_value}")
 
                 # if found value, set solved_argument with the value
                 if found_value:

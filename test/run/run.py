@@ -700,6 +700,31 @@ def test_eq_bool_bool():
 #
 
 
+# IF-ELIF-ELSE TESTS
+def test_if():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "true w x > 0",
+        "",
+        "./if/main.k"
+    )
+
+
+def test_if_elif_elif_elif():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "true w x > 0",
+        "",
+        "./if_elif_elif_elif/main.k"
+    )
+#
+#
+
+
 # ARRAY TESTS
 def test_array_byte_init():
     return _test(
@@ -721,8 +746,20 @@ def test_array_byte_init_uninitialized():
         "",
         "./array_byte_init_uninitialized/main.k"
     )
+#
+#
 
 
+# FORMATTING TESTS
+def test_bin():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./bin/main.k"
+    )
 #
 #
 
