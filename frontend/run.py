@@ -31,6 +31,8 @@ def run(
     else:
         eval_li = eval.eval(expr_li, runtime.scope, ["handle"])
 
+    _merge_nodes(eval_li)
+
     if print_output:
         print(list_.list_print(eval_li))
         exit()
@@ -122,6 +124,46 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     # print(f"remove lic {lic}\n")
 
     return lic
+
+
+def _merge_nodes(li):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_merge_nodes():  li: {li}")
+
+    li_copy = li.copy()
+
+    def iter(item):
+        for child_index, child in enumerate(item):
+            if DEBUG:
+                print(f"_merge_nodes():  child_index: {child_index} child: {child}")
+
+            if type(child) == list and len(child) > 0:
+                if child[0] == "if":
+                    if DEBUG:
+                        print(f"__merge_nodes__():  IF")
+
+                    elif_and_else = [node for node in item[child_index + 1:] if node[0] in ["elif", "else"]]
+                    if DEBUG:
+                        print(f"__merge_nodes__():  elif_and_else: {elif_and_else}")
+
+                    for e_index, e_node in enumerate(elif_and_else):
+                        if e_node[0] == "elif":
+                            e_node[0] = "if"
+                        else:
+                            e_node = [e_node[1]]
+
+                        item[child_index + e_index] += e_node
+
+                        item.pop(child_index + e_index + 1)
+
+                iter(child)
+
+    iter(li_copy)
+    if DEBUG:
+        print(f"_merge_nodes():  li_copy: {li_copy}")
 
 
 def _setup_env(compiletime_scope=False):

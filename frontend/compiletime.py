@@ -343,7 +343,7 @@ def __if__(node, scope):
     # DEBUG = True
 
     if DEBUG:
-        print(f"calling __if__: {node}")
+        print(f"calling __if__:  compiletime - node: {node}")
 
     validate_if(node, scope)
 
@@ -370,6 +370,16 @@ def validate_if(node, scope):
 
     # check if condition is of type bool
     pass
+
+
+def __else__(node, scope):
+    DEBUG = False
+    DEBUG = True
+
+    if DEBUG:
+        print(f"__else__():  frontend compiletime - node: {node}")
+
+    return []
 
 
 def __data__(node, scope):
@@ -442,13 +452,14 @@ def _validate_unsafe(node, scope):
         raise Exception(f"Wrong number of arguments for unsafe: {node}")
 
 
-scope = [
-  [  # names
+scope = eval.default_scope.copy()
+scope[0] = [  # names
     # ["fn", "mut", "internal", __fn__],
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
+    ["else", "mut", "internal", __else__],
     ["data", "mut", "internal", __data__],
     # ["meta", "mut", "internal", __meta__],
     ["write_ptr", "mut", "internal", __write_ptr__],
@@ -456,12 +467,4 @@ scope = [
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
-  ],
-  [],    # macros
-  None,  # parent scope
-  [],    # children scope
-  True,  # is safe scope
-  None,  # forced handler
-  None,  # eval returns calls
-  False,  # backend scope
-]
+  ]

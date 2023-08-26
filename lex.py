@@ -224,100 +224,36 @@ def _decide_dup_tokens(token_list, to_remove):
     return token_list_iter
 
 
-# def _match_singleline_comments(token_list):
-#    token_list_iter = token_list.copy()
-#
-#    buf = []
-#    comment_lines = []
-#    for index, token in enumerate(token_list):
-#        if token[0] == "HASH":
-#            buf.append(index)
-#
-#        elif len(buf) > 0:
-#            buf.append(index)
-#
-#        if token[0] == "BREAKLINE" or index == len(token_list) - 1:
-#            comment_lines.append(buf.copy())
-#            buf = []
-#
-#    for ln in comment_lines:
-#        for token in ln:
-#            token_list_iter.remove(token_list[token])
-#
-#    return token_list_iter
-
-
-# def _check_nontokenized(token_list, code):
-#    last_t = None
-#    for t in token_list:
-#        t_start = int(t[2])
-#
-#        # check for the start
-#        if last_t is None:
-#            if t_start > 0:
-#                ntrange = code[0:t_start]
-#                raise Exception(
-#                    f"Non-tokenized range at start: 0 {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
-#
-#        # check for the middle
-#        else:
-#            last_t_end = int(last_t[3])
-#
-#            if t_start > last_t_end:
-#                ntrange = code[last_t_end:t_start]
-#                raise Exception(
-#                    f"Non-tokenized range at middle: {last_t_end} {t_start}  \"{ntrange}\"\ntoken_list: {token_list}")
-#
-#        last_t = t
-#
-#    # check for the end
-#    t_end = int(t[3])
-#    code_end = len(code)
-#    if t_end < code_end:
-#        ntrange = code[t_end:code_end]
-#        raise Exception(
-#            f"Non-tokenized range at end: {t_end} {code_end}  \"{ntrange}\"\ntoken_list: {token_list}")
-
-
 def _sort_autolist(token_list):
     # add breaklines in the end, so the programmer doesn't need to do it ;)
     for i in range(0, 2):
         token_list.append(["TOKEN", "BREAKLINE"])
-
-    # print(f"token_list: {token_list}")
 
     # split tokens in lines based on BREAKLINEs
     lines = {}
     line_ct = 0
     for token in token_list:
         if line_ct not in lines.keys():
-            # lines[line_ct] = [["TOKEN", "PAR_OPEN"]]
             lines[line_ct] = []
 
         if token[1] != "BREAKLINE":
             lines[line_ct].append(token)
         else:
-            # lines[line_ct].append(["TOKEN", "PAR_CLOSE"])
             line_ct += 1
 
     blocked_lines = []
     level = 0
     mark_block_end = False
     for ln, ln_content in lines.items():
-        # print(f"ln: {ln} {ln_content}")
         empty_line = len(ln_content) == 0
         tilend = [len(lines[i]) == 0 for i in range(ln, len(lines) - 1)]
         eof = all(tilend)
-        # print(eof)
 
         tabs_in_line = []
         for token in ln_content.copy():
             if token[1] == "TAB":
                 tabs_in_line.append(token)
                 ln_content.remove(token)
-
-        # print(f"previous level: {level}")
-        # print(f"tabs_in_line {ln}: {tabs_in_line}")
 
         if len(ln_content) > 0:
 
@@ -328,11 +264,9 @@ def _sort_autolist(token_list):
                 ln_content.append(["TOKEN", "PAR_CLOSE", '', '', ")", f"end ln {ln}"])
 
         # if starting a new level with tab
-        abc = False
-        xyz = False
+        start_block = False
+        end_block = False
         if len(tabs_in_line) == level + 1:
-            # print(f"ADD BLOCK_START {level}")
-            # ln_content.insert(0, ["TOKEN", "BLOCK_START", level])
             level += 1
 
             # remove PAR_CLOSE from previous line
@@ -340,51 +274,28 @@ def _sort_autolist(token_list):
 
             # insert PAR_OPEN at the start of current line
             ln_content.insert(0, ["TOKEN", "PAR_OPEN", '', '', "(", f"start blk {level} {ln}"])
-            # ln_content.insert(0, ["TOKEN", "SPACE", '?', '?', " "])
 
-            abc = True
+            start_block = True
 
         # elif decreasing level receding tabs
         elif len(tabs_in_line) < level:
             if (empty_line and eof) or (not empty_line and not eof):
                 diff = level - len(tabs_in_line)
 
-                # ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '#', '#', ")"])
                 for i in reversed(range(0, diff + 1)):
                     sub = level - i  # - 1
-                    # print(f"ADD BLOCK_END {sub}")
-                    # print(f"level {level} diff {diff} i {i}")
-                    # ln_content.insert(0, ["TOKEN", "BLOCK_END"])
-                    # blocked_lines[ ln-1 ].append(["TOKEN", "BLOCK_END", 0, 0, ")"])
                     ln_content.insert(0, ["TOKEN", "PAR_CLOSE", '', '', ")", f"end blk {sub} {ln}"])
 
                 level -= diff
-                xyz = True
-
-        # if len(ln_content):
-        # if not abc:
-        #    ln_content.insert(0, ["TOKEN", "PAR_OPEN"])
-        # if not xyz:
-        #    ln_content.append(["TOKEN", "PAR_CLOSE"])
+                end_block = True
 
         blocked_lines.append(ln_content)
 
     new_token_list = []
     for bln in blocked_lines:
-        # print(f"bln: {bln}")
         new_token_list += bln
 
-    # print(f"new_token_list: {new_token_list}")
-
     return new_token_list
-
-
-# def _sort_op_order(token_list):
-#    tl = token_list.copy()
-#
-#    xyz = ["'a+'b", "add('a 'b)"]
-#
-#    return tl
 
 
 if __name__ == "__main__":

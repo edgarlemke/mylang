@@ -712,6 +712,17 @@ def test_if():
     )
 
 
+def test_if_else():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "true",
+        "",
+        "./if_else/main.k"
+    )
+
+
 def test_if_elif_elif_elif():
     return _test(
         i.getframeinfo(i.currentframe()).function,

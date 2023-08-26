@@ -1,4 +1,5 @@
 from . import compiletime
+import eval
 
 
 def __fn__(node, scope):
@@ -28,7 +29,24 @@ def __macro__(node, scope):
 
 
 def __if__(node, scope):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"__if__():  frontend runtime - node: {node}")
+
     compiletime.validate_if(node, scope)
+    return node
+
+
+def __else__(node, scope):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"__else__():  frontend runtime - node: {node}")
+
+    compiletime.validate_else(node, scope)
     return node
 
 
@@ -66,13 +84,14 @@ def __unsafe__(node, scope):
     return node[1]
 
 
-scope = [
-  [  # names
-    ["fn", "mut", "internal", __fn__],
+scope = eval.default_scope.copy()
+scope[0] = [  # names
+     ["fn", "mut", "internal", __fn__],
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
+    ["else", "mut", "internal", __else__],
     ["data", "mut", "internal", __data__],
     ["meta", "mut", "internal", __meta__],
     ["write_ptr", "mut", "internal", __write_ptr__],
@@ -80,12 +99,4 @@ scope = [
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
-  ],
-  [],    # macros
-  None,  # parent scope
-  [],    # children scope
-  True,  # is safe scope
-  None,  # forced handler
-  None,  # eval returns calls
-  False,  # backend scope
-]
+  ]

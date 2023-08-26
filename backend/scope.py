@@ -509,7 +509,9 @@ def __if__(node, scope):
     condition_name = _get_var_name("if", "condition_")
 
     stack = ["; if start"]
-    cond_0_label = _get_var_name("if", "if_condition_block_")
+
+    then_label = _get_var_name("if", "if_then_block_")
+    else_label = _get_var_name("if", "if_else_block_")
     end_label = _get_var_name("if", "if_end_")
 
     if isinstance(node[1], list):
@@ -519,7 +521,7 @@ def __if__(node, scope):
             print(f"__if__():  backend - condition_call: {condition_call}")
 
         stack.append(f"""%{condition_name}  = {condition_call[0]}
-br i1 %{condition_name}, label %{cond_0_label}, label %{end_label}\n""")
+br i1 %{condition_name}, label %{then_label}, label %{else_label}\n""")
 
     else:
         # try to infer type
@@ -549,18 +551,22 @@ br i1 %{condition_name}, label %{cond_0_label}, label %{end_label}\n""")
 
             value = "1" if name_value[3] == "true" else "0"
 
-        stack.append(f"br i1 {value}, label %{cond_0_label}, label %{end_label}\n")
+        stack.append(f"br i1 {value}, label %{then_label}, label %{else_label}\n")
 
-    cond_0_code = eval.eval(node[2], scope)
+    then_code = eval.eval(node[2], scope)
     if DEBUG:
-        print(f"__if__():  backend - cond_0_code: {cond_0_code}")
+        print(f"__if__():  backend - then_code: {then_code}")
 
-    stack += [f"{cond_0_label}:"] + cond_0_code + [f"""
+    stack += [f"{then_label}:"] + then_code + [f"br label %{end_label}\n"]
+
+    else_code = eval.eval(node[3], scope)
+    if DEBUG:
+        print(f"__if__():  backend - else_code: {else_code}")
+
+    stack += [f"{else_label}:"] + else_code + [f"""
 br label %{end_label}
 
 {end_label}:
-;
-
 ; if end
 """]
 
@@ -796,7 +802,7 @@ scope = [
   True,  # is safe scope
   None,  # forced handler
   return_call,   # eval return call handler
-  True   # backend scope
+  True,   # backend scope
 ]
 
 
