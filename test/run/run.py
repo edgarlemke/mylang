@@ -732,6 +732,19 @@ def test_if_elif_elif_elif():
         "",
         "./if_elif_elif_elif/main.k"
     )
+
+
+def test_if_elif_elif_elif_else():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "else",
+        "",
+        "./if_elif_elif_elif_else/main.k"
+    )
+
+
 #
 #
 
