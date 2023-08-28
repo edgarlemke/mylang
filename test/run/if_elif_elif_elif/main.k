@@ -1,18 +1,19 @@
 fn main ()
-	a = 0
-	b = 1
-	c = 2
-	d = 3
-
-	if a == 1
-		Str msg_a = "A"
-		print msg_a
-	elif b == 2
-		Str msg_b = "B"
-		print msg_b
-	elif c == 3
-		Str msg_c = "C"
-		print msg_c
-	elif d == 3
-		Str msg_d = "D"
-		print msg_d
+	int a = 0
+	int b = 1
+	int c = 2
+	int d = 3
+	if a > 1
+		Str msg0 = "a > 1"
+		print msg0
+	elif b > 1
+		Str msg1 = "b > 1"
+		print msg1
+	elif c > 2
+		Str msg2 = "c > 2"
+		print msg2
+	elif d >= 3
+		Str msg3 = "d >= 3"
+		print msg3
+	#
+#

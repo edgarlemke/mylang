@@ -728,7 +728,7 @@ def test_if_elif_elif_elif():
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
-        "true w x > 0",
+        "d >= 3",
         "",
         "./if_elif_elif_elif/main.k"
     )

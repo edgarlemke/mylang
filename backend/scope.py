@@ -501,74 +501,128 @@ def __if__(node, scope):
     DEBUG = False
     # DEBUG = True
 
+    _validate_if(node, scope)
+
     if DEBUG:
         print(f"__if__():  backend - node: {node}")
 
     import eval
 
-    condition_name = _get_var_name("if", "condition_")
-
     stack = ["; if start"]
 
+    # extract elifs from node
+    elifs = [child for child in node[3:] if isinstance(child, list) and len(child) > 0 and child[0] == "elif"]
+    if DEBUG:
+        print(f"__if__():  backend - elifs: {elifs}")
+
+    # extract else from node
+    else_ = [child for child in node[2:] if isinstance(child, list) and len(child) > 0 and child[0] == "else"]
+    if DEBUG:
+        print(f"__if__():  backend - !!!! else_: {else_}")
+
+    if len(else_) > 0:
+        else_ = else_[0]
+    else:
+        else_ = None
+
+    if DEBUG:
+        print(f"__if__():  backend - else_: {else_}")
+
+    # get labels
     then_label = _get_var_name("if", "if_then_block_")
-    else_label = _get_var_name("if", "if_else_block_")
+
+    elif_labels = []
+    for elif_ in elifs:
+        elif_labels.append([elif_, _get_var_name("if", "if_elif_block_")])
+
+    else_label = None
+    if else_ is not None:
+        else_label = _get_var_name("if", "if_else_block_")
+
     end_label = _get_var_name("if", "if_end_")
 
-    if isinstance(node[1], list):
-        condition_function = eval.get_name_value(node[1], scope)
-        condition_call = return_call(node[1], scope)
-        if DEBUG:
-            print(f"__if__():  backend - condition_call: {condition_call}")
+    if len(elif_labels) > 0:
+        first_elif = elif_labels[0]
+        x_label = first_elif[1] + "_test"
 
-        stack.append(f"""%{condition_name}  = {condition_call[0]}
-br i1 %{condition_name}, label %{then_label}, label %{else_label}\n""")
+    elif else_ is not None:
+        x_label = else_label
 
-    else:
-        # try to infer type
-        infered_type_value = eval._infer_type(node[1])
-        if DEBUG:
-            print(f"infered_type_value: {infered_type_value}")
+    elif else_ is None:
+        x_label = end_label
 
-        value = None
-
-        if infered_type_value is not None:
-            if infered_type_value[0] != "bool":
-                raise Exception("Invalid value for if test: {node}")
-
-            value = "1" if node[1] == "true" else "0"
-
-        else:
-            # try to get value
-            name_value = eval.get_name_value(node[1], scope)
-            if DEBUG:
-                print(f"__if__():  backend - name_value: {name_value}")
-
-            if len(name_value) == 0:
-                raise Exception(f"Unassigned name: {node[1]}")
-
-            if name_value[2] != "bool":
-                raise Exception("Invalid value for if test: {node}")
-
-            value = "1" if name_value[3] == "true" else "0"
-
-        stack.append(f"br i1 {value}, label %{then_label}, label %{else_label}\n")
+    condition_ir = _get_condition_ir(node, scope, then_label, x_label)
+    stack += ["; if - then condition test"]
+    stack += [condition_ir]
 
     then_code = eval.eval(node[2], scope)
     if DEBUG:
         print(f"__if__():  backend - then_code: {then_code}")
 
-    stack += [f"{then_label}:"] + then_code + [f"br label %{end_label}\n"]
+    stack += [f"; if - then code block\n{then_label}:"] + then_code + [f"br label %{end_label}\n"]
 
-    else_code = eval.eval(node[3], scope)
+    x_size = len(node[3:])
     if DEBUG:
-        print(f"__if__():  backend - else_code: {else_code}")
+        print(f"__if__():  backend - x_size: {x_size}")
 
-    stack += [f"{else_label}:"] + else_code + [f"""
-br label %{end_label}
+    for else_index in range(0, 0 + x_size):
+        item = node[else_index + 3]
+        if DEBUG:
+            print(f"__if__():  backend - else_index: {else_index} item: {item}")
 
+        # handle elif
+        if len(item) > 0 and item[0] == "elif":
+            if DEBUG:
+                print("__if__():  backend - elif")
+
+            # append elif label
+            elif_label = elif_labels[else_index][1]
+            stack += [f"; if - elif condition test\n{elif_label}_test:"]
+
+            # check if needs to add branch for next elif
+            if len(elif_labels) > else_index + 1:
+                next_x_label = elif_labels[else_index + 1][1] + "_test"
+
+            # else, check if there's an else
+            elif else_ is not None:
+                next_x_label = else_label
+
+            # else, use end_label
+            else:
+                next_x_label = end_label
+
+            elif_condition_ir = _get_condition_ir(item, scope, elif_label, next_x_label)
+            if DEBUG:
+                print(f"__if__():  backend - elif_condition_ir: {elif_condition_ir}")
+
+            stack += [elif_condition_ir]
+
+            # get elif code
+            elif_code = eval.eval(item[2], scope)
+            if DEBUG:
+                print(f"__if__():  backend - elif_code: {elif_code}")
+
+            stack += [f"; if - elif code block\n{elif_label}:"]
+            stack += elif_code
+            stack += [f"""br label %{end_label}\n"""]
+
+        else:
+            if DEBUG:
+                print(f"__if__():  backend - else - item: {item}")
+
+            if len(item) == 0:
+                continue
+
+            else_code = eval.eval(item[1], scope)
+            if DEBUG:
+                print(f"__if__():  backend - else_code: {else_code}")
+
+            stack += [f"; if - else code block\n{else_label}:"] + else_code + [f"""
+br label %{end_label}\n"""]
+
+    stack += [f"""; if - end block
 {end_label}:
-; if end
-"""]
+; if end"""]
 
     if DEBUG:
         print(f"__if__():  backend - stack: {stack}")
@@ -582,6 +636,68 @@ br label %{end_label}
         print(f"__if__():  backend - result: {result}")
 
     return result
+
+
+def _validate_if(node, scope):
+    pass
+
+
+def _get_condition_ir(node, scope, then_label, x_label):
+
+    DEBUG = False
+    # DEBUG = True
+
+    import eval
+    condition_name = _get_var_name("if", "condition_")
+
+    if isinstance(node[1], list):
+        condition_function = eval.get_name_value(node[1], scope)
+        condition_call = return_call(node[1], scope)
+        if DEBUG:
+            print(f"_get_condition_ir():  backend - condition_call: {condition_call}")
+
+        return f"""%{condition_name}  = {condition_call[0]}
+br i1 %{condition_name}, label %{then_label}, label %{x_label}\n"""
+
+    else:
+        # try to infer type
+        infered_type_value = eval._infer_type(node[1])
+        if DEBUG:
+            print(f"infered_type_value: {infered_type_value}")
+
+        value = None
+
+        # check infered type
+        if infered_type_value is not None:
+            if infered_type_value[0] != "bool":
+                raise Exception("Invalid value for if test: {node}")
+
+            # translate value
+            value = "1" if node[1] == "true" else "0"
+
+        else:
+            # try to get value
+            name_value = eval.get_name_value(node[1], scope)
+            if DEBUG:
+                print(f"_get_condition_ir():  backend - name_value: {name_value}")
+
+            if len(name_value) == 0:
+                raise Exception(f"Unassigned name: {node[1]}")
+
+            if name_value[2] != "bool":
+                raise Exception("Invalid value for if test: {node}")
+
+            value = "1" if name_value[3] == "true" else "0"
+
+        return f"br i1 {value}, label %{then_label}, label %{x_label}\n"
+
+
+def __elif__(node, scope):
+    DEBUG = False
+    DEBUG = True
+
+    if DEBUG:
+        print(f"__elif__():  backend - node: {node}")
 
 
 def __data__(node, scope):
@@ -769,7 +885,10 @@ scope = [
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
+
     ["if", "mut", "internal", __if__],
+    ["elif", "mut", "internal", __elif__],
+
     ["data", "mut", "internal", __data__],
     ["write_ptr", "mut", "internal", __write_ptr__],
     ["read_ptr", "mut", "internal", __read_ptr__],

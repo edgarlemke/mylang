@@ -31,7 +31,7 @@ def run(
     else:
         eval_li = eval.eval(expr_li, runtime.scope, ["handle"])
 
-    _merge_nodes(eval_li)
+    _mangle_if_nodes(eval_li)
 
     if print_output:
         print(list_.list_print(eval_li))
@@ -126,44 +126,62 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     return lic
 
 
-def _merge_nodes(li):
+def _mangle_if_nodes(li):
     DEBUG = False
     # DEBUG = True
 
     if DEBUG:
-        print(f"_merge_nodes():  li: {li}")
+        print(f"_mangle_if_nodes():  li: {li}")
 
     li_copy = li.copy()
 
     def iter(item):
         for child_index, child in enumerate(item):
             if DEBUG:
-                print(f"_merge_nodes():  child_index: {child_index} child: {child}")
+                print(f"_mangle_if_nodes():  child_index: {child_index} child: {child}")
 
             if type(child) == list and len(child) > 0:
                 if child[0] == "if":
                     if DEBUG:
-                        print(f"__merge_nodes__():  IF")
+                        print(f"_mangle_if_nodes():  IF")
 
                     elif_and_else = [node for node in item[child_index + 1:] if node[0] in ["elif", "else"]]
                     if DEBUG:
-                        print(f"__merge_nodes__():  elif_and_else: {elif_and_else}")
+                        print(f"_mangle_if_nodes():  elif_and_else: {elif_and_else}")
 
+                    ct = 1
                     for e_index, e_node in enumerate(elif_and_else):
-                        if e_node[0] == "elif":
-                            e_node[0] = "if"
-                        else:
-                            e_node = [e_node[1]]
+                        if DEBUG:
+                            print(f"item: {item} child_index: {child_index} e_index: {e_index}")
 
-                        item[child_index + e_index] += e_node
+                        # item[child_index + e_index] += [e_node]
+                        # item[child_index + 1] += [e_node]
+                        candidate_to_append = item[child_index]
+                        candidate_to_append += [e_node]
+                        if DEBUG:
+                            print(f"_mangle_if_nodes():  candidate_to_append: {candidate_to_append}")
 
-                        item.pop(child_index + e_index + 1)
+                        index_to_pop = child_index + e_index + ct
+                        if DEBUG:
+                            print(f"_mangle_if_nodes():  index_to_pop: {index_to_pop} item: {item}\n")
+
+                        item.pop(index_to_pop)
+                        ct -= 1
+
+                    # add empty list in case of if without else
+                    if len(elif_and_else) == 0:
+                        if DEBUG:
+                            print(f"_mangle_if_nodes():  no elif nor else: {child}")
+
+                        item[child_index].append([])
+                        if DEBUG:
+                            print(f"item[child_index]: {item[child_index]}")
 
                 iter(child)
 
     iter(li_copy)
     if DEBUG:
-        print(f"_merge_nodes():  li_copy: {li_copy}")
+        print(f"_mangle_if_nodes():  li_copy: {li_copy}")
 
 
 def _setup_env(compiletime_scope=False):
