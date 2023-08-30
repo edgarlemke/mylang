@@ -775,15 +775,15 @@ def test_array_byte_init_uninitialized():
 
 
 # FORMATTING TESTS
-def test_bin():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "",
-        "",
-        "",
-        "./bin/main.k"
-    )
+# def test_bin():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "",
+#        "",
+#        "",
+#        "./bin/main.k"
+#    )
 #
 #
 

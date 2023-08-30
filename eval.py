@@ -361,6 +361,7 @@ def find_function_method(li, fn, scope):
                 if DEBUG:
                     print(f"find_function_method():  name_value: {name_value} arg: {arg}")
                     print(f"find_function_method():  names: {[i[0] for i in scope[0]]}")
+                    print(f"find_function_method():  scope[0]: {scope[0]}")
 
                 found_value = list(name_value[2:]) != []
 
@@ -418,7 +419,7 @@ def find_function_method(li, fn, scope):
 
     if len(candidates) == 0:
         functions = [n for n in scope[0] if n[2] == "fn"]
-        raise Exception(f"No candidate function found - name: {name}  -  functions: {functions}  - li: {li} ")
+        raise Exception(f"No candidate function found - name: {name}  -  functions: {functions}  - li: {li} - solved_arguments: {solved_arguments}")
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
 

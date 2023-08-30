@@ -212,11 +212,13 @@ store {t} {value}, {t}* %{name}_stack
 
         # test for composite types
         elif len(type_) > 1:
+            # print(type_)
             type_value = eval.get_name_value(type_[0], scope)
             if DEBUG:
                 print(f"__set__():  backend - type_value: {type_value}")
 
             # check for arrays
+            # print(type_value)
             if type_value[0] == "Array":
                 if DEBUG:
                     print(f"__set__():  backend - Array found!")
@@ -352,7 +354,15 @@ def _unoverload(name, function_arguments):
 
     unamel = [name]
     if len(arg_types) > 0:
-        unamel += ["__", "_".join(arg_types)]
+
+        buffer = []
+        for arg_type in arg_types:
+            if isinstance(arg_type, list):
+                buffer.append("_".join(arg_type))
+            else:
+                buffer.append(arg_type)
+
+        unamel += ["__", "_".join(buffer)]
     uname = "".join(unamel)
     # print(f"uname: {uname}")
 
@@ -385,6 +395,9 @@ def _convert_type(type_):
     # convert pointers
     elif type_[0] == "ptr":
         converted_type = f"{_convert_type(type_[1])}*"
+
+    elif type_[0] == "Array":
+        converted_type = f"i8*"
 
     # convert Str (strings)
     elif type_ == "Str":
