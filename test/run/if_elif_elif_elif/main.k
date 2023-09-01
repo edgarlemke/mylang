@@ -15,5 +15,3 @@ fn main ()
 	elif d >= 3
 		Str msg3 = "d >= 3"
 		print msg3
-	#
-#

@@ -5,5 +5,3 @@ fn main ()
 	else
 		Str msg1 = "true"
 		print msg1
-	#
-#

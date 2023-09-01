@@ -18,5 +18,3 @@ fn main ()
 	else
 		Str msg4 = "else"
 		print msg4
-	#
-#
