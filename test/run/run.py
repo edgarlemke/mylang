@@ -774,6 +774,15 @@ def test_array_byte_init_uninitialized():
 #
 
 
+def test_scope():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        "./scope/main.k"
+    )
 # FORMATTING TESTS
 # def test_bin():
 #    return _test(
