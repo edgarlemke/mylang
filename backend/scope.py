@@ -40,6 +40,9 @@ def __handle__(node, scope):
     return []
 
 
+functions_stack = []
+
+
 def __set__(node, scope):
     DEBUG = False
     # DEBUG = True
@@ -61,11 +64,21 @@ def __set__(node, scope):
 
     names = scope[0]
     set_, mutdecl, name, data = node
-    type_ = data[0]
-    fn_content = data[1]
+
+    if len(data) == 1:
+        name_candidate = eval.get_name_value(name, scope)
+        if name_candidate == []:
+            raise Exception(f"Unassigned name: {name}")
+
+        type_ = name_candidate[2]
+
+    elif len(data) == 2:
+        type_ = data[0]
 
     # if node sets a function
     if type_ == "fn":
+        fn_content = data[1]
+
         # solve function overloaded name to a single function name
         uname = _unoverload(name, fn_content[0])
 
@@ -78,6 +91,9 @@ def __set__(node, scope):
         for arg in function_arguments:
             # print(f"arg: {arg}")
             args.append(f"{_convert_type(arg[1])} %{arg[0]}")
+
+        if DEBUG:
+            print(f"__set__():  backend - function_arguments: {function_arguments}")
 
         # get return type and body
         if len(fn_content) == 2:
@@ -97,7 +113,8 @@ def __set__(node, scope):
             print(f"__set__():  backend return_type: {return_type}")
 
         # create function body scope
-        function_body_scope = eval.default_scope.copy()
+        import copy
+        function_body_scope = copy.deepcopy(eval.default_scope)
 
         # set scope child
         scope[3].append(function_body_scope)
@@ -111,14 +128,27 @@ def __set__(node, scope):
         # set scope as backend scope
         function_body_scope[7] = True
 
+        # setup function arguments
+        for function_argument in function_arguments:
+            if DEBUG:
+                print(f"__set__():  backend - function_argument: {function_argument}")
+
+            argument_list = [function_argument[0], "const", function_argument[1], None]
+            function_body_scope[0].append(argument_list)
+
         if DEBUG:
-            print(f"function_body_scope: {function_body_scope}")
+            print(f"__set__():  backend - function_body_scope: {function_body_scope}")
+
+        functions_stack.append([uname, function_body_scope, function_arguments])
 
         # sort out body IR
         result = eval.eval(fn_body, function_body_scope)
         # print(f"result: {result}")
+
+        functions_stack.pop()
+
         # if len(result) == 0:
-        body = ["start:"]
+        body = ["\tstart:"]
         # body = ["br label %start", "start:"]
         # else:
 
@@ -126,66 +156,107 @@ def __set__(node, scope):
             body.append(result)
 
         if DEBUG:
-            print(f"body: {body}")
+            print(f"__set__():  backend - body: {body}")
 
         serialized_body = _serialize_body(body)
 
         if DEBUG:
-            print(f"serialized_body: {serialized_body}")
+            print(f"__set__():  serialized_body: {serialized_body}")
 
         if "ret" not in serialized_body[len(serialized_body) - 1]:
-            serialized_body.append([f"ret {return_type}"])
+            serialized_body.append([f"\t\tret {return_type}"])
 
         # declaration, definition = _write_fn(uname, args, return_type, body)
         retv = _write_fn(uname, args, return_type, serialized_body)
 
     else:
+        tmp_name = None
+        if len(functions_stack) > 0:  # and mutdecl == "mut":
+            function_name = functions_stack[len(functions_stack) - 1][0]
+            if len(data) == 1:
+                _increment_NAME(function_name, name)
+
+            tmp_name = _get_NAME(function_name, name)
+
+        else:
+            # print(f"YAY: {name}")
+            pass
+
+        if DEBUG:
+            print(f"__set__():  tmp_name: {tmp_name}")
+
         if type_ == "Str":
             str_, size = _converted_str(data[1])
 
             retv = f"""
-%{name} = alloca %struct.Str, align 8
+\t\t%{tmp_name} = alloca %struct.Str, align 8
 
-%{name}_str = alloca [{size} x i8]
-store [{size} x i8] c"{str_}", i8* %{name}_str
+\t\t%{name}_str = alloca [{size} x i8]
+\t\tstore [{size} x i8] c"{str_}", i8* %{name}_str
 
-%{name}_str_ptr = getelementptr [{size} x i8], [{size} x i8]* %{name}_str, i64 0, i64 0
+\t\t%{name}_str_ptr = getelementptr [{size} x i8], [{size} x i8]* %{name}_str, i64 0, i64 0
 
-%{name}_addr_ptr = getelementptr %struct.Str, %struct.Str* %{name}, i32 0, i32 0
-store i8* %{name}_str_ptr, i8* %{name}_addr_ptr, align 8
+\t\t%{name}_addr_ptr = getelementptr %struct.Str, %struct.Str* %{tmp_name}, i32 0, i32 0
+\t\tstore i8* %{name}_str_ptr, i8* %{name}_addr_ptr, align 8
 
-%{name}_size_ptr = getelementptr %struct.Str, %struct.Str* %{name}, i32 0, i32 1
-store i64 {size}, i64* %{name}_size_ptr, align 8
+\t\t%{name}_size_ptr = getelementptr %struct.Str, %struct.Str* %{tmp_name}, i32 0, i32 1
+\t\tstore i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
         elif type_ in ["int", "uint", "float", "bool"]:
+            if DEBUG:
+                print("__set__():  backend - type_ is int uint float or bool")
+
             t = _convert_type(type_)
-            value = data[1]
+
+            if len(data) == 1:
+                value = data[0]
+                # _increment_NAME(function_name, name)
+                # tmp_name = _get_NAME(function_name, name)
+
+            elif len(data) == 2:
+                value = data[1]
+
+            if type_ in ["int", "uint"]:
+                if value[:2] == "0x":
+                    value = int(value, base=16)
+
+            if DEBUG:
+                print(f"__set__():  backend - value: {value}")
 
             if isinstance(value, list):
                 if DEBUG:
-                    print(f"__set__():  CALLING return_call()")
-                value, stack = return_call(value, scope)
+                    print(f"__set__():  backend - calling return_call()")
+                value, stack = return_call(value, scope, [])
                 if DEBUG:
-                    print(f"__set__():  backend  value: {value} stack: {stack}")
+                    print(f"__set__():  backend - value: {value} stack: {stack}")
 
-                stack.append(f"%{name} = {value}")
+                stack.append(f"\t\t%{tmp_name} = {value}")
                 retv = "\n".join(stack)
                 if DEBUG:
-                    print(f"retv: {retv}")
+                    print(f"__set__():  backend - retv: {retv}")
+
+                # clean stack from return_call
+                stack = []
 
             else:
                 # check if it's at global backend scope
                 if scope[2] is None:
+                    if DEBUG:
+                        print(F"__set__():  backend - global scope")
                     retv = f"@{name} = global {t} {value}"
 
                 # not global backend scope
                 else:
+                    if DEBUG:
+                        print(f"__set__():  backend - not global scope")
                     # allocate space in stack and set value
-                    retv = f"""%{name}_stack = alloca {t}
-store {t} {value}, {t}* %{name}_stack
-%{name} = load {t}, {t}* %{name}_stack
+                    retv = f"""\t\t%{name}_stack = alloca {t}
+\t\tstore {t} {value}, {t}* %{name}_stack
+\t\t%{tmp_name} = load {t}, {t}* %{name}_stack
 """
+            if DEBUG:
+                print(f"__set__():  backend - retv: {retv}")
 
         elif type_ == "struct":
             if len(data) == 1:
@@ -229,10 +300,9 @@ store {t} {value}, {t}* %{name}_stack
                 array_members_type = _convert_type(type_[1])
 
                 # setup stack with start of array initialization
-                stack = [f"""
-; start of initialization of {name} Array
-%{name}_Array = alloca %{array_struct_name}
-%{name}_Array_members = alloca [{array_size} x {array_members_type}]
+                stack = [f"""\t\t; start of initialization of {name} Array
+\t\t%{name}_Array = alloca %{array_struct_name}
+\t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
 """]
 
                 # initialize array members
@@ -243,19 +313,19 @@ store {t} {value}, {t}* %{name}_stack
                     if value_to_store == "?":
                         continue
 
-                    stack.append(f"""%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
-store {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
+                    stack.append(f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
+\t\tstore {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
 """)
 
                 # end of array initialization
-                stack.append(f"""%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
+                stack.append(f"""\t\t%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
 
-%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
-store [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
+\t\t%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
+\t\tstore [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
 
-%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 1
-store i64 {array_size}, i64* %{name}_Array_size_ptr
-; end of initialization of {name} Array
+\t\t%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 1
+\t\tstore i64 {array_size}, i64* %{name}_Array_size_ptr
+\t\t; end of initialization of {name} Array
 """)
 
                 retv = "\n".join(stack)
@@ -300,6 +370,9 @@ store i64 {array_size}, i64* %{name}_Array_size_ptr
             if len(type_) == 1:
                 raise Exception(f"Unknown type {type_}")
 
+    if DEBUG:
+        print(f"__set__():  backend - exiting __set__()")
+
     return retv
 
 
@@ -323,15 +396,44 @@ def _converted_str(str_):
 
 
 def _validate_set(node, scope):
-    # print(f"backend _validate_set - node: {node}")
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_validate_set():  backend - node: {node}")
+
+    import eval
 
     set_, mutdecl, name, data = node
-    type_ = data[0]
-    value = data[1]
+
+    if len(data) == 1:
+        if DEBUG:
+            print(f"_validate_set():  backend - len(data) == 1 - name: {name}")
+
+        name_candidate = eval.get_name_value(name, scope)
+        if name_candidate == []:
+            raise Exception(f"Reassigning not assigned name: {name} {data}")
+
+        if DEBUG:
+            print(f"_validate_set():  backend - name_candidate: {name_candidate}")
+
+        type_ = name_candidate[2]
+        if DEBUG:
+            print(f"_validate_set():  backend - type_: {type_}")
+
+    elif len(data) == 2:
+        if DEBUG:
+            print(f"_validate_set():  backend - len(data) == 2")
+
+        type_ = data[0]
+        # value = data[1]
 
     # validate type
     if not _validate_type(type_, scope):
         raise Exception(f"Constant assignment has invalid type - type_: {type_} - node: {node}")
+
+    if DEBUG:
+        print(f"_validate_set():  backend - node OK: {node}")
 
     return
 
@@ -521,7 +623,7 @@ def __if__(node, scope):
 
     import eval
 
-    stack = ["; if start"]
+    stack = ["\t\t; if start"]
 
     # extract elifs from node
     elifs = [child for child in node[3:] if isinstance(child, list) and len(child) > 0 and child[0] == "elif"]
@@ -565,14 +667,14 @@ def __if__(node, scope):
         x_label = end_label
 
     condition_ir = _get_condition_ir(node, scope, then_label, x_label)
-    stack += ["; if - then condition test"]
+    stack += ["\t\t; if - then condition test"]
     stack += [condition_ir]
 
     then_code = eval.eval(node[2], scope)
     if DEBUG:
         print(f"__if__():  backend - then_code: {then_code}")
 
-    stack += [f"; if - then code block\n{then_label}:"] + then_code + [f"br label %{end_label}\n"]
+    stack += [f"\t\t; if - then code block\n\t{then_label}:"] + then_code + [f"\t\tbr label %{end_label}\n"]
 
     x_size = len(node[3:])
     if DEBUG:
@@ -590,7 +692,7 @@ def __if__(node, scope):
 
             # append elif label
             elif_label = elif_labels[else_index][1]
-            stack += [f"; if - elif condition test\n{elif_label}_test:"]
+            stack += [f"\t\t; if - elif condition test\n\t{elif_label}_test:"]
 
             # check if needs to add branch for next elif
             if len(elif_labels) > else_index + 1:
@@ -615,9 +717,9 @@ def __if__(node, scope):
             if DEBUG:
                 print(f"__if__():  backend - elif_code: {elif_code}")
 
-            stack += [f"; if - elif code block\n{elif_label}:"]
+            stack += [f"\t\t; if - elif code block\n\t{elif_label}:"]
             stack += elif_code
-            stack += [f"""br label %{end_label}\n"""]
+            stack += [f"""\t\tbr label %{end_label}\n"""]
 
         else:
             if DEBUG:
@@ -630,12 +732,13 @@ def __if__(node, scope):
             if DEBUG:
                 print(f"__if__():  backend - else_code: {else_code}")
 
-            stack += [f"; if - else code block\n{else_label}:"] + else_code + [f"""
-br label %{end_label}\n"""]
+            stack += [f"\t\t; if - else code block\n\t{else_label}:"] + else_code + [f"""
+\t\tbr label %{end_label}\n"""]
 
-    stack += [f"""; if - end block
-{end_label}:
-; if end"""]
+    stack += [f"""\t\t; if - end block
+\t{end_label}:
+\t\t; if end
+"""]
 
     if DEBUG:
         print(f"__if__():  backend - stack: {stack}")
@@ -656,21 +759,24 @@ def _validate_if(node, scope):
 
 
 def _get_condition_ir(node, scope, then_label, x_label):
-
     DEBUG = False
     # DEBUG = True
+
+    if DEBUG:
+        print(f"_get_condition_ir():  node: {node} scope: {hex(id(scope))} then_label: {then_label} x_label: {x_label}")
 
     import eval
     condition_name = _get_var_name("if", "condition_")
 
     if isinstance(node[1], list):
         condition_function = eval.get_name_value(node[1], scope)
-        condition_call = return_call(node[1], scope)
+        condition_call, stack = return_call(node[1], scope, [])
         if DEBUG:
             print(f"_get_condition_ir():  backend - condition_call: {condition_call}")
 
-        return f"""%{condition_name}  = {condition_call[0]}
-br i1 %{condition_name}, label %{then_label}, label %{x_label}\n"""
+        retv = stack + [f"""\t\t%{condition_name}  = {condition_call}
+\t\tbr i1 %{condition_name}, label %{then_label}, label %{x_label}\n"""]
+        return "\n".join(retv)
 
     else:
         # try to infer type
@@ -702,12 +808,12 @@ br i1 %{condition_name}, label %{then_label}, label %{x_label}\n"""
 
             value = "1" if name_value[3] == "true" else "0"
 
-        return f"br i1 {value}, label %{then_label}, label %{x_label}\n"
+        return f"\t\tbr i1 {value}, label %{then_label}, label %{x_label}\n"
 
 
 def __elif__(node, scope):
     DEBUG = False
-    DEBUG = True
+    # DEBUG = True
 
     if DEBUG:
         print(f"__elif__():  backend - node: {node}")
@@ -781,7 +887,7 @@ def return_call(node, scope, stack=[]):
     import eval
 
     if DEBUG:
-        print(f"return_call():  node: {node} stack: {stack}")
+        print(f"return_call():  node: {node} scope: {hex(id(scope))} stack: {stack}")
 
     # find out function name
     li_function_name = node[0]
@@ -834,16 +940,23 @@ def return_call(node, scope, stack=[]):
             scope_argument_value = eval.get_name_value(argument_value[0], scope)
 
             if DEBUG:
-                print(f"CALLING return_call():  before return_call() call - stack: {stack}")
+                print(f"return_call():  before return_call() call - stack: {stack}\n")
             result, stack = return_call(argument_value, scope, stack)
 
             if DEBUG:
-                print(f"return_call():  result: {result} stack: {stack}")
+                print(f"return_call():  result: {result} stack_: {stack}")
 
-            tmp = _get_var_name(function_name, "tmp")
+            tmp = _get_var_name(function_name, "tmp_")
+            call_ = f"\t\t%{tmp} = {result}"
 
-            call_ = f"%{tmp} = {result}"
+            if DEBUG:
+                print(f"return_call():  appending call_ {call_} to stack")
+
             stack.append(call_)
+
+            if DEBUG:
+                print(f"return_call():  stack after append: {stack}")
+
             argument_value = f"%{tmp}"
 
         else:
@@ -852,7 +965,20 @@ def return_call(node, scope, stack=[]):
                 print(f"return_call():  scope_argument_value: {scope_argument_value}")
 
             if scope_argument_value != []:
-                argument_value = f"%{argument_value}"
+                argument_name = False
+                if len(functions_stack) > 0:
+                    arguments_matches = [arg for arg in functions_stack[len(functions_stack) - 1][2] if argument_value == arg[0]]
+                    # print(f"arguments_matches: {arguments_matches}")
+
+                    if len(arguments_matches) > 0:
+                        argument_value = f"%{argument_value}"
+                        argument_name = True
+
+                if not argument_name:
+                    NAME = _get_NAME(function_name, argument_value)
+                    argument_value = f"%{NAME}"
+
+                # print(f"argument_value: {argument_value}")
 
         converted_argument = f"{converted_type} {argument_value}"
 
@@ -872,6 +998,9 @@ def return_call(node, scope, stack=[]):
 
     value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
 
+    if DEBUG:
+        print(f"return_call():  exiting return_call():  value: {value}  stack: {stack}\n")
+
     return value, stack
 
 
@@ -890,6 +1019,27 @@ def _get_var_name(function_name, prefix):
     _var_names[function_name] += 1
 
     return var_name
+
+
+_nyaa = {}
+
+
+def _get_NAME(function_name, name):
+    # initialize key in _nyaa for function_name
+    if function_name not in _nyaa.keys():
+        _nyaa[function_name] = {}
+
+    # initialize key in _nyaa[function_name] for name
+    if name not in _nyaa[function_name].keys():
+        _nyaa[function_name][name] = 0
+
+    NAME = f"{name}_{_nyaa[function_name][name]}"
+
+    return NAME  # _nyaa[function_name][name]
+
+
+def _increment_NAME(function_name, name):
+    _nyaa[function_name][name] += 1
 
 
 scope = [

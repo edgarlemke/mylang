@@ -223,10 +223,11 @@ macro op_set_mut_generic_struct (mut struct 'a = 'b 'c) (set mut 'a (struct 'b '
 macro op_set_generic_struct (struct 'a = 'b 'c) (set const 'a (struct ('b 'c)))
 
 macro op_set_mut_struct (mut struct 'a = 'b) (set mut 'a (struct (() 'b)))
-macro op_set_struct (struct 'a = 'b) (set const 'a (struct (() 'b)))
+macro op_set_struct (struct 'a = 'b) (set const 'a (struct 'b))
 
-macro op_set_mut (mut 't 'a = 'b) (set mut 'a ('t 'b))
-macro op_set_const ('t 'a = 'b) (set const 'a ('t 'b))
+macro op_set_mut (mut 'type 'name = 'value) (set mut 'name ('type 'value))
+macro op_set_const ('type 'name = 'value) (set const 'name ('type 'value))
+macro op_reset_mut ('name = 'value) (set mut 'name ('value))
 
 macro ret (ret) ()
 """

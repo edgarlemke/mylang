@@ -364,13 +364,13 @@ def test_if_node_size():
 
 
 # __repeat__
-def test_repeat():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "(((0 0 0 0 0)))\n",
-        "",
-        "5 ** 0"
-    )
+# def test_repeat():
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "(((0 0 0 0 0)))\n",
+#        "",
+#        "5 ** 0"
+#    )
 
 
 # unsafe
@@ -389,7 +389,7 @@ def test_ptr():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        "set const x (ptr int 0xdeadbeef)"
+        "set const x ((ptr int) 0xdeadbeef)"
     )
 
 

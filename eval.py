@@ -32,34 +32,34 @@ def eval(li, scope, forced_handler_desc=None):
     macros = scope[1]
 
     if DEBUG:
-        print(f"macros: {macros} {scope[5]}")
+        print(f"eval():  macros: {macros} {scope[5]}")
 
     if len(macros):
         expand = True
         new_li = li.copy()
         while expand:
             if DEBUG:
-                print(f"will try to expand macros in {new_li}")
+                print(f"eval():  will try to expand macros in {new_li}")
 
             new_li, found_macro = _expand_macro(new_li, scope)
 
             if DEBUG:
-                print(f"expand new_li: {new_li}")
+                print(f"eval():  new_li: {new_li} found_macro: {found_macro}")
 
             expand = found_macro
 
         if DEBUG:
-            print(f"over new_li: {new_li}")
+            print(f"eval():  expansion ended - new_li: {new_li}")
 
         li = new_li
 
     if DEBUG:
-        print(f"macro expanded li: {li}")
+        print(f"eval():  macro expanded li: {li}")
 
     # if the list is empty, return it
     if len(li) == 0:
         if DEBUG:
-            print(f"exiting eval {li}")
+            print(f"eval():  exiting eval {li}")
 
         return li
 
@@ -73,13 +73,16 @@ def eval(li, scope, forced_handler_desc=None):
 
     is_list = isinstance(li[0], list)
     if is_list:
-        # print(f"li: {li}")
+        if DEBUG:
+            print(f"eval():  is_list - li: {li}")
         evaled_li = []
         for key, item in enumerate(li):
-            # li[key] = eval(item, scope)
-            e = eval(item, scope, forced_handler_desc)
-            if len(e) > 0:
-                evaled_li.append(e)
+            if DEBUG:
+                print(f"eval():  li item: {item}")
+
+            evaluated_list_ = eval(item, scope, forced_handler_desc)
+            if len(evaluated_list_) > 0:
+                evaled_li.append(evaluated_list_)
 
         li = evaled_li
         if DEBUG:
@@ -102,7 +105,7 @@ def eval(li, scope, forced_handler_desc=None):
 
         if name_match[2] in ["fn", "internal"]:
             if DEBUG:
-                print(f"fn/internal")
+                print(f"eval():  li calls fn/internal")
 
             # len == 1, so it's a reference
             if len(li) == 1:
@@ -123,15 +126,23 @@ def eval(li, scope, forced_handler_desc=None):
                     if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
                         scope[5] = retv[1]
                         retv = retv[0]
+
                     li = retv
+
                 elif name_match[2] == "internal":
-                    # print(f"!!! internal")
-                    x = name_match[3](li, scope)
-                    li = x
-                # print(f"li: {li}")
+                    if DEBUG:
+                        print(f"eval():  name_match is internal - name_match: {name_match}")
+
+                    li = name_match[3](li, scope)
+
+                if DEBUG:
+                    print(f"eval():  internal result li: {li}")
 
         # not function nor internal
         else:
+            if DEBUG:
+                print(f"eval():  not function nor internal: {li}")
+
             # if is list of single item
             if len(li) == 1:
                 name_match_value = name_match[3]
@@ -161,7 +172,7 @@ def eval(li, scope, forced_handler_desc=None):
                         type_return_call = "i64"
 
                         # get var name
-                        name_return_call = "%result"
+                        name_return_call = "%result_0"
 
                         li = [f"ret {type_return_call} {name_return_call}"]
 
@@ -173,6 +184,7 @@ def eval(li, scope, forced_handler_desc=None):
             else:
                 if DEBUG:
                     print(f"eval():  struct member li: {li}")
+
                 li = _get_struct_member(li, scope)
 
     if DEBUG:
@@ -375,6 +387,8 @@ def find_function_method(li, fn, scope):
                 # if value not found, try to infer type of argument
                 else:
                     solved_argument = _infer_type(arg)
+                    if solved_argument is None:
+                        raise Exception(f"Unassigned name: {arg}")
             #
             #
 
@@ -456,25 +470,39 @@ def get_name_value(name, scope):
 
 
 def _infer_type(arg):
-    # print(f"_infer_type - arg: {arg}")
+    # DEBUG = False
+    # DEBUG = True
+
+    # if DEBUG:
+    #    print(f"_infer_type():  arg: {arg}")
 
     candidates = []
 
+    # match base 10 integers
     int_regexp = "[0-9]+"
     m = re.match(int_regexp, arg)
     if m:
         candidates.append([m, "int"])
 
+    # match heaxdecimal integers
+    hex_int_regexp = "0x[0-9]+"
+    m = re.match(hex_int_regexp, arg)
+    if m:
+        candidates.append([int(m), "int"])
+
+    # match floating points
     float_regexp = "[0-9]+\\.[0-9]+"
     m = re.match(float_regexp, arg)
     if m:
         candidates.append([m, "float"])
 
+    # match booleans
     bool_regexp = "true|false"
     m = re.match(bool_regexp, arg)
     if m:
         candidates.append([m, "bool"])
 
+    # get biggest match
     biggest = None
     for c in candidates:
         if biggest is None:
@@ -486,6 +514,7 @@ def _infer_type(arg):
             elif len(c[0].group()) == len(biggest[0].group()):
                 raise Exception("Two candidates with same size!")
 
+    # return according to biggest match
     if biggest is None:
         return None
 
@@ -609,6 +638,12 @@ def match_macro(li, index, macro):
 
 
 def _get_struct_member(li, scope):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_get_struct_member:  li: {li}")
+
     def myfn(n, index):
         new_li = n[3][index]
 

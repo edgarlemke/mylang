@@ -85,8 +85,8 @@ def test_llvm_fn_void_ret_type():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define void @main() {
-start:
-ret void
+	start:
+		ret void
 }
 """,
         "",
@@ -98,8 +98,8 @@ def test_llvm_fn_cvt_int():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define i64 @main() {
-start:
-ret i64
+	start:
+		ret i64
 }
 """,
         "",
@@ -111,8 +111,8 @@ def test_llvm_fn_cvt_uint():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define i64 @main() {
-start:
-ret i64
+	start:
+		ret i64
 }
 """,
         "",
@@ -124,12 +124,12 @@ def test_llvm_fn_unoverload():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define i64 @test__int_uint(i64 %x, i64 %y) {
-start:
-ret i64
+	start:
+		ret i64
 }
 define i64 @test__uint_int(i64 %x, i64 %y) {
-start:
-ret i64
+	start:
+		ret i64
 }
 """,
         "",

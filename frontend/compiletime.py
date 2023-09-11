@@ -80,13 +80,22 @@ def __set__(node, scope, split_args=True):
     # DEBUG = True
 
     if DEBUG:
-        print(f"__set__():  calling compile time __set__ {node}")
+        print(f"__set__():  compiletime - node: {node}")
 
     _validate_set(node, scope)
 
     names = scope[0]
     set_, mutdecl, name, data = node
-    type_ = data[0]
+
+    if len(data) == 1:
+        name_candidate = eval.get_name_value(name, scope)
+        if name_candidate == []:
+            raise Exception(f"Unassigned name: {name}")
+
+        type_ = name_candidate[2]
+
+    elif len(data) == 2:
+        type_ = data[0]
 
     if type_ == "fn":
         # get function arguments, return type and body
@@ -118,7 +127,11 @@ def __set__(node, scope, split_args=True):
             names[i][3].append(value)
 
     else:
-        value = data[1]
+        if len(data) == 1:
+            value = data[0]
+
+        elif len(data) == 2:
+            value = data[1]
 
         if not isinstance(name, list):
             if DEBUG:
@@ -138,11 +151,12 @@ def __set__(node, scope, split_args=True):
             names.append([name, mutdecl, type_, value])
 
         else:
-            # print(f"name: {name}")
+            if DEBUG:
+                print(f"__set__():  frontend compiletime - name: {name}")
             _set_struct_member(name, scope, value)
 
     if DEBUG:
-        print(f"\nnames after set: {names}\n")
+        print(f"\n__set__():  frontend compiletime - names after set: {names}\n")
 
     # retv = ["data", [type_, value]]
     # print(f"returning {retv}")
@@ -150,13 +164,35 @@ def __set__(node, scope, split_args=True):
 
 
 def _validate_set(node, scope):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_validate_set():  frontend compiletime - node: {node} scope[0]: {scope[0]}")
+
     # check set arguments number
     if len(node) != 4:
         raise Exception(f"Wrong number of arguments for set: {node}")
 
     set_, mutdecl, name, data = node
-    type_ = data[0]
-    value = data[1]
+
+    is_reassignment = False
+    type_ = None
+    if len(data) == 1:
+        name_candidate = eval.get_name_value(name, scope)
+
+        if name_candidate == []:
+            raise Exception(f"Reassignment of unassigned name: {name} {data[0]}")
+
+        type_ = name_candidate[2]
+        value = data[0]
+
+    elif len(data) == 2:
+        type_ = data[0]
+        value = data[1]
+
+    if type_ is None:
+        raise Exception("Type not found!")
 
     # check mutability declaration
     if mutdecl not in ["const", "mut"]:
@@ -168,7 +204,8 @@ def _validate_set(node, scope):
 
     if type_ in structs:
         struct_type = [st for st in scope[0] if st[2] == "struct" and st[0] == type_][0]
-        # print(f"struct_type: {struct_type}")
+        if DEBUG:
+            print(f"_validate_set():  frontend compiletime - struct_type: {struct_type}")
 
         if len(value) != len(struct_type[3]):
             raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
@@ -207,7 +244,8 @@ def _validate_set(node, scope):
                 elif struct_member[0] == "mut":
                     struct_member_type = struct_member[2]
                 else:
-                    print(f"struct_member: {struct_member}")
+                    if DEBUG:
+                        print(f"_validate_set():  frontend compiletime - struct_member: {struct_member}")
 
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
@@ -215,6 +253,10 @@ def _validate_set(node, scope):
     # check reassignment over const
     # check const reassignment over mut
     if type_ != "fn" and not isinstance(name, list):
+        if DEBUG:
+            print(f"_validate_set():  frontend compiletime - value isn't function and name isn't list")
+            print(f"_validate_set():  frontend compiletime - scope[0]:  {scope[0]}")
+
         for index, v in enumerate(scope[0]):
             if v[0] == name:
                 if v[1] == "const":
