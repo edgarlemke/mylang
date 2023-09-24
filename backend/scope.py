@@ -65,8 +65,14 @@ def __set__(node, scope):
     names = scope[0]
     set_, mutdecl, name, data = node
 
+    name_candidate = []
     if len(data) == 1:
-        name_candidate = eval.get_name_value(name, scope)
+        if isinstance(name, list):
+            name_to_get = name[0]
+        else:
+            name_to_get = name
+
+        name_candidate = eval.get_name_value(name_to_get, scope)
         if name_candidate == []:
             raise Exception(f"Unassigned name: {name}")
 
@@ -171,7 +177,14 @@ def __set__(node, scope):
 
     else:
         tmp_name = None
-        if len(functions_stack) > 0:  # and mutdecl == "mut":
+
+        if DEBUG:
+            print(f"__set__():  type isn't fn - name: {name} type: {type_}")
+
+        if isinstance(type_, list) and type_[0] == "Array":
+            pass
+
+        elif len(functions_stack) > 0:  # and mutdecl == "mut":
             function_name = functions_stack[len(functions_stack) - 1][0]
             if len(data) == 1:
                 _increment_NAME(function_name, name)
@@ -283,7 +296,9 @@ def __set__(node, scope):
 
         # test for composite types
         elif len(type_) > 1:
-            # print(type_)
+            if DEBUG:
+                print(f"__set__():  backend - type_: {type_}")
+
             type_value = eval.get_name_value(type_[0], scope)
             if DEBUG:
                 print(f"__set__():  backend - type_value: {type_value}")
@@ -292,43 +307,19 @@ def __set__(node, scope):
             # print(type_value)
             if type_value[0] == "Array":
                 if DEBUG:
-                    print(f"__set__():  backend - Array found!")
+                    print(f"__set__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
 
-                array_struct_name = "_".join([type_value[0]] + type_[1:])
+                # check if array is already set
+                retv = None
+                if name_candidate != []:
+                    member_index = 0
+                    array_size = 64
 
-                array_size = len(data[1])
-                array_members_type = _convert_type(type_[1])
+                    retv = _set_array_member(type_value, member_index, type_, data[0], name[0], array_size)
 
-                # setup stack with start of array initialization
-                stack = [f"""\t\t; start of initialization of {name} Array
-\t\t%{name}_Array = alloca %{array_struct_name}
-\t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
-"""]
+                else:
+                    retv = _set_array(type_value, type_, data, name)
 
-                # initialize array members
-                for member_index in range(0, array_size):
-                    value_to_store = data[1][member_index]
-
-                    # if value is ?, keep array members uninitialized - unsafer but cheaper
-                    if value_to_store == "?":
-                        continue
-
-                    stack.append(f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
-\t\tstore {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
-""")
-
-                # end of array initialization
-                stack.append(f"""\t\t%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
-
-\t\t%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
-\t\tstore [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
-
-\t\t%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 1
-\t\tstore i64 {array_size}, i64* %{name}_Array_size_ptr
-\t\t; end of initialization of {name} Array
-""")
-
-                retv = "\n".join(stack)
 
 #                if type_value[2] == "struct":
 #                    # if not a generic struct
@@ -376,6 +367,57 @@ def __set__(node, scope):
     return retv
 
 
+def _set_array(type_value, type_, data, name):
+    array_struct_name = "_".join([type_value[0]] + type_[1:])
+
+    array_size = len(data[1])
+    array_members_type = _convert_type(type_[1])
+
+    # setup stack with start of array initialization
+    stack = [f"""\t\t; start of initialization of {name} Array
+\t\t%{name}_Array = alloca %{array_struct_name}
+\t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
+"""]
+
+    # initialize array members
+    for member_index in range(0, array_size):
+        value_to_store = data[1][member_index]
+
+        # if value is ?, keep array members uninitialized - unsafer but cheaper
+        if value_to_store == "?":
+            continue
+
+        stack.append(f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
+\t\tstore {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
+""")
+
+    # end of array initialization
+    stack.append(f"""\t\t%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
+
+\t\t%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
+\t\tstore [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
+
+\t\t%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 1
+\t\tstore i64 {array_size}, i64* %{name}_Array_size_ptr
+\t\t; end of initialization of {name} Array
+""")
+
+    retv = "\n".join(stack)
+    return retv
+
+
+def _set_array_member(type_value, member_index, type_, data, name, array_size):
+    array_members_type = _convert_type(type_[1])
+
+    value = data
+
+    retv = f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
+\t\tstore {array_members_type} {value}, {array_members_type}* %{name}_member_{member_index}_ptr
+"""
+
+    return retv
+
+
 def _converted_str(str_):
     encoded = str_.encode('utf-8')
 
@@ -410,7 +452,13 @@ def _validate_set(node, scope):
         if DEBUG:
             print(f"_validate_set():  backend - len(data) == 1 - name: {name}")
 
-        name_candidate = eval.get_name_value(name, scope)
+        if isinstance(name, list):
+            name_to_get = name[0]
+
+        else:
+            name_to_get = name
+
+        name_candidate = eval.get_name_value(name_to_get, scope)
         if name_candidate == []:
             raise Exception(f"Reassigning not assigned name: {name} {data}")
 

@@ -235,7 +235,9 @@ def _call_fn(li, fn, scope):
 
             if DEBUG:
                 print(f"_call_fn():  CALLING return_call() - li: {li}")
+
             value, stack = return_call_function(li, scope)
+            value = f"\t\t{value}"
 
             if DEBUG:
                 print(f"_call_fn():  value: {value}  stack: {stack}")
@@ -449,13 +451,19 @@ def find_function_method(li, fn, scope):
 
 
 def get_name_value(name, scope):
-    # print(f"name: {name}")
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"get_name_value()  - name: {get_name_value}")
+
     def iterup(scope):
-        # print(f"interup {scope}")
-        for n in scope[0]:
-            # print(f"n: {n}")
-            if n[0] == name:
-                return n  # list(n[2:])
+        for each_name in scope[0]:
+            if DEBUG:
+                print(f"get_name_value()  - each_name: {each_name}")
+
+            if each_name[0] == name:
+                return each_name  # list(n[2:])
 
         # didn't return found value...
 
@@ -714,9 +722,29 @@ def _seek_struct_ref(li, scope, fn):
     # new_li = n[3][index]
     return fn(n, index)
 
-    # check if member access "goes deeper"
-    # if len(li) > 2:
-    #    # print(f"len(li) > 2: {li} {new_li}")
-    #    return _get_struct_member([new_li] + li[2:], scope)
-    # else:
-    #    return new_li
+
+def _seek_array_ref(li, scope, fn):
+    DEBUG = False
+    # DEBUG = True
+
+    # seeks names matching with li[0]
+    name_matches = [n for n in scope[0] if n[0] == li[0]]
+    n = name_matches[0]
+
+    # get possible array_type
+    array_type = n[2]
+
+    # check if there's some struct set with this name
+    candidates = [s for s in scope[0] if s[2] == array_type]  # type(s[2]) == list and s[2][0] == "Array" ] #and s[0] == struct_name]
+    if DEBUG:
+        print(f"candidates: {candidates}")
+
+    # get the candidate struct
+    candidate = candidates[0]
+
+    if DEBUG:
+        print(f"_seek_array_ref():  candidate: {candidate}")
+
+    index = int(li[1])
+
+    return fn(n, index)

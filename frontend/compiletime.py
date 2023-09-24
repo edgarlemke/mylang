@@ -88,11 +88,18 @@ def __set__(node, scope, split_args=True):
     set_, mutdecl, name, data = node
 
     if len(data) == 1:
-        name_candidate = eval.get_name_value(name, scope)
-        if name_candidate == []:
-            raise Exception(f"Unassigned name: {name}")
+        if isinstance(name, list):
+            if DEBUG:
+                print(f"__set__():  compiletime - name is list")
 
-        type_ = name_candidate[2]
+            type_ = _solve_list_name_type(name, scope)
+
+        else:
+            name_candidate = eval.get_name_value(name, scope)
+            if name_candidate == []:
+                raise Exception(f"Unassigned name: {name}")
+
+            type_ = name_candidate[2]
 
     elif len(data) == 2:
         type_ = data[0]
@@ -152,8 +159,14 @@ def __set__(node, scope, split_args=True):
 
         else:
             if DEBUG:
-                print(f"__set__():  frontend compiletime - name: {name}")
-            _set_struct_member(name, scope, value)
+                print(f"__set__():  frontend compiletime - name: {name} type: {type_}")
+
+            if isinstance(type_, list):
+                if type_[0] == "Array":
+                    _set_array_member(name, scope, value)
+
+            else:
+                _set_struct_member(name, scope, value)
 
     if DEBUG:
         print(f"\n__set__():  frontend compiletime - names after set: {names}\n")
@@ -178,11 +191,34 @@ def _validate_set(node, scope):
 
     is_reassignment = False
     type_ = None
+
+    # types = [t[0] for t in scope[0] if t[2] == "type"]
+    # if DEBUG:
+    #    print(f"_validate_set():  types: {types}")
+
+    generic_types_values = [t for t in scope[0] if isinstance(t[2], list) and len(t[2]) > 0]
+    if DEBUG:
+        print(f"_validate_set():  generic_types_values: {generic_types_values}")
+
+    structs = [s[0] for s in scope[0] if s[2] == "struct"]
+    if DEBUG:
+        print(f"_validate_set():  structs: {structs}")
+
+    # exceptions = ["fn"]
+
     if len(data) == 1:
-        name_candidate = eval.get_name_value(name, scope)
+
+        # gets correct name to search
+        search_name = name
+
+        # if type of name is list, take the first
+        if isinstance(name, list):
+            search_name = name[0]
+
+        name_candidate = eval.get_name_value(search_name, scope)
 
         if name_candidate == []:
-            raise Exception(f"Reassignment of unassigned name: {name} {data[0]}")
+            raise Exception(f"Reassignment of unassigned name - name: {name} value: {data[0]}")
 
         type_ = name_candidate[2]
         value = data[0]
@@ -197,10 +233,6 @@ def _validate_set(node, scope):
     # check mutability declaration
     if mutdecl not in ["const", "mut"]:
         raise Exception(f"Assignment with invalid mutability declaration: {node}")
-
-    # types = [t[0] for t in scope[0] if t[2] == "type"]
-    structs = [s[0] for s in scope[0] if s[2] == "struct"]
-    # exceptions = ["fn"]
 
     if type_ in structs:
         struct_type = [st for st in scope[0] if st[2] == "struct" and st[0] == type_][0]
@@ -250,6 +282,9 @@ def _validate_set(node, scope):
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
 
+    elif type_ in generic_types_values:
+        print(f"Generic type value!")
+
     # check reassignment over const
     # check const reassignment over mut
     if type_ != "fn" and not isinstance(name, list):
@@ -291,6 +326,52 @@ def _set_struct_member(li, scope, value):
             # print(f"value: {value}")
 
     return eval._seek_struct_ref(li, scope, myfn)
+
+
+def _set_array_member(li, scope, value):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_set_array_member():  li: {li} value: {value}")
+
+    def myfn(n, index):
+        if DEBUG:
+            print(f"myfn():  - n: {n} index: {index} value: {value}")
+
+        n[3][index] = value
+
+        if DEBUG:
+            print(f"myfn():  - n after set: {n}")
+
+    return eval._seek_array_ref(li, scope, myfn)
+
+
+def _solve_list_name_type(name, scope):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_solve_list_name_type()  - name: {name}")
+
+    def iter(li, scope):
+        if DEBUG:
+            print(f"iter():  - li: {li}")
+
+        name_value = eval.get_name_value(li[0], scope)
+        if DEBUG:
+            print(f"iter():  - name_value: {name_value}")
+
+        name_, mutdecl, type_, value = name_value
+
+        if type_[0] == "Array":
+            if DEBUG:
+                print(f"iter():  - type_[0] is Array")
+
+            return type_
+
+    type_ = iter(name, scope)
+    return type_
 
 
 def split_function_arguments(args):
