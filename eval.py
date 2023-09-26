@@ -105,7 +105,7 @@ def eval(li, scope, forced_handler_desc=None):
 
         if name_match[2] in ["fn", "internal"]:
             if DEBUG:
-                print(f"eval():  li calls fn/internal")
+                print(f"eval():  li calls fn/internal - name_match: {name_match}")
 
             # len == 1, so it's a reference
             if len(li) == 1:
@@ -116,7 +116,7 @@ def eval(li, scope, forced_handler_desc=None):
             else:
                 if name_match[2] == "fn":
                     if DEBUG:
-                        print("eval():  name_match is function")
+                        print(f"eval():  name_match is function - name_match: {name_match}")
 
                     retv = _call_fn(li, name_match, scope)
 
@@ -389,6 +389,7 @@ def find_function_method(li, fn, scope):
                 # if value not found, try to infer type of argument
                 else:
                     solved_argument = _infer_type(arg)
+
                     if solved_argument is None:
                         raise Exception(f"Unassigned name: {arg}")
             #
@@ -679,7 +680,11 @@ def _get_struct_member(li, scope):
 
 
 def _seek_struct_ref(li, scope, fn):
-    # print(f"_get_struct_member li: {li}")
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_seek_struct_ref():  li: {li} fn: {fn}")
 
     # seeks names matching with li[0]
     name_matches = [n for n in scope[0] if n[0] == li[0]]

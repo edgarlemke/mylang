@@ -90,7 +90,7 @@ def __set__(node, scope, split_args=True):
     if len(data) == 1:
         if isinstance(name, list):
             if DEBUG:
-                print(f"__set__():  compiletime - name is list")
+                print(f"__set__():  compiletime - name is list - name: {name}")
 
             type_ = _solve_list_name_type(name, scope)
 
@@ -159,7 +159,7 @@ def __set__(node, scope, split_args=True):
 
         else:
             if DEBUG:
-                print(f"__set__():  frontend compiletime - name: {name} type: {type_}")
+                print(f"__set__():  frontend compiletime - name is list - name: {name} type: {type_}")
 
             if isinstance(type_, list):
                 if type_[0] == "Array":
@@ -339,7 +339,8 @@ def _set_array_member(li, scope, value):
         if DEBUG:
             print(f"myfn():  - n: {n} index: {index} value: {value}")
 
-        n[3][index] = value
+        if not scope[7]:
+            n[3][index] = value
 
         if DEBUG:
             print(f"myfn():  - n after set: {n}")
@@ -370,30 +371,46 @@ def _solve_list_name_type(name, scope):
 
             return type_
 
+        if type_[0] == "ptr":
+            if DEBUG:
+                print(f"iter():  - type[0] is ptr")
+
+            return type_
+
     type_ = iter(name, scope)
+
+    if DEBUG:
+        print(f"_solve_list_name_type():  type_: {type_}")
+
     return type_
 
 
-def split_function_arguments(args):
-    # print(f"args: {args}")
+def split_function_arguments(arg_pieces):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"split_function_arguments():  arg_pieces: {arg_pieces}")
 
     split_args = []
     buf = []
-    ct = 0
 
-    for arg in args:
-        # print(f"arg: {arg} ct: {ct}")
-        buf.append(arg)
+    for piece in arg_pieces:
+        if DEBUG:
+            print(f"split_function_arguments():  piece: {piece}")
 
-        if ct == 1:
+        is_comma = piece == ","
+        if is_comma:
             # print(f"buf: {buf}")
             split_args.append(buf.copy())
             buf = []
-            ct = 0
         else:
-            ct += 1
+            buf.append(piece)
+    if len(buf) > 0:
+        split_args.append(buf.copy())
 
-    # print(f"split_args: {split_args}")
+    if DEBUG:
+        print(f"split_function_arguments():  split_args: {split_args}")
 
     return split_args
 

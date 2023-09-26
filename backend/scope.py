@@ -181,8 +181,11 @@ def __set__(node, scope):
         if DEBUG:
             print(f"__set__():  type isn't fn - name: {name} type: {type_}")
 
-        if isinstance(type_, list) and type_[0] == "Array":
-            pass
+        if isinstance(type_, list):
+            if type_[0] == "Array":
+                pass
+            elif type_[0] == "ptr":
+                pass
 
         elif len(functions_stack) > 0:  # and mutdecl == "mut":
             function_name = functions_stack[len(functions_stack) - 1][0]
@@ -320,6 +323,13 @@ def __set__(node, scope):
                 else:
                     retv = _set_array(type_value, type_, data, name)
 
+            # check for pointers
+            elif type_value[0] == "ptr":
+                if DEBUG:
+                    print(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
+
+                retv = "RETV_PTR"
+
 
 #                if type_value[2] == "struct":
 #                    # if not a generic struct
@@ -411,8 +421,8 @@ def _set_array_member(type_value, member_index, type_, data, name, array_size):
 
     value = data
 
-    retv = f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
-\t\tstore {array_members_type} {value}, {array_members_type}* %{name}_member_{member_index}_ptr
+    retv = f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}, i32 0, i32 {member_index}
+\t\tstore {array_members_type} %{value}, {array_members_type}* %{name}_member_{member_index}_ptr
 """
 
     return retv
@@ -487,7 +497,11 @@ def _validate_set(node, scope):
 
 
 def _unoverload(name, function_arguments):
-    # print(f"_unoverload: {node}")
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_unoverload():  name: {name} function_arguments: {function_arguments} ")
 
     # extract node, get function name
     # set_, mutdecl, name, data = node
@@ -507,8 +521,23 @@ def _unoverload(name, function_arguments):
 
         buffer = []
         for arg_type in arg_types:
+            if DEBUG:
+                print(f"_unoverload():  arg_type: {arg_type}")
+
             if isinstance(arg_type, list):
-                buffer.append("_".join(arg_type))
+                # buffer.append("_".join(arg_type))
+
+                list_arg_type_buffer = []
+
+                def _serialize(li):
+                    for child in li:
+                        if isinstance(child, list):
+                            _serialize(child)
+                        else:
+                            list_arg_type_buffer.append(child)
+                _serialize(arg_type)
+                buffer.append("_".join(list_arg_type_buffer))
+
             else:
                 buffer.append(arg_type)
 
@@ -1023,8 +1052,16 @@ def return_call(node, scope, stack=[]):
                         argument_name = True
 
                 if not argument_name:
-                    NAME = _get_NAME(function_name, argument_value)
-                    argument_value = f"%{NAME}"
+                    if DEBUG:
+                        print(f"return_call():  not argument_name")
+
+                    if isinstance(scope_argument_value[2], list):
+                        if scope_argument_value[2][0] == "Array":
+                            argument_value = f"%{argument_value}_Array_ptr"
+
+                    else:
+                        NAME = _get_NAME(function_name, argument_value)
+                        argument_value = f"%{NAME}"
 
                 # print(f"argument_value: {argument_value}")
 
@@ -1069,25 +1106,31 @@ def _get_var_name(function_name, prefix):
     return var_name
 
 
-_nyaa = {}
+_names_storage = {}
 
 
 def _get_NAME(function_name, name):
-    # initialize key in _nyaa for function_name
-    if function_name not in _nyaa.keys():
-        _nyaa[function_name] = {}
+    # initialize key in _names_storage for function_name
+    if function_name not in _names_storage.keys():
+        _names_storage[function_name] = {}
 
-    # initialize key in _nyaa[function_name] for name
-    if name not in _nyaa[function_name].keys():
-        _nyaa[function_name][name] = 0
+    # initialize key in _names_storage[function_name] for name
+    if name not in _names_storage[function_name].keys():
+        _names_storage[function_name][name] = 0
 
-    NAME = f"{name}_{_nyaa[function_name][name]}"
+    NAME = f"{name}_{_names_storage[function_name][name]}"
 
-    return NAME  # _nyaa[function_name][name]
+    return NAME  # _names_storage[function_name][name]
 
 
 def _increment_NAME(function_name, name):
-    _nyaa[function_name][name] += 1
+    DEBUG = False
+    DEBUG = True
+
+    if DEBUG:
+        print(f"_increment_NAME():  function_name: {function_name} name: {name}")
+
+    _names_storage[function_name][name] += 1
 
 
 scope = [

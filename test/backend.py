@@ -66,7 +66,7 @@ def test_fn_args():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function argument has invalid type",
-        "fn (x wrong  y wrong) int ()"
+        "fn (x wrong, y wrong) int ()"
     )
 
 
@@ -75,7 +75,7 @@ def test_fn_ret_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function return type has invalid type",
-        "fn (x int  y int) wrong ()"
+        "fn (x int, y int) wrong ()"
     )
 #
 

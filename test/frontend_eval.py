@@ -70,7 +70,7 @@ def test_fn():
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
-        "fn main (x int  y int) int ()"
+        "fn main (x int, y int) int ()"
     )
 
 
@@ -568,7 +568,7 @@ def test_unlisp_set_fn():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """fn somefn (x int  y int) ()
+        """fn somefn (x int, y int) ()
 	ret
 somefn 12 34
 """
@@ -580,7 +580,7 @@ def test_unlisp_set_fn_with_return():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """fn somefn (x int  y int)
+        """fn somefn (x int, y int)
 	ret
 somefn 12 34
 """

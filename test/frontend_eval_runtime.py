@@ -71,7 +71,7 @@ def test_fn():
         i.getframeinfo(i.currentframe()).function,
         """((set mut main (fn (((x int) (y int)) int ()))))\n""",
         "",
-        "fn main (x int  y int) int ()"
+        "fn main (x int, y int) int ()"
     )
 
 
