@@ -16,6 +16,7 @@ def run_li(li, print_output=False):
 (set const stderr (int 2))
 
 (set mut print (fn (((text Str)) ((linux_write stdout text)))))
+(set mut print (fn (((text (Array byte))) ((linux_write stdout text)))))
 
 (set mut add (fn (((x int) (y int)) int ((add_int_int x y)))))
 (set mut sub (fn (((x int) (y int)) int ((sub_int_int x y)))))

@@ -137,6 +137,18 @@ define i64 @test__uint_int(i64 %x, i64 %y) {
     )
 
 
+def test_llvm_constant_propagation():
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        """@main_CONSTANT = constant i64 1;
+define void @main() {
+	start:
+		ret void
+}
+""",
+        "",
+        """((set mut main (fn (() ((set const CONSTANT (int 1)))))))"""
+    )
 #
 
 

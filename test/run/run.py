@@ -761,14 +761,14 @@ def test_array_byte_init():
     )
 
 
-def test_array_byte_init_uninitialized():
+def test_array_byte_init_unset():
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./array_byte_init_uninitialized/main.k"
+        "./array_byte_init_unset/main.k"
     )
 #
 #

@@ -1,3 +1,3 @@
 fn main ()
-	Str msg = "Hello world! ❤️"
+	(Array byte) msg = "Hello world! ❤️"
 	print msg

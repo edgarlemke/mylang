@@ -41,9 +41,12 @@ def __handle__(node, scope):
 
 
 functions_stack = []
+function_global_stack = []
 
 
 def __set__(node, scope):
+    global function_global_stack
+
     DEBUG = False
     # DEBUG = True
 
@@ -172,8 +175,20 @@ def __set__(node, scope):
         if "ret" not in serialized_body[len(serialized_body) - 1]:
             serialized_body.append([f"\t\tret {return_type}"])
 
-        # declaration, definition = _write_fn(uname, args, return_type, body)
+        # declaration, definition = _write_fn(uname, args, return_type, body
+        function_global = "\n".join(function_global_stack)
+        if DEBUG:
+            print(f"__set__():  function_global: {function_global}")
+
         retv = _write_fn(uname, args, return_type, serialized_body)
+
+        if len(function_global) > 0:
+            retv.insert(0, function_global)
+
+        if DEBUG:
+            print(f"__set__():  retv: {retv}")
+
+        function_global_stack = []
 
     else:
         tmp_name = None
@@ -204,7 +219,15 @@ def __set__(node, scope):
         if type_ == "Str":
             str_, size = _converted_str(data[1])
 
-            retv = f"""
+            if mutdecl == "const":
+                function_name = functions_stack[len(functions_stack) - 1][0]
+                function_global_stack.append(f"""@{function_name}_{name} = constant [{size} x i8] c"{str_}" """)
+                retv = f"""
+\t\t%{tmp_name} = alloca %struct.Str, align 8
+"""
+
+            elif mutdecl == "mut":
+                retv = f"""
 \t\t%{tmp_name} = alloca %struct.Str, align 8
 
 \t\t%{name}_str = alloca [{size} x i8]
@@ -266,8 +289,21 @@ def __set__(node, scope):
                 else:
                     if DEBUG:
                         print(f"__set__():  backend - not global scope")
-                    # allocate space in stack and set value
-                    retv = f"""\t\t%{name}_stack = alloca {t}
+
+                    if mutdecl == "const":
+                        # propagate constant to global scope
+                        # get function name
+                        fn_name = "main"
+
+                        # print(f"functions_stack: {functions_stack}")
+                        function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value};")
+
+                        # stack.append(f"@{fn_name}_{name} = constant {t} {value}")
+                        retv = ""
+
+                    elif mutdecl == "mut":
+                        # allocate space in stack and set value
+                        retv = f"""\t\t%{name}_stack = alloca {t}
 \t\tstore {t} {value}, {t}* %{name}_stack
 \t\t%{tmp_name} = load {t}, {t}* %{name}_stack
 """
@@ -378,27 +414,55 @@ def __set__(node, scope):
 
 
 def _set_array(type_value, type_, data, name):
-    array_struct_name = "_".join([type_value[0]] + type_[1:])
+    DEBUG = False
+    # DEBUG = True
 
-    array_size = len(data[1])
+    unset = False
+    end = len(type_)
+    if end == 2:
+        array_size = len(data[1])
+
+    elif end == 3:
+        end -= 1
+        array_size = int(type_[2])
+        unset = True
+
+    array_struct_name = "_".join([type_value[0]] + type_[1:end])
     array_members_type = _convert_type(type_[1])
+
+    if DEBUG:
+        print(f"_set_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
 
     # setup stack with start of array initialization
     stack = [f"""\t\t; start of initialization of {name} Array
 \t\t%{name}_Array = alloca %{array_struct_name}
-\t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
 """]
 
-    # initialize array members
-    for member_index in range(0, array_size):
-        value_to_store = data[1][member_index]
+    if not unset:
+        # initialize array members
 
-        # if value is ?, keep array members uninitialized - unsafer but cheaper
-        if value_to_store == "?":
-            continue
+        # check for array of bytes
+        if not isinstance(data[1], list) and type_[1] == "byte":
+            converted_str = _converted_str(data[1])
+            array_size = converted_str[1]
+            value_to_store = f"c\"{converted_str[0]}\""
 
-        stack.append(f"""\t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
-\t\tstore {array_members_type} {data[1][member_index]}, {array_members_type}* %{name}_member_{member_index}_ptr
+#            stack.append(f"""\t\t; member {member_index} initialization
+# \t\t%{name}_member_{member_index}_ptr = getelementptr [{array_size} x {array_members_type}], [{array_size} x {array_members_type}]* %{name}_Array_members, i32 0, i32 {member_index}
+# \t\tstore {array_members_type} {value_to_store}, {array_members_type}* %{name}_member_{member_index}_ptr
+# """)
+
+        else:
+
+            array_ir_buffer = []
+            for member_index in range(0, array_size):
+                array_ir_buffer.append(f"{array_members_type} {data[1][member_index]}")
+
+            value_to_store = f"""[{",".join(array_ir_buffer)}]"""
+
+        stack.append(f"""\t\t; members initialization
+\t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
+\t\tstore [{array_size} x {array_members_type}] {value_to_store}, [{array_size} x {array_members_type}]* %{name}_Array_members
 """)
 
     # end of array initialization
@@ -486,6 +550,41 @@ def _validate_set(node, scope):
         type_ = data[0]
         # value = data[1]
 
+        if isinstance(type_, list):
+            if DEBUG:
+                print(f"_vadidate_set():  backend - type_ is list")
+
+            if len(type_) < 2 or len(type_) > 3:
+                raise Exception("Constant assignment has invalid type - type_: {type_}")
+
+            if type_[0] == "Array":
+                if DEBUG:
+                    print(f"_validate_set():  backend - type is Array: {type_}")
+
+                # validate generic type
+                valid_member_type = _validate_members_type(type_[1], scope)
+                if not valid_member_type:
+                    raise Exception("Constant assignment has invalid type - type_[1]: {type_[1]}")
+
+                if DEBUG:
+                    print(f"_validate_set():  backend - valid member type")
+
+                # check for array size and unset
+                if len(type_) == 3:
+                    if DEBUG:
+                        print(f"_validate_set():  backend - len of type_ is 3")
+
+                    array_size = type_[2]
+                    try:
+                        int(array_size)
+                    except BaseException:
+                        raise Exception("Constant assignment of Array with invalid size - array_size: {array_size}")
+
+                    if data[1] != "unset":
+                        raise Exception("Constant assignment of sized Array for value other than \"unset\" - value: {data[1]}")
+
+                type_ = type_[0]
+
     # validate type
     if not _validate_type(type_, scope):
         raise Exception(f"Constant assignment has invalid type - type_: {type_} - node: {node}")
@@ -494,6 +593,31 @@ def _validate_set(node, scope):
         print(f"_validate_set():  backend - node OK: {node}")
 
     return
+
+
+def _validate_members_type(members_type, scope):
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"_validate_members_type():  members_type: {members_type}")
+
+    valid = True
+
+    if not isinstance(members_type, list):
+        return _validate_type(members_type, scope)
+
+    def iter(type_):
+        if DEBUG:
+            print(f"iter():  type_: {type_}")
+
+        for child in type_:
+            if isinstance(child, list):
+                iter(child)
+
+    iter(members_types)
+
+    return valid
 
 
 def _unoverload(name, function_arguments):
@@ -1018,6 +1142,7 @@ def return_call(node, scope, stack=[]):
 
             if DEBUG:
                 print(f"return_call():  before return_call() call - stack: {stack}\n")
+
             result, stack = return_call(argument_value, scope, stack)
 
             if DEBUG:
@@ -1044,6 +1169,9 @@ def return_call(node, scope, stack=[]):
             if scope_argument_value != []:
                 argument_name = False
                 if len(functions_stack) > 0:
+                    if DEBUG:
+                        print(f"return_call():  len(functions_stack) > 0")
+
                     arguments_matches = [arg for arg in functions_stack[len(functions_stack) - 1][2] if argument_value == arg[0]]
                     # print(f"arguments_matches: {arguments_matches}")
 
@@ -1055,13 +1183,21 @@ def return_call(node, scope, stack=[]):
                     if DEBUG:
                         print(f"return_call():  not argument_name")
 
+                    # check for generic types
                     if isinstance(scope_argument_value[2], list):
                         if scope_argument_value[2][0] == "Array":
                             argument_value = f"%{argument_value}_Array_ptr"
 
+                    # not generic types
                     else:
-                        NAME = _get_NAME(function_name, argument_value)
-                        argument_value = f"%{NAME}"
+                        if scope_argument_value[1] == 'const':
+                            cur_function_name = "main_"
+                            converted_type += "*"
+                            argument_value = f"@{cur_function_name}{argument_value}"
+
+                        elif scope_argument_value[1] == 'mut':
+                            NAME = _get_NAME(function_name, argument_value)
+                            argument_value = f"%{NAME}"
 
                 # print(f"argument_value: {argument_value}")
 
