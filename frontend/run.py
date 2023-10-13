@@ -27,9 +27,9 @@ def run(
     # print(f"expr_li: {expr_li}")
 
     if compile_time_scope:
-        eval_li = eval.eval(expr_li, compiletime.scope, ["handle"])
+        eval_li = eval.eval(expr_li, compiletime.scope)
     else:
-        eval_li = eval.eval(expr_li, runtime.scope, ["handle"])
+        eval_li = eval.eval(expr_li, runtime.scope)
 
     _mangle_if_nodes(eval_li)
 

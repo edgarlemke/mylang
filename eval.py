@@ -24,7 +24,7 @@ default_scope = {
 }
 
 
-def eval(li, scope, forced_handler_desc=None):
+def eval(li, scope):
     DEBUG = False
     # DEBUG = True
 
@@ -40,9 +40,6 @@ def eval(li, scope, forced_handler_desc=None):
     # expand macros until there are no more macros to expand
     new_li = None
     macros = scope["macros"]
-
-    if DEBUG:
-        print(f"""eval():  macros: {macros} {scope["forced_handler"]}""")
 
     if len(macros):
         expand = True
@@ -73,14 +70,6 @@ def eval(li, scope, forced_handler_desc=None):
 
         return li
 
-    # if there's a forced handler descriptor
-    if forced_handler_desc is not None:
-        # print(f"forced_handler_desc: {forced_handler_desc}")
-        # if there's a forced handler set in scope but no handler
-        if scope["forced_handler"] is not None and li[0] != forced_handler_desc[0]:
-            # panic
-            raise Exception("Forced handler set but no handler")
-
     is_list = isinstance(li[0], list)
     if is_list:
         if DEBUG:
@@ -90,18 +79,13 @@ def eval(li, scope, forced_handler_desc=None):
             if DEBUG:
                 print(f"eval():  li item: {item}")
 
-            evaluated_list_ = eval(item, scope, forced_handler_desc)
+            evaluated_list_ = eval(item, scope)
             if len(evaluated_list_) > 0:
                 evaled_li.append(evaluated_list_)
 
         li = evaled_li
         if DEBUG:
             print(f"evaled_li: {evaled_li}")
-
-        # check if li has evaled with forced handler in scope but no handler
-        if forced_handler_desc is not None and scope["forced_handler"] is not None:
-            # panic
-            raise Exception(f"""Forced handler set in scope but no handler - forced handler: {scope["forced_handler"]} - li: {li}""")
 
     else:
         # get name value from scope
@@ -163,7 +147,7 @@ def eval(li, scope, forced_handler_desc=None):
                     # evaluate the list
                     if DEBUG:
                         print(f"eval():  evaluating list: {name_match[3]}")
-                    evaled_name_match_value = eval(name_match_value, scope, forced_handler_desc)
+                    evaled_name_match_value = eval(name_match_value, scope)
                     method_type = evaled_name_match_value[0]
 
                     # if return_calls is set, get correct method type

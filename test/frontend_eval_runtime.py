@@ -227,52 +227,6 @@ x ()
     )
 
 
-# def test_ret_handler():
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((bool true) (handled_overflow))\n",
-#        "",
-#        """set mut x (fn ( () bool
-# ret (data bool true) (data overflow)
-# ))
-# x ()
-# handle data
-# data handled_overflow
-# """
-#    )
-
-
-def test_ret_missing_handler_evaled_li():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Forced handler set in scope but no handler",
-        """set mut x (fn ( () bool
-	ret (data bool true) (data overflow)
-))
-x ()
-handle somethingelse
-	data somethingelse
-"""
-    )
-
-
-def test_ret_missing_handler():
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Forced handler set but no handler",
-        """set mut x (fn ( () bool
-	ret (data bool true) (data overflow)
-))
-x ()
-handle somethingelse
-	(data somethingelse)
-data whatever
-"""
-    )
-
-
 # __set__
 def test_set_const():
     return _test(

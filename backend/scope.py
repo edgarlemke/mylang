@@ -38,10 +38,6 @@ def _validate_fn(node, scope):
         raise Exception(f"Function return type has invalid type: {ret_type} {node}")
 
 
-def __handle__(node, scope):
-    return []
-
-
 functions_stack = []
 function_global_stack = []
 
@@ -1340,7 +1336,6 @@ def _setup_scope():
 
     names = [
     ["fn", "mut", "internal", __fn__],
-    ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
 

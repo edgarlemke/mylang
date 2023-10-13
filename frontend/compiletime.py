@@ -42,41 +42,6 @@ def validate_fn(node, scope):
 #        raise Exception(f"Function return type has invalid type: {ret_type} {node}")
 
 
-def __handle__(node, scope):
-    # print(f"__handle__ node: {node} {scope["forced_handler"][0]}")
-    _validate_handle(node, scope)
-
-    first_cond = (not isinstance(node[1], list) and scope["forced_handler"][0] == node[1])
-    second_cond = (isinstance(node[1], list) and scope["forced_handler"][0] in node[1])
-
-    if scope["forced_handler"] is not None and (first_cond or second_cond):
-        import copy
-        handler_scope = copy.deepcopy(eval.default_scope)
-        handler_scope["parent"] = scope
-        scope["children"].append(handler_scope)
-
-        # print(f"node: {node}")
-        if len(node) == 4:
-            __set__(['set', 'const', node[3], ['data', scope["forced_handler"]]], handler_scope)
-            eval.eval(node[len(node) - 1], handler_scope)
-
-        scope["children"].remove(handler_scope)
-
-        li = eval.eval(node[len(node) - 1], handler_scope)
-
-        # clear forced handler field
-        scope["forced_handler"] = None
-
-        return li[0]
-
-    return []
-
-
-def _validate_handle(node, scope):
-    if len(node) not in [3, 4]:
-        raise Exception(f"Wrong number of arguments for handle: {node}")
-
-
 def __set__(node, scope, split_args=True):
     DEBUG = False
     # DEBUG = True
@@ -597,7 +562,6 @@ def _validate_unsafe(node, scope):
 scope = copy.deepcopy(eval.default_scope)
 scope["names"] = [  # names
     # ["fn", "mut", "internal", __fn__],
-    ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],

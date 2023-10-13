@@ -69,7 +69,7 @@ def run_li(li, print_output=False):
 """
     li = _get_list_from_expr(default) + li
 
-    eval_li = eval.eval(li, scope.scope, ["handle"])
+    eval_li = eval.eval(li, scope.scope)
 
     default_llvm_ir = """define i64 @linux_write (i64 %fildes, i8* %buf, i64 %nbyte) {
 start:
@@ -102,7 +102,7 @@ def run(expr, print_output=False):
     DEBUG = False
 
     expr_li = _get_list_from_expr(expr)
-    eval_li = eval.eval(expr_li, scope.scope, ["handle"])
+    eval_li = eval.eval(expr_li, scope.scope)
 
     if DEBUG:
         print(f"run():  eval_li: {eval_li}")

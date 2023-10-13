@@ -8,11 +8,6 @@ def __fn__(node, scope):
     return node
 
 
-def __handle__(node, scope):
-    compiletime._validate_handle(node, scope)
-    return node
-
-
 def __set__(node, scope):
     DEBUG = False
     if DEBUG:
@@ -88,7 +83,6 @@ def __unsafe__(node, scope):
 scope = copy.deepcopy(eval.default_scope)
 scope["names"] = [  # names
      ["fn", "mut", "internal", __fn__],
-    ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
