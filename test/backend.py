@@ -143,6 +143,9 @@ def test_llvm_constant_propagation():
         """@main_CONSTANT = constant i64 1;
 define void @main() {
 	start:
+		; load value of constant "CONSTANT"
+		%CONSTANT = load i64, i64* @main_CONSTANT
+
 		ret void
 }
 """,

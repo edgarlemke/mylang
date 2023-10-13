@@ -1,3 +1,4 @@
+import copy
 from . import compiletime
 import eval
 
@@ -84,8 +85,8 @@ def __unsafe__(node, scope):
     return node[1]
 
 
-scope = eval.default_scope.copy()
-scope[0] = [  # names
+scope = copy.deepcopy(eval.default_scope)
+scope["names"] = [  # names
      ["fn", "mut", "internal", __fn__],
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],

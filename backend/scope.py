@@ -1,3 +1,5 @@
+import copy
+import eval
 import argparse
 import os
 import sys
@@ -21,7 +23,7 @@ def _validate_fn(node, scope):
     import frontend.compiletime as ct
 
     fn, args, ret_type, body = node
-    types = [t[0] for t in scope[0] if t[2] == "type"]
+    types = [t[0] for t in scope["names"] if t[2] == "type"]
 
     # check if types of the arguments are valid
     split_args = ct.split_function_arguments(args)
@@ -65,7 +67,7 @@ def __set__(node, scope):
     # back-end validation
     _validate_set(node, scope)
 
-    names = scope[0]
+    names = scope["names"]
     set_, mutdecl, name, data = node
 
     name_candidate = []
@@ -126,16 +128,16 @@ def __set__(node, scope):
         function_body_scope = copy.deepcopy(eval.default_scope)
 
         # set scope child
-        scope[3].append(function_body_scope)
+        scope["children"].append(function_body_scope)
 
         # set function body scope parent
-        function_body_scope[2] = scope
+        function_body_scope["parent"] = scope
 
         # set scope return calls
-        function_body_scope[6] = scope[6]
+        function_body_scope["return_call"] = scope["return_call"]
 
         # set scope as backend scope
-        function_body_scope[7] = True
+        function_body_scope["backend_scope"] = True
 
         # setup function arguments
         for function_argument in function_arguments:
@@ -143,7 +145,7 @@ def __set__(node, scope):
                 print(f"__set__():  backend - function_argument: {function_argument}")
 
             argument_list = [function_argument[0], "const", function_argument[1], None]
-            function_body_scope[0].append(argument_list)
+            function_body_scope["names"].append(argument_list)
 
         if DEBUG:
             print(f"__set__():  backend - function_body_scope: {function_body_scope}")
@@ -280,7 +282,7 @@ def __set__(node, scope):
 
             else:
                 # check if it's at global backend scope
-                if scope[2] is None:
+                if scope["parent"] is None:
                     if DEBUG:
                         print(F"__set__():  backend - global scope")
                     retv = f"@{name} = global {t} {value}"
@@ -299,7 +301,15 @@ def __set__(node, scope):
                         function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value};")
 
                         # stack.append(f"@{fn_name}_{name} = constant {t} {value}")
-                        retv = ""
+
+                        # if is an integer read the pointer
+                        if type_ in ["int", "uint"]:
+                            retv = f"""\t\t; load value of constant "{name}"
+\t\t%{name} = load {t}, {t}* @{fn_name}_{name}
+"""
+
+                        else:
+                            retv = ""
 
                     elif mutdecl == "mut":
                         # allocate space in stack and set value
@@ -365,7 +375,6 @@ def __set__(node, scope):
                     print(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
 
                 retv = "RETV_PTR"
-
 
 #                if type_value[2] == "struct":
 #                    # if not a generic struct
@@ -434,8 +443,8 @@ def _set_array(type_value, type_, data, name):
         print(f"_set_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
 
     # setup stack with start of array initialization
-    stack = [f"""\t\t; start of initialization of {name} Array
-\t\t%{name}_Array = alloca %{array_struct_name}
+    stack = [f"""\t\t; start of initialization of "{name}" Array
+\t\t%{name}_Array_ptr = alloca %{array_struct_name}
 """]
 
     if not unset:
@@ -460,20 +469,21 @@ def _set_array(type_value, type_, data, name):
 
             value_to_store = f"""[{",".join(array_ir_buffer)}]"""
 
-        stack.append(f"""\t\t; members initialization
+        stack.append(f"""\t\t; allocate and init stack for members
 \t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
 \t\tstore [{array_size} x {array_members_type}] {value_to_store}, [{array_size} x {array_members_type}]* %{name}_Array_members
+
+\t\t; setup members pointer in Array
+\t\t%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
+\t\tstore [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
 """)
 
     # end of array initialization
-    stack.append(f"""\t\t%{name}_Array_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 0
-
-\t\t%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
-\t\tstore [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
-
-\t\t%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array, i32 0, i32 1
+    stack.append(f"""\t\t; setup Array size as {array_size}
+\t\t%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 1
 \t\tstore i64 {array_size}, i64* %{name}_Array_size_ptr
-\t\t; end of initialization of {name} Array
+
+\t\t; end of initialization of "{name}" Array
 """)
 
     retv = "\n".join(stack)
@@ -719,17 +729,17 @@ def _validate_type(type_, scope):
     def iterup(scope, all_types, all_structs):
         # print(f"\n!! iterup - scope: {scope}\n")
 
-        parent_scope = scope[2]
-        children_scopes = scope[3]
+        parent_scope = scope["parent"]
+        children_scopes = scope["children"]
 
         if parent_scope is not None:
             iterup(parent_scope, all_types, all_structs)
 
-        types = [t[0] for t in scope[0] if t[2] == "type" and t[0] not in all_types]
+        types = [t[0] for t in scope["names"] if t[2] == "type" and t[0] not in all_types]
         all_types += types
         # print(f"types: {types}")
 
-        structs = [s[0] for s in scope[0] if s[2] == "struct" and s[0] not in all_structs]
+        structs = [s[0] for s in scope["names"] if s[2] == "struct" and s[0] not in all_structs]
         all_structs += structs
         # print(f"structs: {structs}")
 
@@ -824,7 +834,7 @@ def __if__(node, scope):
 
     import eval
 
-    stack = ["\t\t; if start"]
+    stack = ["\t; if start"]
 
     # extract elifs from node
     elifs = [child for child in node[3:] if isinstance(child, list) and len(child) > 0 and child[0] == "elif"]
@@ -1097,7 +1107,7 @@ def return_call(node, scope, stack=[]):
     if DEBUG:
         print(f"return_call():  value: {value}")
 
-    # matches = [name for name in scope[0] if name[0] == li_function_name]
+    # matches = [name for name in scope["names"] if name[0] == li_function_name]
 
     # if len(matches) == 0:
     #    raise Exception(f"No name matches for function: {li_function_name}")
@@ -1191,9 +1201,14 @@ def return_call(node, scope, stack=[]):
                     # not generic types
                     else:
                         if scope_argument_value[1] == 'const':
-                            cur_function_name = "main_"
-                            converted_type += "*"
-                            argument_value = f"@{cur_function_name}{argument_value}"
+
+                            if scope_argument_value[2] in ["int", "uint"]:
+                                argument_value = f"%{argument_value}"
+
+                            else:
+                                cur_function_name = "main_"
+                                argument_value = f"@{cur_function_name}{argument_value}"
+                                converted_type += "*"
 
                         elif scope_argument_value[1] == 'mut':
                             NAME = _get_NAME(function_name, argument_value)
@@ -1269,8 +1284,61 @@ def _increment_NAME(function_name, name):
     _names_storage[function_name][name] += 1
 
 
-scope = [
-  [  # names
+scope = copy.deepcopy(eval.default_scope)
+
+# scope = [
+#  [  # names
+#    ["fn", "mut", "internal", __fn__],
+#    ["handle", "mut", "internal", __handle__],
+#    ["set", "mut", "internal", __set__],
+#    ["macro", "mut", "internal", __macro__],
+#
+#    ["if", "mut", "internal", __if__],
+#    ["elif", "mut", "internal", __elif__],
+#
+#    ["data", "mut", "internal", __data__],
+#    ["write_ptr", "mut", "internal", __write_ptr__],
+#    ["read_ptr", "mut", "internal", __read_ptr__],
+#    ["get_ptr", "mut", "internal", __get_ptr__],
+#    ["size_of", "mut", "internal", __size_of__],
+#    ["unsafe", "mut", "internal", __unsafe__],
+#
+#    ["linux_write", "const", "internal", __linux_write__],
+#
+#    ["int", "const", "type", [8]],
+#
+#    ["uint", "const", "type", [8]],
+#
+#    ["ptr", "const", "type", [8]],
+#
+#    ["byte", "const", "type", [1]],
+#    ["bool", "const", "type", [1]],
+#
+#    ["float", "const", "type", [8]],
+#
+#    ["Array", "const", "type", ['?']],
+#    ["struct", "const", "type", ['?']],
+#    ["enum", "const", "type", ['?']],
+#
+#    ["Str", "const", "type", ['?']],
+#  ],
+#  [],    # macros
+#  None,  # parent scope
+#  [],    # children scope
+#  True,  # is safe scope
+#  None,  # forced handler
+#  return_call,   # eval return call handler
+#  True,   # backend scope
+# ]
+
+
+def _setup_scope():
+    from . import bool as bool_
+    from . import uint as uint
+    from . import int as int_
+    from . import float as float_
+
+    names = [
     ["fn", "mut", "internal", __fn__],
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],
@@ -1304,24 +1372,6 @@ scope = [
     ["enum", "const", "type", ['?']],
 
     ["Str", "const", "type", ['?']],
-  ],
-  [],    # macros
-  None,  # parent scope
-  [],    # children scope
-  True,  # is safe scope
-  None,  # forced handler
-  return_call,   # eval return call handler
-  True,   # backend scope
-]
-
-
-def _setup_scope():
-    from . import bool as bool_
-    from . import uint as uint
-    from . import int as int_
-    from . import float as float_
-
-    names = [
 
     ["and_bool_bool", "const", "internal", bool_.__and_bool_bool__],
     ["or_bool_bool", "const", "internal", bool_.__or_bool_bool__],
@@ -1374,7 +1424,10 @@ def _setup_scope():
     ]
 
     for name in names:
-        scope[0].append(name)
+        scope["names"].append(name)
+
+    scope["return_call"] = return_call
+    scope["backend_scope"] = True
 
 
 _setup_scope()

@@ -1,3 +1,4 @@
+import copy
 import eval
 
 
@@ -15,7 +16,7 @@ def __fn__(node, scope):
 
     # create new scope
     child_scope = [[], [], scope, []]
-    scope[3].append(child_scope)
+    scope["children"].append(child_scope)
 
     return node
 
@@ -26,7 +27,7 @@ def validate_fn(node, scope):
         raise Exception(f"Wrong number of arguments for fn: {node}")
 
     fn, args, ret_type, body = node
-    types = [t[0] for t in scope[0] if t[2] == "type"]
+    types = [t[0] for t in scope["names"] if t[2] == "type"]
 
 #    # check if types of the arguments are valid
 #    split_args = split_function_arguments(args)
@@ -42,28 +43,29 @@ def validate_fn(node, scope):
 
 
 def __handle__(node, scope):
-    # print(f"__handle__ node: {node} {scope[5][0]}")
+    # print(f"__handle__ node: {node} {scope["forced_handler"][0]}")
     _validate_handle(node, scope)
 
-    first_cond = (not isinstance(node[1], list) and scope[5][0] == node[1])
-    second_cond = (isinstance(node[1], list) and scope[5][0] in node[1])
+    first_cond = (not isinstance(node[1], list) and scope["forced_handler"][0] == node[1])
+    second_cond = (isinstance(node[1], list) and scope["forced_handler"][0] in node[1])
 
-    if scope[5] is not None and (first_cond or second_cond):
-        handler_scope = eval.default_scope.copy()
-        handler_scope[2] = scope
-        scope[3].append(handler_scope)
+    if scope["forced_handler"] is not None and (first_cond or second_cond):
+        import copy
+        handler_scope = copy.deepcopy(eval.default_scope)
+        handler_scope["parent"] = scope
+        scope["children"].append(handler_scope)
 
         # print(f"node: {node}")
         if len(node) == 4:
-            __set__(['set', 'const', node[3], ['data', scope[5]]], handler_scope)
+            __set__(['set', 'const', node[3], ['data', scope["forced_handler"]]], handler_scope)
             eval.eval(node[len(node) - 1], handler_scope)
 
-        scope[3].remove(handler_scope)
+        scope["children"].remove(handler_scope)
 
         li = eval.eval(node[len(node) - 1], handler_scope)
 
         # clear forced handler field
-        scope[5] = None
+        scope["forced_handler"] = None
 
         return li[0]
 
@@ -84,7 +86,7 @@ def __set__(node, scope, split_args=True):
 
     _validate_set(node, scope)
 
-    names = scope[0]
+    names = scope["names"]
     set_, mutdecl, name, data = node
 
     if len(data) == 1:
@@ -181,7 +183,7 @@ def _validate_set(node, scope):
     # DEBUG = True
 
     if DEBUG:
-        print(f"_validate_set():  frontend compiletime - node: {node} scope[0]: {scope[0]}")
+        print(f"""_validate_set():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
 
     # check set arguments number
     if len(node) != 4:
@@ -192,15 +194,15 @@ def _validate_set(node, scope):
     is_reassignment = False
     type_ = None
 
-    # types = [t[0] for t in scope[0] if t[2] == "type"]
+    # types = [t[0] for t in scope["names"] if t[2] == "type"]
     # if DEBUG:
     #    print(f"_validate_set():  types: {types}")
 
-    generic_types_values = [t for t in scope[0] if isinstance(t[2], list) and len(t[2]) > 0]
+    generic_types_values = [t for t in scope["names"] if isinstance(t[2], list) and len(t[2]) > 0]
     if DEBUG:
         print(f"_validate_set():  generic_types_values: {generic_types_values}")
 
-    structs = [s[0] for s in scope[0] if s[2] == "struct"]
+    structs = [s[0] for s in scope["names"] if s[2] == "struct"]
     if DEBUG:
         print(f"_validate_set():  structs: {structs}")
 
@@ -235,7 +237,7 @@ def _validate_set(node, scope):
         raise Exception(f"Assignment with invalid mutability declaration: {node}")
 
     if type_ in structs:
-        struct_type = [st for st in scope[0] if st[2] == "struct" and st[0] == type_][0]
+        struct_type = [st for st in scope["names"] if st[2] == "struct" and st[0] == type_][0]
         if DEBUG:
             print(f"_validate_set():  frontend compiletime - struct_type: {struct_type}")
 
@@ -248,7 +250,7 @@ def _validate_set(node, scope):
                 value_member_type = None
                 struct_names = []
                 for st in structs:
-                    for sts in scope[0]:
+                    for sts in scope["names"]:
                         # print(f"st {st} sts {sts}")
                         if st == sts[2]:
                             struct_names.append(sts)
@@ -290,9 +292,9 @@ def _validate_set(node, scope):
     if type_ != "fn" and not isinstance(name, list):
         if DEBUG:
             print(f"_validate_set():  frontend compiletime - value isn't function and name isn't list")
-            print(f"_validate_set():  frontend compiletime - scope[0]:  {scope[0]}")
+            print(f"""_validate_set():  frontend compiletime - scope["names"]:  {scope["names"]}""")
 
-        for index, v in enumerate(scope[0]):
+        for index, v in enumerate(scope["names"]):
             if v[0] == name:
                 if v[1] == "const":
                     raise Exception(f"Trying to reassign constant: {node}")
@@ -314,7 +316,7 @@ def _set_struct_member(li, scope, value):
             # print(f"value_type: {value_type}")
 
             n_type = n[2]
-            struct_matches = [n for n in scope[0] if n[0] == n_type and n[2] == "struct"]
+            struct_matches = [n for n in scope["names"] if n[0] == n_type and n[2] == "struct"]
             member_type = struct_matches[0][3][0][2]
 
             # print(f"member_type: {member_type}")
@@ -339,7 +341,7 @@ def _set_array_member(li, scope, value):
         if DEBUG:
             print(f"myfn():  - n: {n} index: {index} value: {value}")
 
-        if not scope[7]:
+        if not scope["backend_scope"]:
             n[3][index] = value
 
         if DEBUG:
@@ -467,7 +469,7 @@ def __macro__(node, scope):
     new_expanded = join_quotes(expanded)
     # print(f"new_expanded: {new_expanded}")
 
-    scope[1].append([alias, new_syntax, new_expanded])
+    scope["macros"].append([alias, new_syntax, new_expanded])
 
     return []
 
@@ -545,7 +547,7 @@ def _validate_write_ptr(node, scope):
     if len(node) != 4:
         raise Exception(f"Wrong number of arguments for write_ptr: {node}")
 
-    if scope[4] == True:
+    if scope["safe"] == True:
         raise Exception(f"Trying to write_ptr outside of unsafe scope: {node}")
 
 
@@ -558,7 +560,7 @@ def _validate_read_ptr(node, scope):
     if len(node) != 3:
         raise Exception(f"Wrong number of arguments for read_ptr: {node}")
 
-    if scope[4] == True:
+    if scope["safe"] == True:
         raise Exception(f"Trying to read_ptr outside of unsafe scope: {node}")
 
 
@@ -592,8 +594,8 @@ def _validate_unsafe(node, scope):
         raise Exception(f"Wrong number of arguments for unsafe: {node}")
 
 
-scope = eval.default_scope.copy()
-scope[0] = [  # names
+scope = copy.deepcopy(eval.default_scope)
+scope["names"] = [  # names
     # ["fn", "mut", "internal", __fn__],
     ["handle", "mut", "internal", __handle__],
     ["set", "mut", "internal", __set__],

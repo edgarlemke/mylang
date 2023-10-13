@@ -2,23 +2,33 @@ import re
 
 
 # default scope is given for creating copies
-default_scope = [
-    [],    # 0 names
-    [],    # 1 macros
-    None,  # 2 parent scope
-    [],    # 3 children scopes
-    True,  # 4 is safe scope
-    None,  # 5 forced handler
-    None,  # 6 eval returns calls
-    False,  # 7 backend scope
-]
+# default_scope = [
+#    [],    # 0 names
+#    [],    # 1 macros
+#    None,  # 2 parent scope
+#    [],    # 3 children scopes
+#    True,  # 4 is safe scope
+#    None,  # 5 forced handler
+#    None,  # 6 eval returns calls
+#    False,  # 7 backend scope
+# ]
+default_scope = {
+    "names": [],
+    "macros": [],
+    "parent": None,
+    "children": [],
+    "safe": True,
+    "forced_handler": None,
+    "return_call": None,
+    "backend_scope": False
+}
 
 
 def eval(li, scope, forced_handler_desc=None):
     DEBUG = False
     # DEBUG = True
 
-    is_backend_scope = scope[7] == True
+    is_backend_scope = scope["backend_scope"] == True
     end_str = "backend" if is_backend_scope else "frontend"
 
     if DEBUG:
@@ -29,10 +39,10 @@ def eval(li, scope, forced_handler_desc=None):
 
     # expand macros until there are no more macros to expand
     new_li = None
-    macros = scope[1]
+    macros = scope["macros"]
 
     if DEBUG:
-        print(f"eval():  macros: {macros} {scope[5]}")
+        print(f"""eval():  macros: {macros} {scope["forced_handler"]}""")
 
     if len(macros):
         expand = True
@@ -67,7 +77,7 @@ def eval(li, scope, forced_handler_desc=None):
     if forced_handler_desc is not None:
         # print(f"forced_handler_desc: {forced_handler_desc}")
         # if there's a forced handler set in scope but no handler
-        if scope[5] is not None and li[0] != forced_handler_desc[0]:
+        if scope["forced_handler"] is not None and li[0] != forced_handler_desc[0]:
             # panic
             raise Exception("Forced handler set but no handler")
 
@@ -89,9 +99,9 @@ def eval(li, scope, forced_handler_desc=None):
             print(f"evaled_li: {evaled_li}")
 
         # check if li has evaled with forced handler in scope but no handler
-        if forced_handler_desc is not None and scope[5] is not None:
+        if forced_handler_desc is not None and scope["forced_handler"] is not None:
             # panic
-            raise Exception(f"Forced handler set in scope but no handler - forced handler: {scope[5]} - li: {li}")
+            raise Exception(f"""Forced handler set in scope but no handler - forced handler: {scope["forced_handler"]} - li: {li}""")
 
     else:
         # get name value from scope
@@ -124,7 +134,7 @@ def eval(li, scope, forced_handler_desc=None):
                         print(f"eval():  retv: {retv}")
 
                     if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
-                        scope[5] = retv[1]
+                        scope["forced_handler"] = retv[1]
                         retv = retv[0]
 
                     li = retv
@@ -157,7 +167,7 @@ def eval(li, scope, forced_handler_desc=None):
                     method_type = evaled_name_match_value[0]
 
                     # if return_calls is set, get correct method type
-                    return_calls = scope[6] is not None
+                    return_calls = scope["return_call"] is not None
                     if return_calls:
                         evaled_fn = get_name_value(evaled_name_match_value[0], scope)
                         method, solved_arguments = find_function_method(evaled_name_match_value, evaled_fn, scope)
@@ -206,14 +216,14 @@ def _call_fn(li, fn, scope):
 
     found_method, solved_arguments = find_function_method(li, fn, scope)
     # print(f"found_method: {found_method} - solved_arguments: {solved_arguments}")
+    # print(f"solved_arguments: {solved_arguments}")
 
     # set new scope
-    fn_scope = default_scope.copy()
-    fn_scope[2] = scope  # parent scope
-    fn_scope[4] = scope[4]  # handler descriptor
-    fn_scope[7] = scope[7]  # backend scope
-
-    # print(f"solved_arguments: {solved_arguments}")
+    import copy
+    fn_scope = copy.deepcopy(default_scope)
+    fn_scope["parent"] = scope  # parent scope
+    fn_scope["safe"] = scope["safe"]  # handler descriptor
+    fn_scope["backend_scope"] = scope["backend_scope"]  # backend scope
 
     # populate new scope's names with function call arguments
     if li[1:] != [[]]:
@@ -222,16 +232,20 @@ def _call_fn(li, fn, scope):
         for arg_i, arg in enumerate(solved_arguments):
             # print(f"found_method[0]: {found_method[0]} arg_i: {arg_i} arg: {arg}")
             method_arg = found_method[0][arg_i]
-            fn_scope[0].append([method_arg[0], "const", method_arg[1], arg[1]])
+            fn_scope["names"].append([method_arg[0], "const", method_arg[1], arg[1]])
 
-    # print(f"fn_scope: {fn_scope}")
-    return_calls = scope[6] is not None
-    # print(f"return_calls: {return_calls}")
+    # if DEBUG:
+    #    print(f"fn_scope: {fn_scope}")
+
+    return_calls = scope["return_call"] is not None
+
+    if DEBUG:
+        print(f"return_calls: {return_calls}")
 
     # check for functions without return value
     if len(found_method) == 2:
         if return_calls:
-            return_call_function = scope[6]
+            return_call_function = scope["return_call"]
 
             if DEBUG:
                 print(f"_call_fn():  CALLING return_call() - li: {li}")
@@ -331,14 +345,14 @@ def find_function_method(li, fn, scope):
             if is_list:
                 if DEBUG:
                     print(f"is_list: {is_list} arg: {arg} method[0][0]: {method[0][0]}")
-                    print(f"is backend scope: {scope[7]}")
+                    print(f"""is backend scope: {scope["backend_scope"]}""")
 
                 # if it's calling a function without arguments with a single empty list as argument
                 if len(arg) == 0 and len(method[0][0]) == 0:
                     continue
 
                 # if it's a backend scope
-                if scope[7] == True:
+                if scope["backend_scope"] == True:
                     # get function
                     list_function = get_name_value(arg[0], scope)
                     if DEBUG:
@@ -374,8 +388,8 @@ def find_function_method(li, fn, scope):
                 name_value = get_name_value(arg, scope)
                 if DEBUG:
                     print(f"find_function_method():  name_value: {name_value} arg: {arg}")
-                    print(f"find_function_method():  names: {[i[0] for i in scope[0]]}")
-                    print(f"find_function_method():  scope[0]: {scope[0]}")
+                    print(f"""find_function_method():  names: {[i[0] for i in scope["names"]]}""")
+                    print(f"""find_function_method():  scope["names"]: {scope["names"]}""")
 
                 found_value = list(name_value[2:]) != []
 
@@ -435,7 +449,7 @@ def find_function_method(li, fn, scope):
             candidates.append(method)
 
     if len(candidates) == 0:
-        functions = [n for n in scope[0] if n[2] == "fn"]
+        functions = [n for n in scope["names"] if n[2] == "fn"]
         raise Exception(f"No candidate function found - name: {name}  -  functions: {functions}  - li: {li} - solved_arguments: {solved_arguments}")
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
@@ -459,7 +473,7 @@ def get_name_value(name, scope):
         print(f"get_name_value()  - name: {get_name_value}")
 
     def iterup(scope):
-        for each_name in scope[0]:
+        for each_name in scope["names"]:
             if DEBUG:
                 print(f"get_name_value()  - each_name: {each_name}")
 
@@ -469,8 +483,8 @@ def get_name_value(name, scope):
         # didn't return found value...
 
         # if has parent scope, iterup
-        if scope[2] is not None:
-            return iterup(scope[2])
+        if scope["parent"] is not None:
+            return iterup(scope["parent"])
         # else, return empty list
         else:
             return []
@@ -550,7 +564,7 @@ def _expand_macro(li, scope):
                     li[index] = sub_new_li
 
         found_macro = False
-        for macro in scope[1]:
+        for macro in scope["macros"]:
             # print(f"macro: {macro}")
 
             found_macro, full_match, bindings = match_macro(li, index, macro)
@@ -661,7 +675,7 @@ def _get_struct_member(li, scope):
         else:
             # print(f"n: {n}")
             # print(f"new_li: {new_li}")
-            matches = [name for name in scope[0] if name[0] == n[2] and name[2] == "struct"]
+            matches = [name for name in scope["names"] if name[0] == n[2] and name[2] == "struct"]
             # print(f"matches: {matches}")
 
             # member_type = matches[0][3][index][1]
@@ -687,14 +701,14 @@ def _seek_struct_ref(li, scope, fn):
         print(f"_seek_struct_ref():  li: {li} fn: {fn}")
 
     # seeks names matching with li[0]
-    name_matches = [n for n in scope[0] if n[0] == li[0]]
+    name_matches = [n for n in scope["names"] if n[0] == li[0]]
     n = name_matches[0]
 
     # get possible struct name
     struct_name = n[2]
 
     # check if there's some struct set with this name
-    candidates = [s for s in scope[0] if s[2] == "struct" and s[0] == struct_name]
+    candidates = [s for s in scope["names"] if s[2] == "struct" and s[0] == struct_name]
     # print(f"candidates: {candidates}")
 
     # get the candidate struct
@@ -733,14 +747,14 @@ def _seek_array_ref(li, scope, fn):
     # DEBUG = True
 
     # seeks names matching with li[0]
-    name_matches = [n for n in scope[0] if n[0] == li[0]]
+    name_matches = [n for n in scope["names"] if n[0] == li[0]]
     n = name_matches[0]
 
     # get possible array_type
     array_type = n[2]
 
     # check if there's some struct set with this name
-    candidates = [s for s in scope[0] if s[2] == array_type]  # type(s[2]) == list and s[2][0] == "Array" ] #and s[0] == struct_name]
+    candidates = [s for s in scope["names"] if s[2] == array_type]  # type(s[2]) == list and s[2][0] == "Array" ] #and s[0] == struct_name]
     if DEBUG:
         print(f"candidates: {candidates}")
 
