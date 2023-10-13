@@ -8,34 +8,181 @@ sys.path.append(dir_path)
 
 
 def __fn__(node, scope):
-    # print(f"back-end __fn__: {node}")
+    DEBUG = False
+    # DEBUG = True
+
+    if DEBUG:
+        print(f"__fn__():  backend - node: {node}")
+
+    global function_global_stack
 
     # compile-time validation
-    import frontend.compiletime as ct
-    ct.validate_fn(node, scope)
+    import frontend.compiletime as compiletime
+    compiletime.__fn__(node, scope)
 
     # back-end validation
     _validate_fn(node, scope)
-    return []
+
+    if len(node) == 4:
+        fn_, name, arguments, body = node
+    elif len(node) == 5:
+        fn_, name, arguments, return_type, body = node
+
+    # split_arguments = compiletime.split_function_arguments(arguments)
+
+    if DEBUG:
+        print(f"__fn__():  backend - arguments: {arguments}")
+
+    # solve function overloaded name to a single function name
+    uname = _unoverload(name, arguments)
+
+    # get argument types
+    args = []
+    # convert argument types
+    for arg in arguments:
+        # print(f"arg: {arg}")
+        args.append(f"{_convert_type(arg[1])} %{arg[0]}")
+
+
+#    # get return type and body
+#    if len(fn_content) == 2:
+#        fn_return_type = None
+#        fn_body = fn_content[1]
+#
+#    elif len(fn_content) == 3:
+#        fn_return_type = fn_content[1]
+#        fn_body = fn_content[2]
+
+    # convert return type
+    if len(node) == 4:
+        return_type = "void"
+    if len(node) == 5:
+        return_type = _convert_type(return_type)
+
+    if DEBUG:
+        print(f"__fn__():  backend return_type: {return_type}")
+
+    # create function body scope
+    import copy
+    function_body_scope = copy.deepcopy(eval.default_scope)
+
+    # set scope child
+    scope["children"].append(function_body_scope)
+
+    # set function body scope parent
+    function_body_scope["parent"] = scope
+
+    # set scope return calls
+    function_body_scope["return_call"] = scope["return_call"]
+
+    # set scope as backend scope
+    function_body_scope["backend_scope"] = True
+
+    # setup function arguments
+    for function_argument in arguments:
+        if DEBUG:
+            print(f"__fn__():  backend - function_argument: {function_argument}")
+
+        argument_list = [function_argument[0], "const", function_argument[1], None]
+        function_body_scope["names"].append(argument_list)
+
+    # if DEBUG:
+    #    print(f"__fn__():  backend - function_body_scope: {function_body_scope}")
+
+    functions_stack.append([uname, function_body_scope, arguments])
+
+    # sort out body IR
+    result = eval.eval(body, function_body_scope)
+
+    functions_stack.pop()
+
+    # if len(result) == 0:
+    body = ["\tstart:"]
+    # body = ["br label %start", "start:"]
+    # else:
+
+    if len(result) > 0:
+        body.append(result)
+
+    if DEBUG:
+        print(f"__fn__():  backend - body: {body}")
+
+    serialized_body = _serialize_body(body)
+
+    if DEBUG:
+        print(f"__fn__():  serialized_body: {serialized_body}")
+
+    if "ret" not in serialized_body[len(serialized_body) - 1]:
+        serialized_body.append([f"\t\tret {return_type}"])
+
+    # declaration, definition = _write_fn(uname, args, return_type, body
+    function_global = "\n".join(function_global_stack)
+    if DEBUG:
+        print(f"__fn__():  function_global: {function_global}")
+
+    retv = _write_fn(uname, args, return_type, serialized_body)
+
+    if len(function_global) > 0:
+        retv.insert(0, function_global)
+
+    if DEBUG:
+        print(f"__fn__():  retv: {retv}")
+
+    function_global_stack = []
+
+    return retv
 
 
 def _validate_fn(node, scope):
-    import frontend.compiletime as ct
+    DEBUG = False
+    # DEBUG = True
 
-    fn, args, ret_type, body = node
-    types = [t[0] for t in scope["names"] if t[2] == "type"]
+    import frontend.compiletime as compiletime
+
+    # fn, args, ret_type, body = node
+    if len(node) == 4:
+        fn_, name, args, body = node
+    elif len(node) == 5:
+        fn_, name, args, ret_type, body = node
+
+    if DEBUG:
+        print(f"_validate_fn():  args: {args}")
+
+    # types = [t[0] for t in scope["names"] if t[2] == "type"]
 
     # check if types of the arguments are valid
-    split_args = ct.split_function_arguments(args)
-    for arg in split_args:
-        # type_, name = arg
+    # split_args = compiletime.split_function_arguments(args)
+    # if DEBUG:
+    #    print(f"_validate_fn():  split_args: {split_args}")
+
+    for arg in args:
+        if DEBUG:
+            print(f"_validate_fn():  backend - arg: {arg} args: {args}")
+
         name, type_ = arg
-        if type_ not in types:
-            raise Exception(f"Function argument has invalid type: {arg} {node}")
+        if DEBUG:
+            print(f"_validate_fn():  backend - name: {name} type_: {type_}")
+
+        # check for composite type
+        if isinstance(type_, list):
+            search_type = type_[0]
+
+        # check for simple type
+        else:
+            search_type = type_
+
+        # name_value = eval.get_name_value(type_, scope)
+        # if DEBUG:
+        #    print(f"_validate_fn():  backend - name_value: {name_value}")
+
+        if not _validate_type(type_, scope):  # name_value == [] or (name_value != [] and name_value[2] != "type"):
+            raise Exception(f"Function argument has invalid type: {type_} {node}")
 
     # check if the return type is valid
-    if ret_type not in types:
-        raise Exception(f"Function return type has invalid type: {ret_type} {node}")
+    if len(node) == 5:  # and ret_type not in types:
+
+        if not _validate_type(ret_type, scope):  # name_value == [] or (name_value != [] and name_value[2] != "type"):
+            raise Exception(f"Function return type has invalid type: {ret_type} {node}")
 
 
 functions_stack = []
@@ -55,7 +202,7 @@ def __set__(node, scope):
 
     # compile-time validation
     import frontend.compiletime as ct
-    ct.__set__(node, scope, split_args=False)
+    ct.__set__(node, scope)
 
     # if DEBUG:
     #    print(f"\nscope: {scope}\n\n")
@@ -82,150 +229,40 @@ def __set__(node, scope):
     elif len(data) == 2:
         type_ = data[0]
 
-    # if node sets a function
-    if type_ == "fn":
-        fn_content = data[1]
+    tmp_name = None
 
-        # solve function overloaded name to a single function name
-        uname = _unoverload(name, fn_content[0])
-
-        # get argument types
-        args = []
-
-        # convert argument types
-        function_arguments = fn_content[0]
-        # print(f"function_arguments: {function_arguments}")
-        for arg in function_arguments:
-            # print(f"arg: {arg}")
-            args.append(f"{_convert_type(arg[1])} %{arg[0]}")
-
-        if DEBUG:
-            print(f"__set__():  backend - function_arguments: {function_arguments}")
-
-        # get return type and body
-        if len(fn_content) == 2:
-            fn_return_type = None
-            fn_body = fn_content[1]
-
-        elif len(fn_content) == 3:
-            fn_return_type = fn_content[1]
-            fn_body = fn_content[2]
-
-        # convert return type
-        return_type = "void"
-        if fn_return_type is not None:
-            return_type = _convert_type(fn_return_type)
-
-        if DEBUG:
-            print(f"__set__():  backend return_type: {return_type}")
-
-        # create function body scope
-        import copy
-        function_body_scope = copy.deepcopy(eval.default_scope)
-
-        # set scope child
-        scope["children"].append(function_body_scope)
-
-        # set function body scope parent
-        function_body_scope["parent"] = scope
-
-        # set scope return calls
-        function_body_scope["return_call"] = scope["return_call"]
-
-        # set scope as backend scope
-        function_body_scope["backend_scope"] = True
-
-        # setup function arguments
-        for function_argument in function_arguments:
-            if DEBUG:
-                print(f"__set__():  backend - function_argument: {function_argument}")
-
-            argument_list = [function_argument[0], "const", function_argument[1], None]
-            function_body_scope["names"].append(argument_list)
-
-        if DEBUG:
-            print(f"__set__():  backend - function_body_scope: {function_body_scope}")
-
-        functions_stack.append([uname, function_body_scope, function_arguments])
-
-        # sort out body IR
-        result = eval.eval(fn_body, function_body_scope)
-        # print(f"result: {result}")
-
-        functions_stack.pop()
-
-        # if len(result) == 0:
-        body = ["\tstart:"]
-        # body = ["br label %start", "start:"]
-        # else:
-
-        if len(result) > 0:
-            body.append(result)
-
-        if DEBUG:
-            print(f"__set__():  backend - body: {body}")
-
-        serialized_body = _serialize_body(body)
-
-        if DEBUG:
-            print(f"__set__():  serialized_body: {serialized_body}")
-
-        if "ret" not in serialized_body[len(serialized_body) - 1]:
-            serialized_body.append([f"\t\tret {return_type}"])
-
-        # declaration, definition = _write_fn(uname, args, return_type, body
-        function_global = "\n".join(function_global_stack)
-        if DEBUG:
-            print(f"__set__():  function_global: {function_global}")
-
-        retv = _write_fn(uname, args, return_type, serialized_body)
-
-        if len(function_global) > 0:
-            retv.insert(0, function_global)
-
-        if DEBUG:
-            print(f"__set__():  retv: {retv}")
-
-        function_global_stack = []
-
-    else:
-        tmp_name = None
-
-        if DEBUG:
-            print(f"__set__():  type isn't fn - name: {name} type: {type_}")
-
-        if isinstance(type_, list):
-            if type_[0] == "Array":
-                pass
-            elif type_[0] == "ptr":
-                pass
-
-        elif len(functions_stack) > 0:  # and mutdecl == "mut":
-            function_name = functions_stack[len(functions_stack) - 1][0]
-            if len(data) == 1:
-                _increment_NAME(function_name, name)
-
-            tmp_name = _get_NAME(function_name, name)
-
-        else:
-            # print(f"YAY: {name}")
+    if isinstance(type_, list):
+        if type_[0] == "Array":
+            pass
+        elif type_[0] == "ptr":
             pass
 
-        if DEBUG:
-            print(f"__set__():  tmp_name: {tmp_name}")
+    elif len(functions_stack) > 0:  # and mutdecl == "mut":
+        function_name = functions_stack[len(functions_stack) - 1][0]
+        if len(data) == 1:
+            _increment_NAME(function_name, name)
 
-        if type_ == "Str":
-            str_, size = _converted_str(data[1])
+        tmp_name = _get_NAME(function_name, name)
 
-            if mutdecl == "const":
-                function_name = functions_stack[len(functions_stack) - 1][0]
-                function_global_stack.append(f"""@{function_name}_{name} = constant [{size} x i8] c"{str_}" """)
-                retv = f"""
+    else:
+        # print(f"YAY: {name}")
+        pass
+
+    if DEBUG:
+        print(f"__set__():  tmp_name: {tmp_name}")
+
+    if type_ == "Str":
+        str_, size = _converted_str(data[1])
+
+        if mutdecl == "const":
+            function_name = functions_stack[len(functions_stack) - 1][0]
+            function_global_stack.append(f"""@{function_name}_{name} = constant [{size} x i8] c"{str_}" """)
+            retv = f"""
 \t\t%{tmp_name} = alloca %struct.Str, align 8
 """
 
-            elif mutdecl == "mut":
-                retv = f"""
+        elif mutdecl == "mut":
+            retv = f"""
 \t\t%{tmp_name} = alloca %struct.Str, align 8
 
 \t\t%{name}_str = alloca [{size} x i8]
@@ -240,177 +277,149 @@ def __set__(node, scope):
 \t\tstore i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
-        elif type_ in ["int", "uint", "float", "bool"]:
+    elif type_ in ["int", "uint", "float", "bool"]:
+        if DEBUG:
+            print("__set__():  backend - type_ is int uint float or bool")
+
+        t = _convert_type(type_)
+
+        if len(data) == 1:
+            value = data[0]
+            # _increment_NAME(function_name, name)
+            # tmp_name = _get_NAME(function_name, name)
+
+        elif len(data) == 2:
+            value = data[1]
+
+        if type_ in ["int", "uint"]:
+            if value[:2] == "0x":
+                value = int(value, base=16)
+
+        if DEBUG:
+            print(f"__set__():  backend - value: {value}")
+
+        if isinstance(value, list):
             if DEBUG:
-                print("__set__():  backend - type_ is int uint float or bool")
-
-            t = _convert_type(type_)
-
-            if len(data) == 1:
-                value = data[0]
-                # _increment_NAME(function_name, name)
-                # tmp_name = _get_NAME(function_name, name)
-
-            elif len(data) == 2:
-                value = data[1]
-
-            if type_ in ["int", "uint"]:
-                if value[:2] == "0x":
-                    value = int(value, base=16)
-
+                print(f"__set__():  backend - calling return_call()")
+            value, stack = return_call(value, scope, [])
             if DEBUG:
-                print(f"__set__():  backend - value: {value}")
+                print(f"__set__():  backend - value: {value} stack: {stack}")
 
-            if isinstance(value, list):
-                if DEBUG:
-                    print(f"__set__():  backend - calling return_call()")
-                value, stack = return_call(value, scope, [])
-                if DEBUG:
-                    print(f"__set__():  backend - value: {value} stack: {stack}")
-
-                stack.append(f"\t\t%{tmp_name} = {value}")
-                retv = "\n".join(stack)
-                if DEBUG:
-                    print(f"__set__():  backend - retv: {retv}")
-
-                # clean stack from return_call
-                stack = []
-
-            else:
-                # check if it's at global backend scope
-                if scope["parent"] is None:
-                    if DEBUG:
-                        print(F"__set__():  backend - global scope")
-                    retv = f"@{name} = global {t} {value}"
-
-                # not global backend scope
-                else:
-                    if DEBUG:
-                        print(f"__set__():  backend - not global scope")
-
-                    if mutdecl == "const":
-                        # propagate constant to global scope
-                        # get function name
-                        fn_name = "main"
-
-                        # print(f"functions_stack: {functions_stack}")
-                        function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value};")
-
-                        # stack.append(f"@{fn_name}_{name} = constant {t} {value}")
-
-                        # if is an integer read the pointer
-                        if type_ in ["int", "uint"]:
-                            retv = f"""\t\t; load value of constant "{name}"
-\t\t%{name} = load {t}, {t}* @{fn_name}_{name}
-"""
-
-                        else:
-                            retv = ""
-
-                    elif mutdecl == "mut":
-                        # allocate space in stack and set value
-                        retv = f"""\t\t%{name}_stack = alloca {t}
-\t\tstore {t} {value}, {t}* %{name}_stack
-\t\t%{tmp_name} = load {t}, {t}* %{name}_stack
-"""
+            stack.append(f"\t\t%{tmp_name} = {value}")
+            retv = "\n".join(stack)
             if DEBUG:
                 print(f"__set__():  backend - retv: {retv}")
 
-        elif type_ == "struct":
-            if len(data) == 1:
-                value = data[0]
-                converted_member_types = []
-
-                if DEBUG:
-                    print(f"value: {value}")
-
-                for struct_member in value:
-                    if DEBUG:
-                        print(f"struct_member: {struct_member}")
-                    converted_member_types.append(_convert_type(struct_member[1]))
-
-                joined_converted_member_types = ", ".join(converted_member_types)
-                retv = f"%{name} = type {{ {joined_converted_member_types} }}"
-
-            elif len(data) == 2:
-                value = data[1]
-                retv = ""
-
-            else:
-                raise Exception("Invalid size of struct")
-
-        # test for composite types
-        elif len(type_) > 1:
-            if DEBUG:
-                print(f"__set__():  backend - type_: {type_}")
-
-            type_value = eval.get_name_value(type_[0], scope)
-            if DEBUG:
-                print(f"__set__():  backend - type_value: {type_value}")
-
-            # check for arrays
-            # print(type_value)
-            if type_value[0] == "Array":
-                if DEBUG:
-                    print(f"__set__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
-
-                # check if array is already set
-                retv = None
-                if name_candidate != []:
-                    member_index = 0
-                    array_size = 64
-
-                    retv = _set_array_member(type_value, member_index, type_, data[0], name[0], array_size)
-
-                else:
-                    retv = _set_array(type_value, type_, data, name)
-
-            # check for pointers
-            elif type_value[0] == "ptr":
-                if DEBUG:
-                    print(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
-
-                retv = "RETV_PTR"
-
-#                if type_value[2] == "struct":
-#                    # if not a generic struct
-#                    if len(type_value[3][0]) == 0:
-#                        retv = 555
-#
-#                    # else, it's a generic struct
-#                    else:
-#                        # assemble name from type variables
-#                        generic_struct_name = "_".join([type_value[0]] + type_[1:])
-#
-#                        if DEBUG:
-#                            print(f"generic_struct_name: {generic_struct_name}")
-#
-#                        stack = [f"%{name}_stack = alloca %struct.{generic_struct_name}"]
-#
-#                        if type_value[0] == "Array":
-#                            print("ARRAY")
-#
-#                        for member_index, member_value in enumerate(data[1]):
-#                            print(f"member_value: {member_value}")
-#
-#                            # convert value type
-#                            # converted_type = _convert_type(type_value[3][1][member_index][1])
-#                            infered_type_argument = eval._infer_type(member_value)
-#                            converted_type = _convert_type(infered_type_argument[0])
-#
-#                            # append alloca to stack
-#                            stack.append(f"%{name}_{member_index} = alloca {converted_type}")
-#
-#                   retv = "\n".join(stack)
-            else:
-                raise Exception(f"Unknown composite type {type_}")
+            # clean stack from return_call
+            stack = []
 
         else:
-            # print("AQUI")
+            # check if it's at global backend scope
+            if scope["parent"] is None:
+                if DEBUG:
+                    print(F"__set__():  backend - global scope")
+                retv = f"@{name} = global {t} {value}"
 
-            # if it's simple unknown type
-            if len(type_) == 1:
-                raise Exception(f"Unknown type {type_}")
+            # not global backend scope
+            else:
+                if DEBUG:
+                    print(f"__set__():  backend - not global scope")
+
+            # handle constants
+            if mutdecl == "const":
+
+                if len(functions_stack) == 0:
+                    retv = f"@{name} = constant {t} {value}"
+
+                else:
+                    if DEBUG:
+                        print(f"functions_stack: {functions_stack}")
+
+                    # TODO: get correct fn_name
+                    fn_name = "main"
+
+                    function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value};")
+
+                    # if is an integer read the pointer
+                    if type_ in ["int", "uint"]:
+                        retv = f"""\t\t; load value of constant "{name}"
+\t\t%{name} = load {t}, {t}* @{fn_name}_{name}
+"""
+
+                    else:
+                        retv = ""
+
+            # handle mutable values
+            elif mutdecl == "mut":
+                # allocate space in stack and set value
+                retv = f"""\t\t%{name}_stack = alloca {t}
+\t\tstore {t} {value}, {t}* %{name}_stack
+\t\t%{tmp_name} = load {t}, {t}* %{name}_stack
+"""
+        if DEBUG:
+            print(f"__set__():  backend - retv: {retv}")
+
+    elif type_ == "struct":
+        if len(data) == 1:
+            value = data[0]
+            converted_member_types = []
+
+            if DEBUG:
+                print(f"value: {value}")
+
+            for struct_member in value:
+                if DEBUG:
+                    print(f"struct_member: {struct_member}")
+                converted_member_types.append(_convert_type(struct_member[1]))
+
+            joined_converted_member_types = ", ".join(converted_member_types)
+            retv = f"%{name} = type {{ {joined_converted_member_types} }}"
+
+        elif len(data) == 2:
+            value = data[1]
+            retv = ""
+
+        else:
+            raise Exception("Invalid size of struct")
+
+    # test for composite types
+    elif isinstance(type_, list):
+        if DEBUG:
+            print(f"__set__():  backend - type_: {type_}")
+
+        type_value = eval.get_name_value(type_[0], scope)
+        if DEBUG:
+            print(f"__set__():  backend - type_value: {type_value}")
+
+        # check for arrays
+        # print(type_value)
+        if type_value[0] == "Array":
+            if DEBUG:
+                print(f"__set__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
+
+            # check if array is already set
+            retv = None
+            if name_candidate != []:
+                member_index = 0
+                array_size = 64
+
+                retv = _set_array_member(type_value, member_index, type_, data[0], name[0], array_size)
+
+            else:
+                retv = _set_array(type_value, type_, data, name)
+
+        # check for pointers
+        elif type_value[0] == "ptr":
+            if DEBUG:
+                print(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
+
+            retv = "RETV_PTR"
+
+        else:
+            raise Exception(f"Unknown composite type {type_}")
+
+    else:
+        raise Exception(f"Unknown type: {type_}")
 
     if DEBUG:
         print(f"__set__():  backend - exiting __set__()")
@@ -685,6 +694,8 @@ def _convert_type(type_):
     if DEBUG:
         print(f"_convert_type: {type_}")
 
+    converted_type = None
+
     # convert integers
     if type_ in ["int", "uint"]:
         converted_type = "i64"
@@ -711,6 +722,11 @@ def _convert_type(type_):
     # convert Str (strings)
     elif type_ == "Str":
         converted_type = "%struct.Str*"
+
+    # try:
+    #    converted_type
+    # except:
+    #    raise Exception(f"Not convertable type: {type_}")
 
     return converted_type
 
@@ -1118,7 +1134,7 @@ def return_call(node, scope, stack=[]):
     if DEBUG:
         print(f"return_call():  method: {method}")
 
-    function_arguments = method[0]
+    function_arguments = method[0][0]
     if DEBUG:
         print(f"return_call():  function_arguments: {function_arguments}")
 

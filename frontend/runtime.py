@@ -4,8 +4,10 @@ import eval
 
 
 def __fn__(node, scope):
-    compiletime.validate_fn(node, scope)
-    return node
+    compiletime.__fn__(node, scope)
+    node_copy = node.copy()
+    node_copy[2] = compiletime.split_function_arguments(node_copy[2])
+    return node_copy
 
 
 def __set__(node, scope):
@@ -82,7 +84,7 @@ def __unsafe__(node, scope):
 
 scope = copy.deepcopy(eval.default_scope)
 scope["names"] = [  # names
-     ["fn", "mut", "internal", __fn__],
+    ["fn", "mut", "internal", __fn__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],

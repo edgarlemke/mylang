@@ -88,9 +88,7 @@ def test_fn_without_args():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set mut x (fn (() () ())))
-(x ())
-"""
+        """fn main () ()"""
     )
 
 
@@ -99,7 +97,7 @@ def test_fn_arg_type_infer_int():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """set const myfn (fn ( (x int) int () ) )
+        """fn myfn (x int) ()
 myfn 1234"""
     )
 
@@ -109,8 +107,8 @@ def test_fn_arg_type_infer_float():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( (x float) float () ) ))
-(myfn 3.14)"""
+        """fn myfn (x float) ()
+myfn 3.14"""
     )
 
 
@@ -119,8 +117,8 @@ def test_fn_arg_type_infer_bool_true():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( (x bool) bool () ) ))
-(myfn true)"""
+        """fn myfn (x bool) ()
+myfn true"""
     )
 
 
@@ -129,8 +127,8 @@ def test_fn_arg_type_infer_bool_false():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const myfn (fn ( (x bool) bool () ) ))
-(myfn false)"""
+        """fn myfn (x bool) ()
+myfn false"""
     )
 
 
@@ -139,9 +137,8 @@ def test_fn_arg_name():
         i.getframeinfo(i.currentframe()).function,
         "((bool true))\n",
         "",
-        """set const myfn (fn ( (x bool) bool
+        """fn myfn (x bool) bool
 	x
-))
 set const mybool (bool true)
 myfn mybool"""
     )
@@ -152,8 +149,9 @@ def test_fn_arg_fncall():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """set const myfn (fn ( (x bool) bool () ))
-set const retbool (fn ( () bool ((data bool true)) ))
+        """fn myfn (x bool) ()
+fn retbool () bool
+	data bool true
 myfn (retbool ())"""
     )
 
@@ -163,11 +161,9 @@ def test_fn_arg_inside_scope():
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """set const myfn (fn ( (x int) int
+        """fn myfn (x int) int
 	x
-) )
-myfn 1
-"""
+myfn 1"""
     )
 
 
@@ -176,9 +172,9 @@ def test_ret():
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set mut x (fn ( () () (ret ()) ) ))
-(x ())
-"""
+        """fn x ()
+	ret
+x ()"""
     )
 
 
@@ -200,9 +196,8 @@ def test_ret_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Returned value type of function is different from called function type",
-        """set mut x (fn ( () bool
+        """fn x () bool
 	ret data int 0
-))
 x ()
 """
     )

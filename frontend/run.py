@@ -216,8 +216,8 @@ macro op_lte ('a <= 'b) ((le 'a 'b))
 
 macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c))
 
-macro op_set_fn_with_return (fn 'f 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body)))
-macro op_set_fn_without_return (fn 'f 'args 'body) (set mut 'f (fn ('args 'body)))
+#macro op_set_fn_with_return (fn 'f 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body)))
+#macro op_set_fn_without_return (fn 'f 'args 'body) (set mut 'f (fn ('args 'body)))
 
 macro op_set_mut_generic_struct (mut struct 'a = 'b 'c) (set mut 'a (struct 'b 'c))
 macro op_set_generic_struct (struct 'a = 'b 'c) (set const 'a (struct ('b 'c)))

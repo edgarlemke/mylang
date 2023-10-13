@@ -94,6 +94,7 @@ def eval(li, scope):
         # check name_matches size
         if name_match == []:
             raise Exception(f"Unassigned name: {li[0]}")
+
         # elif len(name_matches) > 1:
         #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
 
@@ -199,7 +200,9 @@ def _call_fn(li, fn, scope):
     candidates = []
 
     found_method, solved_arguments = find_function_method(li, fn, scope)
-    # print(f"found_method: {found_method} - solved_arguments: {solved_arguments}")
+
+    if DEBUG:
+        print(f"found_method: {found_method} - solved_arguments: {solved_arguments}")
     # print(f"solved_arguments: {solved_arguments}")
 
     # set new scope
@@ -214,9 +217,16 @@ def _call_fn(li, fn, scope):
 
         # for arg_i, arg in enumerate(li[1:]):
         for arg_i, arg in enumerate(solved_arguments):
-            # print(f"found_method[0]: {found_method[0]} arg_i: {arg_i} arg: {arg}")
             method_arg = found_method[0][arg_i]
-            fn_scope["names"].append([method_arg[0], "const", method_arg[1], arg[1]])
+            if DEBUG:
+                print(f"_call_fn():  method_arg: {method_arg} arg_i: {arg_i} arg: {arg}")
+
+            if scope["backend_scope"]:
+                to_append = [method_arg[0], "const", method_arg[0][1], arg[1]]
+            else:
+                to_append = [method_arg[0], "const", method_arg[1], arg[1]]
+
+            fn_scope["names"].append(to_append)
 
     # if DEBUG:
     #    print(f"fn_scope: {fn_scope}")
@@ -311,9 +321,14 @@ def find_function_method(li, fn, scope):
                 print(f"\nargument - arg_i: {arg_i} arg: {arg}")
 
             # break in methods without the arguments
-            if len(method[0][0]) < arg_i + 1 and not (len(method[0][0]) == 0 and len(li[1:]) == 1 and li[1] == []):
+            if scope["backend_scope"]:
+                m0 = method[0][0]
+            else:
+                m0 = method[0]
+
+            if len(m0) < arg_i + 1 and not (len(m0) == 0 and len(li[1:]) == 1 and li[1] == []):
                 if DEBUG:
-                    print(f"not matching - len(method[0]) < arg_i + 1")
+                    print(f"not matching - len(m0) < arg_i + 1")
 
                 match = False
                 break
@@ -328,11 +343,11 @@ def find_function_method(li, fn, scope):
             # if it's a list
             if is_list:
                 if DEBUG:
-                    print(f"is_list: {is_list} arg: {arg} method[0][0]: {method[0][0]}")
+                    print(f"is_list: {is_list} arg: {arg} m0: {m0}")
                     print(f"""is backend scope: {scope["backend_scope"]}""")
 
                 # if it's calling a function without arguments with a single empty list as argument
-                if len(arg) == 0 and len(method[0][0]) == 0:
+                if len(arg) == 0 and len(method[0]) == 0:
                     continue
 
                 # if it's a backend scope
@@ -361,7 +376,7 @@ def find_function_method(li, fn, scope):
                     solved_argument = eval(arg, scope)
 
                 if DEBUG:
-                    print(f"list solved_argument: {solved_argument}")
+                    print(f"find_function_method(): list solved_argument: {solved_argument}")
 
             # if it's not a list
             else:
@@ -411,10 +426,10 @@ def find_function_method(li, fn, scope):
                 if DEBUG:
                     print(f"solved_argument: {solved_argument}")
                     print(f"method: {method}")
-                    print(f"method[0]: {method[0][0][arg_i]} - arg_i: {arg_i}")
+                    print(f"m0[arg_i]: {m0[arg_i]} - arg_i: {arg_i}")
 
                 # get the type of the method argument
-                method_argument_type = method[0][0][arg_i][1]
+                method_argument_type = m0[arg_i][1]
 
                 if DEBUG:
                     print(f"method_argument_type: {method_argument_type}")
@@ -441,7 +456,7 @@ def find_function_method(li, fn, scope):
     if DEBUG:
         print(f"candidates: {candidates}")
 
-    found_method = candidates[0][0]
+    found_method = candidates[0]
 
     if DEBUG:
         print(f"exiting find_function_method - li: {li} -> found_method: {found_method} solved_arguments: {solved_arguments}\n")

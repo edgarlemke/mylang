@@ -66,7 +66,7 @@ def test_fn_args():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function argument has invalid type",
-        "fn (x wrong, y wrong) int ()"
+        "fn main ((x wrong)(y wrong)) int ()"
     )
 
 
@@ -75,7 +75,7 @@ def test_fn_ret_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function return type has invalid type",
-        "fn (x int, y int) wrong ()"
+        "fn main ((x int) (y int)) wrong ()"
     )
 #
 
@@ -90,7 +90,7 @@ def test_llvm_fn_void_ret_type():
 }
 """,
         "",
-        """((set mut main (fn (() ()))))"""
+        """fn main () ()"""
     )
 
 
@@ -103,7 +103,7 @@ def test_llvm_fn_cvt_int():
 }
 """,
         "",
-        """((set mut main (fn (() int ()))))"""
+        """fn main () int ()"""
     )
 
 
@@ -116,7 +116,7 @@ def test_llvm_fn_cvt_uint():
 }
 """,
         "",
-        """((set mut main (fn (() uint ()))))"""
+        """fn main () uint ()"""
     )
 
 
@@ -133,7 +133,7 @@ define i64 @test__uint_int(i64 %x, i64 %y) {
 }
 """,
         "",
-        """((set mut test (fn (((x int)(y uint)) int ()))) (set mut test (fn (((x uint)(y int)) uint ()))))"""
+        """((fn test ((x int)(y uint)) int ()) (fn test ((x uint)(y int)) uint ()))"""
     )
 
 
@@ -150,7 +150,7 @@ define void @main() {
 }
 """,
         "",
-        """((set mut main (fn (() ((set const CONSTANT (int 1)))))))"""
+        """fn main () ((set const CONSTANT (int 1)))"""
     )
 #
 

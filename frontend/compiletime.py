@@ -2,47 +2,65 @@ import copy
 import eval
 
 
-def __fn__(node, scope):
-    """
-    Validate function declarations.
+def __fn__(node, scope, split_args=True):
+    DEBUG = False
+    # DEBUG = True
 
-    Syntax:
-    fn ((argtype1 arg1)(argtype2 arg2)) ret_type (body)
-    """
-
-    # print(f"calling __fn__ {node}")
+    if DEBUG:
+        print(f"__fn__():  compiletime - node: {node}")
 
     validate_fn(node, scope)
 
-    # create new scope
-    child_scope = [[], [], scope, []]
-    scope["children"].append(child_scope)
+    # check for functions without return value
+    if len(node) == 4:
+        fn_, name, arguments, body = node
+        method = [arguments, body]
 
-    return node
+    # check for functions with return value
+    elif len(node) == 5:
+        fn_, name, arguments, return_type, body = node
+        method = [arguments, return_type, body]
+
+    # split arguments if needed
+    if split_args:
+        # value[0][0] = split_function_arguments(value[0][0])
+        arguments = split_function_arguments(arguments)
+        method[0] = arguments
+
+    if DEBUG:
+        print(f"value after split fn args: {arguments}")
+
+    # get all functions with the function-to-be-set name
+    names = scope["names"]
+    all_fn = [(i, var) for i, var in enumerate(names) if var[2] == "fn" and var[0] == name]
+
+    # if there's no function with the function-to-be-set name, create a new function value in scope
+    if all_fn == []:
+        if DEBUG:
+            print(f"empty all_fn")
+
+        names.append([name, "mut", "fn", [method]])
+
+    # else, add a method to the existing function value
+    else:
+        match_fn = all_fn[0]
+        i, var = match_fn
+
+        names[i][3].append(method)
+
+    if DEBUG:
+        print(f"\n__fn__():  frontend compiletime - names after fn: {names}\n")
+
+    return []
 
 
 def validate_fn(node, scope):
     # check fn arguments number
-    if len(node) != 4:
+    if len(node) != 4 and len(node) != 5:
         raise Exception(f"Wrong number of arguments for fn: {node}")
 
-    fn, args, ret_type, body = node
-    types = [t[0] for t in scope["names"] if t[2] == "type"]
 
-#    # check if types of the arguments are valid
-#    split_args = split_function_arguments(args)
-#    for arg in split_args:
-#        # type_, name = arg
-#        name, type_ = arg
-#        if type_ not in types:
-#            raise Exception(f"Function argument has invalid type: {arg} {node}")
-
-#    # check if the return type is valid
-#    if ret_type not in types:
-#        raise Exception(f"Function return type has invalid type: {ret_type} {node}")
-
-
-def __set__(node, scope, split_args=True):
+def __set__(node, scope):
     DEBUG = False
     # DEBUG = True
 
@@ -71,69 +89,39 @@ def __set__(node, scope, split_args=True):
     elif len(data) == 2:
         type_ = data[0]
 
-    if type_ == "fn":
-        # get function arguments, return type and body
-        value = list(data[1:4])
+    if len(data) == 1:
+        value = data[0]
+
+    elif len(data) == 2:
+        value = data[1]
+
+    if not isinstance(name, list):
         if DEBUG:
-            print(f"__set__():  fn value: {value}")
+            print(f"__set__():  value: {value} - typeof {name} not list")
 
-        # split arguments if needed
-        if split_args:
-            value[0][0] = split_function_arguments(value[0][0])
-        if DEBUG:
-            print(f"value after split fn args: {value}")
+        # remove old value from names
+        for index, v in enumerate(names):
+            if v[0] == name:
+                names.remove(v)
+                break
 
-        # get all functions with the function-to-be-set name
-        all_fn = [(i, var) for i, var in enumerate(names) if var[2] == "fn" and var[0] == name]
+        # add string length to output ;)
+        if type_ == "Str":
+            value = [value, len(value)]
 
-        # if there's no function with the function-to-be-set name, create a new function value in scope
-        if all_fn == []:
-            if DEBUG:
-                print(f"empty all_fn")
-
-            names.append([name, mutdecl, type_, [value]])
-
-        # else, add a method to the existing function value
-        else:
-            match_fn = all_fn[0]
-            i, var = match_fn
-
-            names[i][3].append(value)
+        # insert new value into names
+        names.append([name, mutdecl, type_, value])
 
     else:
-        if len(data) == 1:
-            value = data[0]
+        if DEBUG:
+            print(f"__set__():  frontend compiletime - name is list - name: {name} type: {type_}")
 
-        elif len(data) == 2:
-            value = data[1]
-
-        if not isinstance(name, list):
-            if DEBUG:
-                print(f"__set__():  value: {value} - typeof {name} not list")
-
-            # remove old value from names
-            for index, v in enumerate(names):
-                if v[0] == name:
-                    names.remove(v)
-                    break
-
-            # add string length to output ;)
-            if type_ == "Str":
-                value = [value, len(value)]
-
-            # insert new value into names
-            names.append([name, mutdecl, type_, value])
+        if isinstance(type_, list):
+            if type_[0] == "Array":
+                _set_array_member(name, scope, value)
 
         else:
-            if DEBUG:
-                print(f"__set__():  frontend compiletime - name is list - name: {name} type: {type_}")
-
-            if isinstance(type_, list):
-                if type_[0] == "Array":
-                    _set_array_member(name, scope, value)
-
-            else:
-                _set_struct_member(name, scope, value)
+            _set_struct_member(name, scope, value)
 
     if DEBUG:
         print(f"\n__set__():  frontend compiletime - names after set: {names}\n")
@@ -561,7 +549,7 @@ def _validate_unsafe(node, scope):
 
 scope = copy.deepcopy(eval.default_scope)
 scope["names"] = [  # names
-    # ["fn", "mut", "internal", __fn__],
+    ["fn", "mut", "internal", __fn__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],

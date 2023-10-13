@@ -69,7 +69,7 @@ def test_data():
 def test_fn():
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """((set mut main (fn (((x int) (y int)) int ()))))\n""",
+        """((fn main ((x int) (y int)) int ()))\n""",
         "",
         "fn main (x int, y int) int ()"
     )
@@ -219,9 +219,8 @@ def test_ret_type():
         i.getframeinfo(i.currentframe()).function,
         "",
         "Returned value type of function is different from called function type",
-        """set mut x (fn ( () bool
+        """fn x () bool
 	ret data int 0
-))
 x ()
 """
     )
