@@ -5,6 +5,8 @@ import inspect as i
 from subprocess import Popen, PIPE
 from shlex import split
 
+import shared
+
 OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
 
@@ -155,39 +157,11 @@ define void @main() {
 #
 
 
+def run(**args):
+    return shared.run("Backend Tests", [], globals(), **args)
+
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--fast", action="store_true")
-    group.add_argument("-f")
-    args = parser.parse_args()
-
-    test_ct, ok_ct, failed_ct = 0, 0, 0
-
-    if args.f is None:
-        fast = args.fast
-        slow = []
-        tests = [t for t in globals() if t[0:5] == "test_" and callable(eval(t))]
-        for t in tests:
-
-            if fast and t in slow:
-                continue
-
-            result = eval(f"{t}()")
-            test_ct += 1
-            if result:
-                ok_ct += 1
-            else:
-                failed_ct += 1
-
-    else:
-        result = eval(f"{args.f}()")
-        test_ct += 1
-        if result:
-            ok_ct += 1
-        else:
-            failed_ct += 1
-
-    print(f"\nTests: {test_ct} - Passed: {ok_ct} - Failed: {failed_ct}")
+    args = shared.parse_args()
+    run(**args)

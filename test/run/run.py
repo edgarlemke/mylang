@@ -1,19 +1,25 @@
 #!/usr/bin/python3
 
+import shared
 import argparse
 import inspect as i
-from subprocess import Popen, PIPE, run
+from subprocess import Popen, PIPE, run as run_
 from shlex import split
 
+import os
+import sys
+dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+root_path = os.path.dirname(dir_path)
+sys.path.append(dir_path)
 
 OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
 
 
-def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expected_stderr_bin, src):
+def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expected_stderr_bin, src, keep):
     print(f"TEST {fn_name} - ", end="")
 
-    cmd = f"/usr/bin/python3 ../../run.py --src \"{src}\" --output \"{src}.o\""
+    cmd = f"/usr/bin/python3 {root_path}/run.py --src \"{src}\" --output \"{src}.o\""
     p = Popen(
         split(cmd),
         stdout=PIPE,
@@ -49,7 +55,7 @@ def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expect
         return False
 
     # Linking
-    run(split(f"gcc {src}.o -o {src}.bin"))
+    run_(split(f"gcc {src}.o -o {src}.bin"))
 
     # Running
     cmd_bin = f"{src}.bin"
@@ -79,6 +85,9 @@ def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expect
         got:        %s""" % (expected_stdout_bin, stdout_bin_dec))
         err = True
 
+    if not keep:
+        run_(split(f"rm {src}.o.parse {src}.o.ll {src}.o.s {src}.o {src}.bin "))
+
     if err:
         print(f"CMD: %s" % cmd)
         return False
@@ -87,10 +96,10 @@ def _test(fn_name, expected_stdout, expected_stderr, expected_stdout_bin, expect
     return True
 
 
-def _test_exit_code(fn_name, expected_stdout, expected_stderr, expected_exit_code, src):
+def _test_exit_code(fn_name, expected_stdout, expected_stderr, expected_exit_code, src, keep):
     print(f"TEST {fn_name} - ", end="")
 
-    cmd = f"/usr/bin/python3 ../../run.py --src \"{src}\" --output \"{src}.o\""
+    cmd = f"/usr/bin/python3 {root_path}/run.py --src \"{src}\" --output \"{src}.o\""
     p = Popen(
         split(cmd),
         stdout=PIPE,
@@ -126,7 +135,7 @@ def _test_exit_code(fn_name, expected_stdout, expected_stderr, expected_exit_cod
         return False
 
     # Linking
-    run(split(f"gcc {src}.o -o {src}.bin"))
+    run_(split(f"gcc {src}.o -o {src}.bin"))
 
     # Running
     cmd_bin = f"{src}.bin; echo $?"
@@ -135,7 +144,7 @@ def _test_exit_code(fn_name, expected_stdout, expected_stderr, expected_exit_cod
 
     # print(stdout_bin)
     # print(stderr_bin)
-    result = run(split(cmd_bin), shell=True, capture_output=True, text=True)
+    result = run_(split(cmd_bin), shell=True, capture_output=True, text=True)
 
     if str(result.returncode) != expected_exit_code:
         print(FAIL)
@@ -144,6 +153,9 @@ def _test_exit_code(fn_name, expected_stdout, expected_stderr, expected_exit_cod
         expected:   %s
         got:        %s""" % (expected_exit_code, str(result.returncode)))
         err = True
+
+    if not keep:
+        run_(split(f"rm {src}.o.parse {src}.o.ll {src}.o.s {src}.o {src}.bin "))
 
     if err:
         print(f"CMD: %s" % cmd)
@@ -168,25 +180,27 @@ def cleanup():
 #
 
 
-def test_empty_function():
+def test_empty_function(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./empty_function/main.k"
+        f"{dir_path}/run/empty_function/main.k",
+        keep
     )
 
 
-def test_hello_world():
+def test_hello_world(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "Hello world! ❤️",
         "",
-        "./hello_world/main.k"
+        f"{dir_path}/run/hello_world/main.k",
+        keep
     )
 #
 #
@@ -195,172 +209,188 @@ def test_hello_world():
 #
 
 
-def test_add_int_int():
+def test_add_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "46",
-        "./add_int_int/main.k"
+        f"{dir_path}/run/add_int_int/main.k",
+        keep
     )
 
 
-def test_sub_int_int():
+def test_sub_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "4",
-        "./sub_int_int/main.k"
+        f"{dir_path}/run/sub_int_int/main.k",
+        keep
     )
 
 
-def test_mul_int_int():
+def test_mul_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "15",
-        "./mul_int_int/main.k"
+        f"{dir_path}/run/mul_int_int/main.k",
+        keep
     )
 
 
-def test_sdiv_int_int():
+def test_sdiv_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./sdiv_int_int/main.k"
+        f"{dir_path}/run/sdiv_int_int/main.k",
+        keep
     )
 
 
-def test_and_int_int():
+def test_and_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "42",
-        "./and_int_int/main.k"
+        f"{dir_path}/run/and_int_int/main.k",
+        keep
     )
 
 
-def test_or_int_int():
+def test_or_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "6",
-        "./or_int_int/main.k"
+        f"{dir_path}/run/or_int_int/main.k",
+        keep
     )
 
 
-def test_xor_int_int():
+def test_xor_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "42",
-        "./xor_int_int/main.k"
+        f"{dir_path}/run/xor_int_int/main.k",
+        keep
     )
 
 
-def test_not_int_int():
+def test_not_int_int(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "254",
-        "./not_int_int/main.k"
+        f"{dir_path}/run/not_int_int/main.k",
+        keep
     )
 
 
-def test_eq_int_int():
+def test_eq_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_int_int/main.k"
+        f"{dir_path}/run/eq_int_int/main.k",
+        keep
     )
 
 
-def test_neq_int_int():
+def test_neq_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./neq_int_int/main.k"
+        f"{dir_path}/run/neq_int_int/main.k",
+        keep
     )
 
 
-def test_gt_int_int():
+def test_gt_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./gt_int_int/main.k"
+        f"{dir_path}/run/gt_int_int/main.k",
+        keep
     )
 
 
-def test_ge_int_int():
+def test_ge_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./ge_int_int/main.k"
+        f"{dir_path}/run/ge_int_int/main.k",
+        keep
     )
 
 
-def test_lt_int_int():
+def test_lt_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./lt_int_int/main.k"
+        f"{dir_path}/run/lt_int_int/main.k",
+        keep
     )
 
 
-def test_le_int_int():
+def test_le_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./le_int_int/main.k"
+        f"{dir_path}/run/le_int_int/main.k",
+        keep
     )
 
 
-def test_shl_int_int():
+def test_shl_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./shl_int_int/main.k"
+        f"{dir_path}/run/shl_int_int/main.k",
+        keep
     )
 
 
-def test_shr_int_int():
+def test_shr_int_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./shr_int_int/main.k"
+        f"{dir_path}/run/shr_int_int/main.k",
+        keep
     )
 
 
@@ -370,172 +400,188 @@ def test_shr_int_int():
 
 # UNSIGNED INTEGER TESTS
 #
-def test_add_uint_uint():
+def test_add_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "46",
-        "./add_uint_uint/main.k"
+        f"{dir_path}/run/add_uint_uint/main.k",
+        keep
     )
 
 
-def test_sub_uint_uint():
+def test_sub_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "4",
-        "./sub_uint_uint/main.k"
+        f"{dir_path}/run/sub_uint_uint/main.k",
+        keep
     )
 
 
-def test_mul_uint_uint():
+def test_mul_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "15",
-        "./mul_uint_uint/main.k"
+        f"{dir_path}/run/mul_uint_uint/main.k",
+        keep
     )
 
 
-def test_div_uint_uint():
+def test_div_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./div_uint_uint/main.k"
+        f"{dir_path}/run/div_uint_uint/main.k",
+        keep
     )
 
 
-def test_and_uint_uint():
+def test_and_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "42",
-        "./and_uint_uint/main.k"
+        f"{dir_path}/run/and_uint_uint/main.k",
+        keep
     )
 
 
-def test_or_uint_uint():
+def test_or_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "6",
-        "./or_uint_uint/main.k"
+        f"{dir_path}/run/or_uint_uint/main.k",
+        keep
     )
 
 
-def test_xor_uint_uint():
+def test_xor_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "0",
-        "./xor_uint_uint/main.k"
+        f"{dir_path}/run/xor_uint_uint/main.k",
+        keep
     )
 
 
-def test_not_uint_uint():
+def test_not_uint_uint(keep=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "254",
-        "./not_uint_uint/main.k"
+        f"{dir_path}/run/not_uint_uint/main.k",
+        keep
     )
 
 
-def test_eq_uint_uint():
+def test_eq_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_uint_uint/main.k"
+        f"{dir_path}/run/eq_uint_uint/main.k",
+        keep
     )
 
 
-def test_neq_uint_uint():
+def test_neq_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./neq_uint_uint/main.k"
+        f"{dir_path}/run/neq_uint_uint/main.k",
+        keep
     )
 
 
-def test_gt_uint_uint():
+def test_gt_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./gt_uint_uint/main.k"
+        f"{dir_path}/run/gt_uint_uint/main.k",
+        keep
     )
 
 
-def test_ge_uint_uint():
+def test_ge_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./ge_uint_uint/main.k"
+        f"{dir_path}/run/ge_uint_uint/main.k",
+        keep
     )
 
 
-def test_lt_uint_uint():
+def test_lt_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./lt_uint_uint/main.k"
+        f"{dir_path}/run/lt_uint_uint/main.k",
+        keep
     )
 
 
-def test_le_uint_uint():
+def test_le_uint_uint(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./le_uint_uint/main.k"
+        f"{dir_path}/run/le_uint_uint/main.k",
+        keep
     )
 
 
-def test_shl_uint_int():
+def test_shl_uint_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./shl_uint_int/main.k"
+        f"{dir_path}/run/shl_uint_int/main.k",
+        keep
     )
 
 
-def test_shr_uint_int():
+def test_shr_uint_int(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./shr_uint_int/main.k"
+        f"{dir_path}/run/shr_uint_int/main.k",
+        keep
     )
 #
 #
@@ -543,205 +589,223 @@ def test_shr_uint_int():
 
 # FLOAT TESTS
 #
-def test_add_float_float():
+def test_add_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./add_float_float/main.k"
+        f"{dir_path}/run/add_float_float/main.k",
+        keep
     )
 
 
-def test_sub_float_float():
+def test_sub_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./sub_float_float/main.k"
+        f"{dir_path}/run/sub_float_float/main.k",
+        keep
     )
 
 
-def test_mul_float_float():
+def test_mul_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./mul_float_float/main.k"
+        f"{dir_path}/run/mul_float_float/main.k",
+        keep
     )
 
 
-def test_fdiv_float_float():
+def test_fdiv_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./fdiv_float_float/main.k"
+        f"{dir_path}/run/fdiv_float_float/main.k",
+        keep
     )
 
 
-def test_eq_float_float():
+def test_eq_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_float_float/main.k"
+        f"{dir_path}/run/eq_float_float/main.k",
+        keep
     )
 
 
-def test_gt_float_float():
+def test_gt_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./gt_float_float/main.k"
+        f"{dir_path}/run/gt_float_float/main.k",
+        keep
     )
 
 
-def test_ge_float_float():
+def test_ge_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./ge_float_float/main.k"
+        f"{dir_path}/run/ge_float_float/main.k",
+        keep
     )
 
 
-def test_lt_float_float():
+def test_lt_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./lt_float_float/main.k"
+        f"{dir_path}/run/lt_float_float/main.k",
+        keep
     )
 
 
-def test_le_float_float():
+def test_le_float_float(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./le_float_float/main.k"
+        f"{dir_path}/run/le_float_float/main.k",
+        keep
     )
 
 
 # BOOL TESTS
-def test_and_bool_bool():
+def test_and_bool_bool(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./and_bool_bool/main.k"
+        f"{dir_path}/run/and_bool_bool/main.k",
+        keep
     )
 
 
-def test_or_bool_bool():
+def test_or_bool_bool(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./or_bool_bool/main.k"
+        f"{dir_path}/run/or_bool_bool/main.k",
+        keep
     )
 
 
-def test_xor_bool_bool():
+def test_xor_bool_bool(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./xor_bool_bool/main.k"
+        f"{dir_path}/run/xor_bool_bool/main.k",
+        keep
     )
 
 
-def test_not_bool_bool():
+def test_not_bool_bool(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./not_bool_bool/main.k"
+        f"{dir_path}/run/not_bool_bool/main.k",
+        keep
     )
 
 
-def test_eq_bool_bool():
+def test_eq_bool_bool(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./eq_bool_bool/main.k"
+        f"{dir_path}/run/eq_bool_bool/main.k",
+        keep
     )
 #
 #
 
 
 # IF-ELIF-ELSE TESTS
-def test_if():
+def test_if(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "true w x > 0",
         "",
-        "./if/main.k"
+        f"{dir_path}/run/if/main.k",
+        keep
     )
 
 
-def test_if_else():
+def test_if_else(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "true",
         "",
-        "./if_else/main.k"
+        f"{dir_path}/run/if_else/main.k",
+        keep
     )
 
 
-def test_if_elif_elif_elif():
+def test_if_elif_elif_elif(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "d >= 3",
         "",
-        "./if_elif_elif_elif/main.k"
+        f"{dir_path}/run/if_elif_elif_elif/main.k",
+        keep
     )
 
 
-def test_if_elif_elif_elif_else():
+def test_if_elif_elif_elif_else(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "else",
         "",
-        "./if_elif_elif_elif_else/main.k"
+        f"{dir_path}/run/if_elif_elif_elif_else/main.k",
+        keep
     )
 
 
@@ -750,41 +814,43 @@ def test_if_elif_elif_elif_else():
 
 
 # ARRAY TESTS
-def test_array_byte_init():
+def test_array_byte_init(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./array_byte_init/main.k"
+        f"{dir_path}/run/array_byte_init/main.k",
+        keep
     )
 
 
-def test_array_byte_init_unset():
+def test_array_byte_init_unset(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./array_byte_init_unset/main.k"
+        f"{dir_path}/run/array_byte_init_unset/main.k",
+        keep
     )
 #
 #
+
 
 # SCOPE TESTS
 #
-
-
-def test_scope():
+def test_scope(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./scope/main.k"
+        f"{dir_path}/run/scope/main.k",
+        keep
     )
 #
 #
@@ -792,59 +858,25 @@ def test_scope():
 # FORMATTING TESTS
 
 
-def test_bin():
+def test_bin(keep=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "",
         "",
-        "./bin/main.k"
+        f"{dir_path}/run/bin/main.k",
+        keep
     )
 #
 #
 
 
+def run(**args):
+    return shared.run_keep("End-to-end Tests", [], globals(), **args)
+
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--fast", action="store_true")
-    group.add_argument("-f")
-
-    parser.add_argument("-c", action="store_true")
-
-    args = parser.parse_args()
-
-    if args.c is True:
-        cleanup()
-        exit()
-
-    test_ct, ok_ct, failed_ct = 0, 0, 0
-
-    if args.f is None:
-        fast = args.fast
-        slow = []
-        tests = [t for t in globals() if t[0:5] == "test_" and callable(eval(t))]
-        for t in tests:
-
-            if fast and t in slow:
-                continue
-
-            result = eval(f"{t}()")
-            test_ct += 1
-            if result:
-                ok_ct += 1
-            else:
-                failed_ct += 1
-
-    else:
-        result = eval(f"{args.f}()")
-        test_ct += 1
-        if result:
-            ok_ct += 1
-        else:
-            failed_ct += 1
-
-    print(f"\nTests: {test_ct} - Passed: {ok_ct} - Failed: {failed_ct}")
+    args = shared.parse_args()
+    run(**args)
