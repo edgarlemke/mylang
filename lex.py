@@ -5,6 +5,7 @@ import argparse
 import re
 
 import list as list_
+from shared import debug
 
 
 # rules list
@@ -35,41 +36,31 @@ def tokenize(code, autolist=True):
     Returns a list
     """
 
-    DEBUG = False
-    # DEBUG = True
-
     token_list = _match_tokens(code)
-    # if DEBUG:
-    #    print(f"tokenize():  token_list after _match_tokens: {token_list}")
+    #    debug(f"tokenize():  token_list after _match_tokens: {token_list}")
 
     if len(token_list) == 0:
         raise Exception("No token match!")
 
     # match literals tokens
     token_list = _match_lit_tokens(token_list, code)
-    # if DEBUG:
-    #    print(f"tokenize():  token_list after _match_lit_tokens: {token_list}")
+    #    debug(f"tokenize():  token_list after _match_lit_tokens: {token_list}")
 
     # sort out duplicated tokens
     token_list = _decide_dup_tokens(token_list, ["LIT"])
-    # if DEBUG:
-    #    print(f"tokenize():  token_list after _decide_dup_tokens: {token_list}")
+    #    debug(f"tokenize():  token_list after _decide_dup_tokens: {token_list}")
 
     # sort token_list list by start position of the token
     token_list.sort(key=lambda x: x[2])
-    # if DEBUG:
-    #    print(f"tokenize():  token_list after sort: {token_list}")
+    #    debug(f"tokenize():  token_list after sort: {token_list}")
 
     token_list = _remove_comments(token_list)
-    if DEBUG:
-        print(f"tokenize():  token_list after _remove_comments: {token_list}")
+    debug(f"tokenize():  token_list after _remove_comments: {token_list}")
 
     # sort autolist if needed
     if autolist:
         token_list = _sort_autolist(token_list)
-
-        if DEBUG:
-            print(f"tokenize():  token_list after _sort_autolist: {token_list}")
+        debug(f"tokenize():  token_list after _sort_autolist: {token_list}")
 
     return token_list
 
@@ -240,23 +231,15 @@ def _decide_dup_tokens(token_list, to_remove):
 
 
 def _sort_autolist(token_list):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"\n\n_sort_autolist()")
-        # print(f"\n\n_sort_autolist():  token_list: {token_list}")
+    debug(f"\n\n_sort_autolist()")
+    # debug(f"\n\n_sort_autolist():  token_list: {token_list}")
 
     # add breaklines in the end, so the user doesn't need to do it ;)
     for i in range(0, 2):
         token_list.append(["TOKEN", "BREAKLINE"])
 
-    if DEBUG:
-        par_open_nodes = [n for n in token_list if n[1] == "PAR_OPEN"]
-        par_close_nodes = [n for n in token_list if n[1] == "PAR_CLOSE"]
-
-        print(f"_sort_autolist():  old par_open_nodes: {par_open_nodes} {len(par_open_nodes)}\n")
-        print(f"_sort_autolist():  old par_close_nodes: {par_close_nodes} {len(par_close_nodes)}")
+    debug(f"""_sort_autolist():  old par_open_nodes: {[n for n in token_list if n[1] == "PAR_OPEN"]} {len([n for n in token_list if n[1] == "PAR_OPEN"])}\n""")
+    debug(f"""_sort_autolist():  old par_close_nodes: {[n for n in token_list if n[1] == "PAR_CLOSE"]} {len([n for n in token_list if n[1] == "PAR_CLOSE"])}""")
 
     # split tokens in lines based on BREAKLINEs
     lines = {}
@@ -310,45 +293,41 @@ def _sort_autolist(token_list):
             pop_index = len(blocked_lines[ln - 1]) - 1
             pop_item = blocked_lines[ln - 1].pop(pop_index)
             popped.append(pop_item)
-            if DEBUG:
-                print(f"_sort_autolist():  pop_index: {pop_index}  pop_item: {pop_item}")
+
+            debug(f"_sort_autolist():  pop_index: {pop_index}  pop_item: {pop_item}")
 
             # insert PAR_OPEN at the beginning of current line
             insert_item = ["TOKEN", "PAR_OPEN", '', '', "(", f"start blk level {level} line {ln+1}"]
-            if DEBUG:
-                print(f"_sort_autolist():  inserting {insert_item} at 0")
+            debug(f"_sort_autolist():  inserting {insert_item} at 0")
             ln_content.insert(0, insert_item)
 
             start_block = True
 
         # elif decreasing level receding tabs
         elif len(tabs_in_line) < level:
-            if DEBUG:
-                print(f"\n_sort_autolist():  len(tabs_in_line) < level: {len(tabs_in_line)} < {level}")
+            debug(f"\n_sort_autolist():  len(tabs_in_line) < level: {len(tabs_in_line)} < {level}")
 
             if (empty_line and eof) or (not empty_line and not eof):
                 # get difference between current level and tabs in line
                 diff = level - len(tabs_in_line)
-                if DEBUG:
-                    print(f"_sort_autolist():  diff: {diff}")
-                    for p in popped:
-                        print(f"_sort_autolist():  popped: {p}")
+                debug(f"_sort_autolist():  diff: {diff}")
+
+                for p in popped:
+                    debug(f"_sort_autolist():  popped: {p}")
 
                 # for every level in difference
                 range_end = diff * 2
                 # if eof:
                 #    range_end += 1
                 for i in reversed(range(0, range_end)):
-                    if DEBUG:
-                        print(f"_sort_autolist():  i: {i}")
+                    debug(f"_sort_autolist():  i: {i}")
 
                     # get sub for identification
                     sub = level - i  # - 1
 
                     # insert PAR_CLOSE at the beginning of current line
                     insert_item = ["TOKEN", "PAR_CLOSE", '', '', ")", f"end blk sub {sub} line {ln+1}"]
-                    if DEBUG:
-                        print(f"_sort_autolist():  inserting {insert_item} at 0")
+                    debug(f"_sort_autolist():  inserting {insert_item} at 0")
                     ln_content.insert(0, insert_item)
 
                 level -= diff
@@ -363,15 +342,10 @@ def _sort_autolist(token_list):
     for bln in blocked_lines:
         new_token_list += bln
 
-    # if DEBUG:
-    #    print(f"_sort_autolist():  new_token_list: {new_token_list}")
+    # debug(f"_sort_autolist():  new_token_list: {new_token_list}")
 
-    if DEBUG:
-        par_open_nodes = [n for n in new_token_list if n[1] == "PAR_OPEN"]
-        par_close_nodes = [n for n in new_token_list if n[1] == "PAR_CLOSE"]
-
-        print(f"par_open_nodes: {par_open_nodes} {len(par_open_nodes)}\n")
-        print(f"par_close_nodes: {par_close_nodes} {len(par_close_nodes)}")
+    debug(f"""_sort_autolist():  par_open_nodes: {[n for n in new_token_list if n[1] == "PAR_OPEN"]} {len([n for n in new_token_list if n[1] == "PAR_OPEN"])}\n""")
+    debug(f"""_sort_autolist():  par_close_nodes: {[n for n in new_token_list if n[1] == "PAR_CLOSE"]} {len([n for n in new_token_list if n[1] == "PAR_CLOSE"])}\n""")
 
     return new_token_list
 

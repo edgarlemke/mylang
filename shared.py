@@ -7,3 +7,13 @@ def read_file(src):
         expr = "".join(code)
 
         return expr
+
+
+# DEBUG is re-set by run.py files
+DEBUG = False
+
+
+def debug(msg):
+    global DEBUG
+    if DEBUG:
+        print(msg)

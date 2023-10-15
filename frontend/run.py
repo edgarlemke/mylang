@@ -1,8 +1,18 @@
 import argparse
 import os
 import sys
+
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(dir_path)
+
+import eval
+import lex
+import list as list_
+import frontend.compiletime as compiletime
+import frontend.runtime as runtime
+import parse
+import shared
+from shared import debug
 
 
 def run(
@@ -11,13 +21,9 @@ def run(
     print_token_list=False,
     print_token_tree=False,
     print_output=False,
-    compile_time_scope=False
+    compile_time_scope=False,
+    debug_=False
 ):
-    import eval
-    import list as list_
-    import frontend.compiletime as compiletime
-    import frontend.runtime as runtime
-
     # print(f"print_token_list: {print_token_list}")
     # print(f"print_token_tree: {print_token_tree}")
 
@@ -42,8 +48,6 @@ def run(
 
 def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
     # from pprint import pprint
-    import lex
-    import parse
 
     token_list = lex.tokenize(expr)
     if print_token_list:
@@ -130,65 +134,51 @@ def _mangle_if_nodes(li):
     DEBUG = False
     # DEBUG = True
 
-    if DEBUG:
-        print(f"_mangle_if_nodes():  li: {li}")
+    debug(f"_mangle_if_nodes():  li: {li}")
 
     li_copy = li.copy()
 
     def iter(item):
         for child_index, child in enumerate(item):
-            if DEBUG:
-                print(f"_mangle_if_nodes():  child_index: {child_index} child: {child}")
+            debug(f"_mangle_if_nodes():  child_index: {child_index} child: {child}")
 
             if type(child) == list and len(child) > 0:
                 if child[0] == "if":
-                    if DEBUG:
-                        print(f"_mangle_if_nodes():  IF")
+                    debug(f"_mangle_if_nodes():  IF")
 
                     elif_and_else = [node for node in item[child_index + 1:] if node[0] in ["elif", "else"]]
-                    if DEBUG:
-                        print(f"_mangle_if_nodes():  elif_and_else: {elif_and_else}")
+                    debug(f"_mangle_if_nodes():  elif_and_else: {elif_and_else}")
 
                     ct = 1
                     for e_index, e_node in enumerate(elif_and_else):
-                        if DEBUG:
-                            print(f"item: {item} child_index: {child_index} e_index: {e_index}")
+                        debug(f"item: {item} child_index: {child_index} e_index: {e_index}")
 
                         # item[child_index + e_index] += [e_node]
                         # item[child_index + 1] += [e_node]
                         candidate_to_append = item[child_index]
                         candidate_to_append += [e_node]
-                        if DEBUG:
-                            print(f"_mangle_if_nodes():  candidate_to_append: {candidate_to_append}")
+                        debug(f"_mangle_if_nodes():  candidate_to_append: {candidate_to_append}")
 
                         index_to_pop = child_index + e_index + ct
-                        if DEBUG:
-                            print(f"_mangle_if_nodes():  index_to_pop: {index_to_pop} item: {item}\n")
+                        debug(f"_mangle_if_nodes():  index_to_pop: {index_to_pop} item: {item}\n")
 
                         item.pop(index_to_pop)
                         ct -= 1
 
                     # add empty list in case of if without else
                     if len(elif_and_else) == 0:
-                        if DEBUG:
-                            print(f"_mangle_if_nodes():  no elif nor else: {child}")
+                        debug(f"_mangle_if_nodes():  no elif nor else: {child}")
 
                         item[child_index].append([])
-                        if DEBUG:
-                            print(f"item[child_index]: {item[child_index]}")
+                        debug(f"item[child_index]: {item[child_index]}")
 
                 iter(child)
 
     iter(li_copy)
-    if DEBUG:
-        print(f"_mangle_if_nodes():  li_copy: {li_copy}")
+    debug(f"_mangle_if_nodes():  li_copy: {li_copy}")
 
 
 def _setup_env(compiletime_scope=False):
-    import eval
-    import frontend.compiletime as compiletime
-    import frontend.runtime as runtime
-
     scope = runtime.scope if compiletime_scope == False else compiletime.scope
 
     # Macros declared first are matched first...
@@ -250,6 +240,7 @@ if __name__ == "__main__":
     print_group.add_argument("--print-output", action="store_true")
 
     parser.add_argument("--compile-time-scope", action="store_true")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
 
@@ -258,6 +249,9 @@ if __name__ == "__main__":
 
     # get the expr argument
     expr = args.expr
+
+    # setup DEBUG
+    shared.DEBUG = args.debug
 
     # extract expr from src file
     if src is not None:

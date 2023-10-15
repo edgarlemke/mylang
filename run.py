@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
 import argparse
+import os
 from subprocess import run
 import shlex
 
 import list as list_
 import frontend
 import backend
-from shared import read_file
+# from shared import read_file
+import shared
 
 
 if __name__ == "__main__":
@@ -25,6 +27,7 @@ if __name__ == "__main__":
     output_group.add_argument("--frontend-print-token-tree", action="store_true")
 
     parser.add_argument("--frontend-compile-time-scope", action="store_true")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
 
@@ -37,14 +40,14 @@ if __name__ == "__main__":
     # get the expr argument
     expr = args.expr
 
+    # setup DEBUG
+    shared.DEBUG = args.debug
+
     # if src argument was given, extract expr from src file
     if src is not None:
         src = str(src)
-
-        import os
         src = os.path.abspath(src)
-
-        expr = read_file(src)
+        expr = shared.read_file(src)
 
     # if expr argument was given, just convert expr to str
     elif expr is not None:

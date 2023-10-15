@@ -1,18 +1,16 @@
 import copy
-import eval
 import argparse
+
 import os
 import sys
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(dir_path)
+import eval
+from shared import debug
 
 
 def __fn__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"__fn__():  backend - node: {node}")
+    debug(f"__fn__():  backend - node: {node}")
 
     global function_global_stack
 
@@ -30,8 +28,7 @@ def __fn__(node, scope):
 
     # split_arguments = compiletime.split_function_arguments(arguments)
 
-    if DEBUG:
-        print(f"__fn__():  backend - arguments: {arguments}")
+    debug(f"__fn__():  backend - arguments: {arguments}")
 
     # solve function overloaded name to a single function name
     uname = _unoverload(name, arguments)
@@ -59,8 +56,7 @@ def __fn__(node, scope):
     if len(node) == 5:
         return_type = _convert_type(return_type)
 
-    if DEBUG:
-        print(f"__fn__():  backend return_type: {return_type}")
+    debug(f"__fn__():  backend return_type: {return_type}")
 
     # create function body scope
     import copy
@@ -80,14 +76,12 @@ def __fn__(node, scope):
 
     # setup function arguments
     for function_argument in arguments:
-        if DEBUG:
-            print(f"__fn__():  backend - function_argument: {function_argument}")
+        debug(f"__fn__():  backend - function_argument: {function_argument}")
 
         argument_list = [function_argument[0], "const", function_argument[1], None]
         function_body_scope["names"].append(argument_list)
 
-    # if DEBUG:
-    #    print(f"__fn__():  backend - function_body_scope: {function_body_scope}")
+    # debug(f"__fn__():  backend - function_body_scope: {function_body_scope}")
 
     functions_stack.append([uname, function_body_scope, arguments])
 
@@ -104,29 +98,25 @@ def __fn__(node, scope):
     if len(result) > 0:
         body.append(result)
 
-    if DEBUG:
-        print(f"__fn__():  backend - body: {body}")
+    debug(f"__fn__():  backend - body: {body}")
 
     serialized_body = _serialize_body(body)
 
-    if DEBUG:
-        print(f"__fn__():  serialized_body: {serialized_body}")
+    debug(f"__fn__():  serialized_body: {serialized_body}")
 
     if "ret" not in serialized_body[len(serialized_body) - 1]:
         serialized_body.append([f"\t\tret {return_type}"])
 
     # declaration, definition = _write_fn(uname, args, return_type, body
     function_global = "\n".join(function_global_stack)
-    if DEBUG:
-        print(f"__fn__():  function_global: {function_global}")
+    debug(f"__fn__():  function_global: {function_global}")
 
     retv = _write_fn(uname, args, return_type, serialized_body)
 
     if len(function_global) > 0:
         retv.insert(0, function_global)
 
-    if DEBUG:
-        print(f"__fn__():  retv: {retv}")
+    debug(f"__fn__():  retv: {retv}")
 
     function_global_stack = []
 
@@ -134,9 +124,6 @@ def __fn__(node, scope):
 
 
 def _validate_fn(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
     import frontend.compiletime as compiletime
 
     # fn, args, ret_type, body = node
@@ -145,23 +132,19 @@ def _validate_fn(node, scope):
     elif len(node) == 5:
         fn_, name, args, ret_type, body = node
 
-    if DEBUG:
-        print(f"_validate_fn():  args: {args}")
+    debug(f"_validate_fn():  args: {args}")
 
     # types = [t[0] for t in scope["names"] if t[2] == "type"]
 
     # check if types of the arguments are valid
     # split_args = compiletime.split_function_arguments(args)
-    # if DEBUG:
-    #    print(f"_validate_fn():  split_args: {split_args}")
+    # debug(f"_validate_fn():  split_args: {split_args}")
 
     for arg in args:
-        if DEBUG:
-            print(f"_validate_fn():  backend - arg: {arg} args: {args}")
+        debug(f"_validate_fn():  backend - arg: {arg} args: {args}")
 
         name, type_ = arg
-        if DEBUG:
-            print(f"_validate_fn():  backend - name: {name} type_: {type_}")
+        debug(f"_validate_fn():  backend - name: {name} type_: {type_}")
 
         # check for composite type
         if isinstance(type_, list):
@@ -172,8 +155,7 @@ def _validate_fn(node, scope):
             search_type = type_
 
         # name_value = eval.get_name_value(type_, scope)
-        # if DEBUG:
-        #    print(f"_validate_fn():  backend - name_value: {name_value}")
+        # debug(f"_validate_fn():  backend - name_value: {name_value}")
 
         if not _validate_type(type_, scope):  # name_value == [] or (name_value != [] and name_value[2] != "type"):
             raise Exception(f"Function argument has invalid type: {type_} {node}")
@@ -192,20 +174,13 @@ function_global_stack = []
 def __set__(node, scope):
     global function_global_stack
 
-    DEBUG = False
-    # DEBUG = True
-
-    import eval
-
-    if DEBUG:
-        print(f"__set__():  backend {node}")
+    debug(f"__set__():  backend {node}")
 
     # compile-time validation
     import frontend.compiletime as ct
     ct.__set__(node, scope)
 
-    # if DEBUG:
-    #    print(f"\nscope: {scope}\n\n")
+    # debug(f"\nscope: {scope}\n\n")
 
     # back-end validation
     _validate_set(node, scope)
@@ -248,8 +223,7 @@ def __set__(node, scope):
         # print(f"YAY: {name}")
         pass
 
-    if DEBUG:
-        print(f"__set__():  tmp_name: {tmp_name}")
+    debug(f"__set__():  tmp_name: {tmp_name}")
 
     if type_ == "Str":
         str_, size = _converted_str(data[1])
@@ -278,8 +252,7 @@ def __set__(node, scope):
 """.split("\n")
 
     elif type_ in ["int", "uint", "float", "bool"]:
-        if DEBUG:
-            print("__set__():  backend - type_ is int uint float or bool")
+        debug("__set__():  backend - type_ is int uint float or bool")
 
         t = _convert_type(type_)
 
@@ -295,20 +268,16 @@ def __set__(node, scope):
             if value[:2] == "0x":
                 value = int(value, base=16)
 
-        if DEBUG:
-            print(f"__set__():  backend - value: {value}")
+        debug(f"__set__():  backend - value: {value}")
 
         if isinstance(value, list):
-            if DEBUG:
-                print(f"__set__():  backend - calling return_call()")
+            debug(f"__set__():  backend - calling return_call()")
             value, stack = return_call(value, scope, [])
-            if DEBUG:
-                print(f"__set__():  backend - value: {value} stack: {stack}")
+            debug(f"__set__():  backend - value: {value} stack: {stack}")
 
             stack.append(f"\t\t%{tmp_name} = {value}")
             retv = "\n".join(stack)
-            if DEBUG:
-                print(f"__set__():  backend - retv: {retv}")
+            debug(f"__set__():  backend - retv: {retv}")
 
             # clean stack from return_call
             stack = []
@@ -316,14 +285,12 @@ def __set__(node, scope):
         else:
             # check if it's at global backend scope
             if scope["parent"] is None:
-                if DEBUG:
-                    print(F"__set__():  backend - global scope")
+                debug(F"__set__():  backend - global scope")
                 retv = f"@{name} = global {t} {value}"
 
             # not global backend scope
             else:
-                if DEBUG:
-                    print(f"__set__():  backend - not global scope")
+                debug(f"__set__():  backend - not global scope")
 
             # handle constants
             if mutdecl == "const":
@@ -332,8 +299,7 @@ def __set__(node, scope):
                     retv = f"@{name} = constant {t} {value}"
 
                 else:
-                    if DEBUG:
-                        print(f"functions_stack: {functions_stack}")
+                    debug(f"functions_stack: {functions_stack}")
 
                     # TODO: get correct fn_name
                     fn_name = "main"
@@ -356,20 +322,17 @@ def __set__(node, scope):
 \t\tstore {t} {value}, {t}* %{name}_stack
 \t\t%{tmp_name} = load {t}, {t}* %{name}_stack
 """
-        if DEBUG:
-            print(f"__set__():  backend - retv: {retv}")
+        debug(f"__set__():  backend - retv: {retv}")
 
     elif type_ == "struct":
         if len(data) == 1:
             value = data[0]
             converted_member_types = []
 
-            if DEBUG:
-                print(f"value: {value}")
+            debug(f"value: {value}")
 
             for struct_member in value:
-                if DEBUG:
-                    print(f"struct_member: {struct_member}")
+                debug(f"struct_member: {struct_member}")
                 converted_member_types.append(_convert_type(struct_member[1]))
 
             joined_converted_member_types = ", ".join(converted_member_types)
@@ -384,18 +347,15 @@ def __set__(node, scope):
 
     # test for composite types
     elif isinstance(type_, list):
-        if DEBUG:
-            print(f"__set__():  backend - type_: {type_}")
+        debug(f"__set__():  backend - type_: {type_}")
 
         type_value = eval.get_name_value(type_[0], scope)
-        if DEBUG:
-            print(f"__set__():  backend - type_value: {type_value}")
+        debug(f"__set__():  backend - type_value: {type_value}")
 
         # check for arrays
         # print(type_value)
         if type_value[0] == "Array":
-            if DEBUG:
-                print(f"__set__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
+            debug(f"__set__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
 
             # check if array is already set
             retv = None
@@ -410,8 +370,7 @@ def __set__(node, scope):
 
         # check for pointers
         elif type_value[0] == "ptr":
-            if DEBUG:
-                print(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
+            debug(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
 
             retv = "RETV_PTR"
 
@@ -421,16 +380,12 @@ def __set__(node, scope):
     else:
         raise Exception(f"Unknown type: {type_}")
 
-    if DEBUG:
-        print(f"__set__():  backend - exiting __set__()")
+    debug(f"__set__():  backend - exiting __set__()")
 
     return retv
 
 
 def _set_array(type_value, type_, data, name):
-    DEBUG = False
-    # DEBUG = True
-
     unset = False
     end = len(type_)
     if end == 2:
@@ -444,8 +399,7 @@ def _set_array(type_value, type_, data, name):
     array_struct_name = "_".join([type_value[0]] + type_[1:end])
     array_members_type = _convert_type(type_[1])
 
-    if DEBUG:
-        print(f"_set_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
+    debug(f"_set_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
 
     # setup stack with start of array initialization
     stack = [f"""\t\t; start of initialization of "{name}" Array
@@ -527,19 +481,14 @@ def _converted_str(str_):
 
 
 def _validate_set(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_validate_set():  backend - node: {node}")
+    debug(f"_validate_set():  backend - node: {node}")
 
     import eval
 
     set_, mutdecl, name, data = node
 
     if len(data) == 1:
-        if DEBUG:
-            print(f"_validate_set():  backend - len(data) == 1 - name: {name}")
+        debug(f"_validate_set():  backend - len(data) == 1 - name: {name}")
 
         if isinstance(name, list):
             name_to_get = name[0]
@@ -551,43 +500,36 @@ def _validate_set(node, scope):
         if name_candidate == []:
             raise Exception(f"Reassigning not assigned name: {name} {data}")
 
-        if DEBUG:
-            print(f"_validate_set():  backend - name_candidate: {name_candidate}")
+        debug(f"_validate_set():  backend - name_candidate: {name_candidate}")
 
         type_ = name_candidate[2]
-        if DEBUG:
-            print(f"_validate_set():  backend - type_: {type_}")
+        debug(f"_validate_set():  backend - type_: {type_}")
 
     elif len(data) == 2:
-        if DEBUG:
-            print(f"_validate_set():  backend - len(data) == 2")
+        debug(f"_validate_set():  backend - len(data) == 2")
 
         type_ = data[0]
         # value = data[1]
 
         if isinstance(type_, list):
-            if DEBUG:
-                print(f"_vadidate_set():  backend - type_ is list")
+            debug(f"_vadidate_set():  backend - type_ is list")
 
             if len(type_) < 2 or len(type_) > 3:
                 raise Exception("Constant assignment has invalid type - type_: {type_}")
 
             if type_[0] == "Array":
-                if DEBUG:
-                    print(f"_validate_set():  backend - type is Array: {type_}")
+                debug(f"_validate_set():  backend - type is Array: {type_}")
 
                 # validate generic type
                 valid_member_type = _validate_members_type(type_[1], scope)
                 if not valid_member_type:
                     raise Exception("Constant assignment has invalid type - type_[1]: {type_[1]}")
 
-                if DEBUG:
-                    print(f"_validate_set():  backend - valid member type")
+                debug(f"_validate_set():  backend - valid member type")
 
                 # check for array size and unset
                 if len(type_) == 3:
-                    if DEBUG:
-                        print(f"_validate_set():  backend - len of type_ is 3")
+                    debug(f"_validate_set():  backend - len of type_ is 3")
 
                     array_size = type_[2]
                     try:
@@ -604,18 +546,13 @@ def _validate_set(node, scope):
     if not _validate_type(type_, scope):
         raise Exception(f"Constant assignment has invalid type - type_: {type_} - node: {node}")
 
-    if DEBUG:
-        print(f"_validate_set():  backend - node OK: {node}")
+    debug(f"_validate_set():  backend - node OK: {node}")
 
     return
 
 
 def _validate_members_type(members_type, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_validate_members_type():  members_type: {members_type}")
+    debug(f"_validate_members_type():  members_type: {members_type}")
 
     valid = True
 
@@ -623,8 +560,7 @@ def _validate_members_type(members_type, scope):
         return _validate_type(members_type, scope)
 
     def iter(type_):
-        if DEBUG:
-            print(f"iter():  type_: {type_}")
+        debug(f"iter():  type_: {type_}")
 
         for child in type_:
             if isinstance(child, list):
@@ -636,11 +572,7 @@ def _validate_members_type(members_type, scope):
 
 
 def _unoverload(name, function_arguments):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_unoverload():  name: {name} function_arguments: {function_arguments} ")
+    debug(f"_unoverload():  name: {name} function_arguments: {function_arguments} ")
 
     # extract node, get function name
     # set_, mutdecl, name, data = node
@@ -660,8 +592,7 @@ def _unoverload(name, function_arguments):
 
         buffer = []
         for arg_type in arg_types:
-            if DEBUG:
-                print(f"_unoverload():  arg_type: {arg_type}")
+            debug(f"_unoverload():  arg_type: {arg_type}")
 
             if isinstance(arg_type, list):
                 # buffer.append("_".join(arg_type))
@@ -688,11 +619,7 @@ def _unoverload(name, function_arguments):
 
 
 def _convert_type(type_):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_convert_type: {type_}")
+    debug(f"_convert_type: {type_}")
 
     converted_type = None
 
@@ -761,8 +688,7 @@ def _validate_type(type_, scope):
 
     def loop(current_type):
         for each_type in current_type:
-            if DEBUG:
-                print(f"loop():  each_type: {each_type}")
+            debug(f"loop():  each_type: {each_type}")
 
             if isinstance(each_type, list):
                 return loop(each_type)
@@ -796,37 +722,27 @@ def _write_fn(fn, args, return_type, body):
 
 
 def _serialize_body(body):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_serialize_body():  {body}")
+    debug(f"_serialize_body():  {body}")
 
     serialized = []
 
     def iter(li):
-        if DEBUG:
-            print(f"iter():  li: {li}")
+        debug(f"iter():  li: {li}")
 
         for child in li:
-            if DEBUG:
-                print(f"\niter():  child: {child}")
+            debug(f"\niter():  child: {child}")
             if isinstance(child, list):
-                if DEBUG:
-                    print(f"iter():  gonna iter over {child}")
+                debug(f"iter():  gonna iter over {child}")
                 iter(child)
             else:
-                if DEBUG:
-                    print(f"iter():  appending {child}")
+                debug(f"iter():  appending {child}")
                 serialized.append(child)
 
-        if DEBUG:
-            print(f"\niter():  exiting {li}\n\n -> serialized: {serialized}\n")
+        debug(f"\niter():  exiting {li}\n\n -> serialized: {serialized}\n")
 
     iter(body)
 
-    if DEBUG:
-        print(f"_serialize_body():  - exiting -> serialized: {serialized}\n")
+    debug(f"_serialize_body():  - exiting -> serialized: {serialized}\n")
 
     return serialized
 
@@ -836,13 +752,9 @@ def __macro__(node, scope):
 
 
 def __if__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
     _validate_if(node, scope)
 
-    if DEBUG:
-        print(f"__if__():  backend - node: {node}")
+    debug(f"__if__():  backend - node: {node}")
 
     import eval
 
@@ -850,21 +762,18 @@ def __if__(node, scope):
 
     # extract elifs from node
     elifs = [child for child in node[3:] if isinstance(child, list) and len(child) > 0 and child[0] == "elif"]
-    if DEBUG:
-        print(f"__if__():  backend - elifs: {elifs}")
+    debug(f"__if__():  backend - elifs: {elifs}")
 
     # extract else from node
     else_ = [child for child in node[2:] if isinstance(child, list) and len(child) > 0 and child[0] == "else"]
-    if DEBUG:
-        print(f"__if__():  backend - !!!! else_: {else_}")
+    debug(f"__if__():  backend - !!!! else_: {else_}")
 
     if len(else_) > 0:
         else_ = else_[0]
     else:
         else_ = None
 
-    if DEBUG:
-        print(f"__if__():  backend - else_: {else_}")
+    debug(f"__if__():  backend - else_: {else_}")
 
     # get labels
     then_label = _get_var_name("if", "if_then_block_")
@@ -894,24 +803,20 @@ def __if__(node, scope):
     stack += [condition_ir]
 
     then_code = eval.eval(node[2], scope)
-    if DEBUG:
-        print(f"__if__():  backend - then_code: {then_code}")
+    debug(f"__if__():  backend - then_code: {then_code}")
 
     stack += [f"\t\t; if - then code block\n\t{then_label}:"] + then_code + [f"\t\tbr label %{end_label}\n"]
 
     x_size = len(node[3:])
-    if DEBUG:
-        print(f"__if__():  backend - x_size: {x_size}")
+    debug(f"__if__():  backend - x_size: {x_size}")
 
     for else_index in range(0, 0 + x_size):
         item = node[else_index + 3]
-        if DEBUG:
-            print(f"__if__():  backend - else_index: {else_index} item: {item}")
+        debug(f"__if__():  backend - else_index: {else_index} item: {item}")
 
         # handle elif
         if len(item) > 0 and item[0] == "elif":
-            if DEBUG:
-                print("__if__():  backend - elif")
+            debug("__if__():  backend - elif")
 
             # append elif label
             elif_label = elif_labels[else_index][1]
@@ -930,30 +835,26 @@ def __if__(node, scope):
                 next_x_label = end_label
 
             elif_condition_ir = _get_condition_ir(item, scope, elif_label, next_x_label)
-            if DEBUG:
-                print(f"__if__():  backend - elif_condition_ir: {elif_condition_ir}")
+            debug(f"__if__():  backend - elif_condition_ir: {elif_condition_ir}")
 
             stack += [elif_condition_ir]
 
             # get elif code
             elif_code = eval.eval(item[2], scope)
-            if DEBUG:
-                print(f"__if__():  backend - elif_code: {elif_code}")
+            debug(f"__if__():  backend - elif_code: {elif_code}")
 
             stack += [f"\t\t; if - elif code block\n\t{elif_label}:"]
             stack += elif_code
             stack += [f"""\t\tbr label %{end_label}\n"""]
 
         else:
-            if DEBUG:
-                print(f"__if__():  backend - else - item: {item}")
+            debug(f"__if__():  backend - else - item: {item}")
 
             if len(item) == 0:
                 continue
 
             else_code = eval.eval(item[1], scope)
-            if DEBUG:
-                print(f"__if__():  backend - else_code: {else_code}")
+            debug(f"__if__():  backend - else_code: {else_code}")
 
             stack += [f"\t\t; if - else code block\n\t{else_label}:"] + else_code + [f"""
 \t\tbr label %{end_label}\n"""]
@@ -963,16 +864,14 @@ def __if__(node, scope):
 \t\t; if end
 """]
 
-    if DEBUG:
-        print(f"__if__():  backend - stack: {stack}")
+    debug(f"__if__():  backend - stack: {stack}")
 
     S = _serialize_body(stack)
     # print(f"S: {S}")
 
     result = "\n".join(S)
     # result = "\n".join(stack)
-    if DEBUG:
-        print(f"__if__():  backend - result: {result}")
+    debug(f"__if__():  backend - result: {result}")
 
     return result
 
@@ -982,11 +881,7 @@ def _validate_if(node, scope):
 
 
 def _get_condition_ir(node, scope, then_label, x_label):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_get_condition_ir():  node: {node} scope: {hex(id(scope))} then_label: {then_label} x_label: {x_label}")
+    debug(f"_get_condition_ir():  node: {node} scope: {hex(id(scope))} then_label: {then_label} x_label: {x_label}")
 
     import eval
     condition_name = _get_var_name("if", "condition_")
@@ -994,8 +889,7 @@ def _get_condition_ir(node, scope, then_label, x_label):
     if isinstance(node[1], list):
         condition_function = eval.get_name_value(node[1], scope)
         condition_call, stack = return_call(node[1], scope, [])
-        if DEBUG:
-            print(f"_get_condition_ir():  backend - condition_call: {condition_call}")
+        debug(f"_get_condition_ir():  backend - condition_call: {condition_call}")
 
         retv = stack + [f"""\t\t%{condition_name}  = {condition_call}
 \t\tbr i1 %{condition_name}, label %{then_label}, label %{x_label}\n"""]
@@ -1004,8 +898,7 @@ def _get_condition_ir(node, scope, then_label, x_label):
     else:
         # try to infer type
         infered_type_value = eval._infer_type(node[1])
-        if DEBUG:
-            print(f"infered_type_value: {infered_type_value}")
+        debug(f"infered_type_value: {infered_type_value}")
 
         value = None
 
@@ -1020,8 +913,7 @@ def _get_condition_ir(node, scope, then_label, x_label):
         else:
             # try to get value
             name_value = eval.get_name_value(node[1], scope)
-            if DEBUG:
-                print(f"_get_condition_ir():  backend - name_value: {name_value}")
+            debug(f"_get_condition_ir():  backend - name_value: {name_value}")
 
             if len(name_value) == 0:
                 raise Exception(f"Unassigned name: {node[1]}")
@@ -1035,11 +927,7 @@ def _get_condition_ir(node, scope, then_label, x_label):
 
 
 def __elif__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"__elif__():  backend - node: {node}")
+    debug(f"__elif__():  backend - node: {node}")
 
 
 def __data__(node, scope):
@@ -1104,20 +992,13 @@ def _validate_linux_write(node, scope):
 
 
 def return_call(node, scope, stack=[]):
-    DEBUG = False
-    # DEBUG = True
-
-    import eval
-
-    if DEBUG:
-        print(f"return_call():  node: {node} scope: {hex(id(scope))} stack: {stack}")
+    debug(f"return_call():  node: {node} scope: {hex(id(scope))} stack: {stack}")
 
     # find out function name
     li_function_name = node[0]
 
     value = eval.get_name_value(li_function_name, scope)
-    if DEBUG:
-        print(f"return_call():  value: {value}")
+    debug(f"return_call():  value: {value}")
 
     # matches = [name for name in scope["names"] if name[0] == li_function_name]
 
@@ -1131,22 +1012,18 @@ def return_call(node, scope, stack=[]):
         raise Exception(f"No name matches for function: {li_function_name}")
 
     method, solved_arguments = eval.find_function_method(node, value, scope)
-    if DEBUG:
-        print(f"return_call():  method: {method}")
+    debug(f"return_call():  method: {method}")
 
     function_arguments = method[0][0]
-    if DEBUG:
-        print(f"return_call():  function_arguments: {function_arguments}")
+    debug(f"return_call():  function_arguments: {function_arguments}")
 
     function_name = _unoverload(li_function_name, function_arguments)
-    if DEBUG:
-        print(f"return_call():  function_name: {function_name}")
+    debug(f"return_call():  function_name: {function_name}")
 
     # find out arguments
     converted_arguments = []
     for argument_index, argument in enumerate(function_arguments):
-        if DEBUG:
-            print(f"return_call():  argument: {argument}")
+        debug(f"return_call():  argument: {argument}")
 
         name, type_ = argument
         converted_type = _convert_type(type_)
@@ -1156,43 +1033,36 @@ def return_call(node, scope, stack=[]):
             converted_type = "double"
 
         argument_value = node[argument_index + 1]
-        if DEBUG:
-            print(f"return_call():  argument_value: {argument_value}")
+        debug(f"return_call():  argument_value: {argument_value}")
 
         if isinstance(argument_value, list):
             scope_argument_value = eval.get_name_value(argument_value[0], scope)
 
-            if DEBUG:
-                print(f"return_call():  before return_call() call - stack: {stack}\n")
+            debug(f"return_call():  before return_call() call - stack: {stack}\n")
 
             result, stack = return_call(argument_value, scope, stack)
 
-            if DEBUG:
-                print(f"return_call():  result: {result} stack_: {stack}")
+            debug(f"return_call():  result: {result} stack_: {stack}")
 
             tmp = _get_var_name(function_name, "tmp_")
             call_ = f"\t\t%{tmp} = {result}"
 
-            if DEBUG:
-                print(f"return_call():  appending call_ {call_} to stack")
+            debug(f"return_call():  appending call_ {call_} to stack")
 
             stack.append(call_)
 
-            if DEBUG:
-                print(f"return_call():  stack after append: {stack}")
+            debug(f"return_call():  stack after append: {stack}")
 
             argument_value = f"%{tmp}"
 
         else:
             scope_argument_value = eval.get_name_value(argument_value, scope)
-            if DEBUG:
-                print(f"return_call():  scope_argument_value: {scope_argument_value}")
+            debug(f"return_call():  scope_argument_value: {scope_argument_value}")
 
             if scope_argument_value != []:
                 argument_name = False
                 if len(functions_stack) > 0:
-                    if DEBUG:
-                        print(f"return_call():  len(functions_stack) > 0")
+                    debug(f"return_call():  len(functions_stack) > 0")
 
                     arguments_matches = [arg for arg in functions_stack[len(functions_stack) - 1][2] if argument_value == arg[0]]
                     # print(f"arguments_matches: {arguments_matches}")
@@ -1202,8 +1072,7 @@ def return_call(node, scope, stack=[]):
                         argument_name = True
 
                 if not argument_name:
-                    if DEBUG:
-                        print(f"return_call():  not argument_name")
+                    debug(f"return_call():  not argument_name")
 
                     # check for generic types
                     if isinstance(scope_argument_value[2], list):
@@ -1230,8 +1099,7 @@ def return_call(node, scope, stack=[]):
 
         converted_argument = f"{converted_type} {argument_value}"
 
-        if DEBUG:
-            print(f"return_call():  converted_argument: {converted_argument}")
+        debug(f"return_call():  converted_argument: {converted_argument}")
 
         converted_arguments.append(converted_argument)
 
@@ -1246,8 +1114,7 @@ def return_call(node, scope, stack=[]):
 
     value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
 
-    if DEBUG:
-        print(f"return_call():  exiting return_call():  value: {value}  stack: {stack}\n")
+    debug(f"return_call():  exiting return_call():  value: {value}  stack: {stack}\n")
 
     return value, stack
 
@@ -1287,11 +1154,7 @@ def _get_NAME(function_name, name):
 
 
 def _increment_NAME(function_name, name):
-    DEBUG = False
-    DEBUG = True
-
-    if DEBUG:
-        print(f"_increment_NAME():  function_name: {function_name} name: {name}")
+    debug(f"_increment_NAME():  function_name: {function_name} name: {name}")
 
     _names_storage[function_name][name] += 1
 

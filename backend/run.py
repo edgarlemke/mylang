@@ -1,14 +1,19 @@
 import argparse
+
 import os
 import sys
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(dir_path)
 
+import eval
+import backend.scope as scope
+import list as list_
+import shared
+from shared import debug
+
 
 def run_li(li, print_output=False):
     # print(f"!! run_li: {li}")
-    import eval
-    import backend.scope as scope
 
     default = """(
 (set const stdin (int 0))
@@ -95,17 +100,10 @@ ret i64 %retv
 
 
 def run(expr, print_output=False):
-    import eval
-    import backend.scope as scope
-    import list as list_
-
-    DEBUG = False
-
     expr_li = _get_list_from_expr(expr)
     eval_li = eval.eval(expr_li, scope.scope)
 
-    if DEBUG:
-        print(f"run():  eval_li: {eval_li}")
+    debug(f"run():  eval_li: {eval_li}")
 
     output = _join_lists(eval_li)
 
@@ -125,8 +123,6 @@ def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
 def _join_lists(li):
     # print(f"_join_lists: {li}")
 
-    DEBUG = False
-
     lines = []
 
     def iter(li):
@@ -138,8 +134,7 @@ def _join_lists(li):
                 lines.append(item)
     iter(li)
 
-    if DEBUG:
-        print(f"lines: {lines}")
+    debug(f"lines: {lines}")
 
     return "\n".join(lines)
 
@@ -159,6 +154,7 @@ if __name__ == "__main__":
     print_group.add_argument("--print-output", action="store_true")
 
 #    parser.add_argument("--compile-time-scope", action="store_true")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
 
@@ -167,6 +163,9 @@ if __name__ == "__main__":
 
     # get the expr argument
     expr = args.expr
+
+    # setup DEBUG
+    shared.DEBUG = args.debug
 
     # extract expr from src file
     if src is not None:

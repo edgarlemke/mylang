@@ -1,13 +1,10 @@
 import copy
 import eval
+from shared import debug
 
 
 def __fn__(node, scope, split_args=True):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"__fn__():  compiletime - node: {node}")
+    debug(f"__fn__():  compiletime - node: {node}")
 
     validate_fn(node, scope)
 
@@ -27,8 +24,7 @@ def __fn__(node, scope, split_args=True):
         arguments = split_function_arguments(arguments)
         method[0] = arguments
 
-    if DEBUG:
-        print(f"value after split fn args: {arguments}")
+    debug(f"value after split fn args: {arguments}")
 
     # get all functions with the function-to-be-set name
     names = scope["names"]
@@ -36,8 +32,7 @@ def __fn__(node, scope, split_args=True):
 
     # if there's no function with the function-to-be-set name, create a new function value in scope
     if all_fn == []:
-        if DEBUG:
-            print(f"empty all_fn")
+        debug(f"empty all_fn")
 
         names.append([name, "mut", "fn", [method]])
 
@@ -48,8 +43,7 @@ def __fn__(node, scope, split_args=True):
 
         names[i][3].append(method)
 
-    if DEBUG:
-        print(f"\n__fn__():  frontend compiletime - names after fn: {names}\n")
+    debug(f"\n__fn__():  frontend compiletime - names after fn: {names}\n")
 
     return []
 
@@ -61,11 +55,7 @@ def validate_fn(node, scope):
 
 
 def __set__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"__set__():  compiletime - node: {node}")
+    debug(f"__set__():  compiletime - node: {node}")
 
     _validate_set(node, scope)
 
@@ -74,8 +64,7 @@ def __set__(node, scope):
 
     if len(data) == 1:
         if isinstance(name, list):
-            if DEBUG:
-                print(f"__set__():  compiletime - name is list - name: {name}")
+            debug(f"__set__():  compiletime - name is list - name: {name}")
 
             type_ = _solve_list_name_type(name, scope)
 
@@ -96,8 +85,7 @@ def __set__(node, scope):
         value = data[1]
 
     if not isinstance(name, list):
-        if DEBUG:
-            print(f"__set__():  value: {value} - typeof {name} not list")
+        debug(f"__set__():  value: {value} - typeof {name} not list")
 
         # remove old value from names
         for index, v in enumerate(names):
@@ -113,8 +101,7 @@ def __set__(node, scope):
         names.append([name, mutdecl, type_, value])
 
     else:
-        if DEBUG:
-            print(f"__set__():  frontend compiletime - name is list - name: {name} type: {type_}")
+        debug(f"__set__():  frontend compiletime - name is list - name: {name} type: {type_}")
 
         if isinstance(type_, list):
             if type_[0] == "Array":
@@ -123,8 +110,7 @@ def __set__(node, scope):
         else:
             _set_struct_member(name, scope, value)
 
-    if DEBUG:
-        print(f"\n__set__():  frontend compiletime - names after set: {names}\n")
+    debug(f"\n__set__():  frontend compiletime - names after set: {names}\n")
 
     # retv = ["data", [type_, value]]
     # print(f"returning {retv}")
@@ -132,11 +118,7 @@ def __set__(node, scope):
 
 
 def _validate_set(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"""_validate_set():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
+    debug(f"""_validate_set():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
 
     # check set arguments number
     if len(node) != 4:
@@ -148,16 +130,13 @@ def _validate_set(node, scope):
     type_ = None
 
     # types = [t[0] for t in scope["names"] if t[2] == "type"]
-    # if DEBUG:
-    #    print(f"_validate_set():  types: {types}")
+    # debug(f"_validate_set():  types: {types}")
 
     generic_types_values = [t for t in scope["names"] if isinstance(t[2], list) and len(t[2]) > 0]
-    if DEBUG:
-        print(f"_validate_set():  generic_types_values: {generic_types_values}")
+    debug(f"_validate_set():  generic_types_values: {generic_types_values}")
 
     structs = [s[0] for s in scope["names"] if s[2] == "struct"]
-    if DEBUG:
-        print(f"_validate_set():  structs: {structs}")
+    debug(f"_validate_set():  structs: {structs}")
 
     # exceptions = ["fn"]
 
@@ -191,8 +170,7 @@ def _validate_set(node, scope):
 
     if type_ in structs:
         struct_type = [st for st in scope["names"] if st[2] == "struct" and st[0] == type_][0]
-        if DEBUG:
-            print(f"_validate_set():  frontend compiletime - struct_type: {struct_type}")
+        debug(f"_validate_set():  frontend compiletime - struct_type: {struct_type}")
 
         if len(value) != len(struct_type[3]):
             raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
@@ -231,8 +209,7 @@ def _validate_set(node, scope):
                 elif struct_member[0] == "mut":
                     struct_member_type = struct_member[2]
                 else:
-                    if DEBUG:
-                        print(f"_validate_set():  frontend compiletime - struct_member: {struct_member}")
+                    debug(f"_validate_set():  frontend compiletime - struct_member: {struct_member}")
 
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
@@ -243,9 +220,8 @@ def _validate_set(node, scope):
     # check reassignment over const
     # check const reassignment over mut
     if type_ != "fn" and not isinstance(name, list):
-        if DEBUG:
-            print(f"_validate_set():  frontend compiletime - value isn't function and name isn't list")
-            print(f"""_validate_set():  frontend compiletime - scope["names"]:  {scope["names"]}""")
+        debug(f"_validate_set():  frontend compiletime - value isn't function and name isn't list")
+        debug(f"""_validate_set():  frontend compiletime - scope["names"]:  {scope["names"]}""")
 
         for index, v in enumerate(scope["names"]):
             if v[0] == name:
@@ -284,75 +260,55 @@ def _set_struct_member(li, scope, value):
 
 
 def _set_array_member(li, scope, value):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_set_array_member():  li: {li} value: {value}")
+    debug(f"_set_array_member():  li: {li} value: {value}")
 
     def myfn(n, index):
-        if DEBUG:
-            print(f"myfn():  - n: {n} index: {index} value: {value}")
+        debug(f"myfn():  - n: {n} index: {index} value: {value}")
 
         if not scope["backend_scope"]:
             n[3][index] = value
 
-        if DEBUG:
-            print(f"myfn():  - n after set: {n}")
+        debug(f"myfn():  - n after set: {n}")
 
     return eval._seek_array_ref(li, scope, myfn)
 
 
 def _solve_list_name_type(name, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_solve_list_name_type()  - name: {name}")
+    debug(f"_solve_list_name_type()  - name: {name}")
 
     def iter(li, scope):
-        if DEBUG:
-            print(f"iter():  - li: {li}")
+        debug(f"iter():  - li: {li}")
 
         name_value = eval.get_name_value(li[0], scope)
-        if DEBUG:
-            print(f"iter():  - name_value: {name_value}")
+        debug(f"iter():  - name_value: {name_value}")
 
         name_, mutdecl, type_, value = name_value
 
         if type_[0] == "Array":
-            if DEBUG:
-                print(f"iter():  - type_[0] is Array")
+            debug(f"iter():  - type_[0] is Array")
 
             return type_
 
         if type_[0] == "ptr":
-            if DEBUG:
-                print(f"iter():  - type[0] is ptr")
+            debug(f"iter():  - type[0] is ptr")
 
             return type_
 
     type_ = iter(name, scope)
 
-    if DEBUG:
-        print(f"_solve_list_name_type():  type_: {type_}")
+    debug(f"_solve_list_name_type():  type_: {type_}")
 
     return type_
 
 
 def split_function_arguments(arg_pieces):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"split_function_arguments():  arg_pieces: {arg_pieces}")
+    debug(f"split_function_arguments():  arg_pieces: {arg_pieces}")
 
     split_args = []
     buf = []
 
     for piece in arg_pieces:
-        if DEBUG:
-            print(f"split_function_arguments():  piece: {piece}")
+        debug(f"split_function_arguments():  piece: {piece}")
 
         is_comma = piece == ","
         if is_comma:
@@ -364,8 +320,7 @@ def split_function_arguments(arg_pieces):
     if len(buf) > 0:
         split_args.append(buf.copy())
 
-    if DEBUG:
-        print(f"split_function_arguments():  split_args: {split_args}")
+    debug(f"split_function_arguments():  split_args: {split_args}")
 
     return split_args
 
@@ -434,11 +389,7 @@ def validate_macro(node, scope):
 
 
 def __if__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"calling __if__:  compiletime - node: {node}")
+    debug(f"calling __if__:  compiletime - node: {node}")
 
     validate_if(node, scope)
 
@@ -468,11 +419,7 @@ def validate_if(node, scope):
 
 
 def __else__(node, scope):
-    DEBUG = False
-    DEBUG = True
-
-    if DEBUG:
-        print(f"__else__():  frontend compiletime - node: {node}")
+    debug(f"__else__():  frontend compiletime - node: {node}")
 
     return []
 

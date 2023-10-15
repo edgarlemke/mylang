@@ -1,6 +1,8 @@
 import copy
+
 from . import compiletime
 import eval
+from shared import debug
 
 
 def __fn__(node, scope):
@@ -11,9 +13,7 @@ def __fn__(node, scope):
 
 
 def __set__(node, scope):
-    DEBUG = False
-    if DEBUG:
-        print(f"calling runtime __set__")
+    debug(f"calling runtime __set__")
 
     # compiletime._validate_set(node, scope)
     compiletime.__set__(node, scope)
@@ -27,22 +27,14 @@ def __macro__(node, scope):
 
 
 def __if__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"__if__():  frontend runtime - node: {node}")
+    debug(f"__if__():  frontend runtime - node: {node}")
 
     compiletime.validate_if(node, scope)
     return node
 
 
 def __else__(node, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"__else__():  frontend runtime - node: {node}")
+    debug(f"__else__():  frontend runtime - node: {node}")
 
     compiletime.validate_else(node, scope)
     return node

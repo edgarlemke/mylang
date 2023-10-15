@@ -1,5 +1,7 @@
 import re
 
+from shared import debug
+
 
 # default scope is given for creating copies
 # default_scope = [
@@ -25,14 +27,10 @@ default_scope = {
 
 
 def eval(li, scope):
-    DEBUG = False
-    # DEBUG = True
-
     is_backend_scope = scope["backend_scope"] == True
     end_str = "backend" if is_backend_scope else "frontend"
 
-    if DEBUG:
-        print(f"""\neval():  {end_str} - li: {li}""")
+    debug(f"""\neval():  {end_str} - li: {li}""")
     # print(f"\neval {li} {scope}")
 
     old_li = li
@@ -45,47 +43,39 @@ def eval(li, scope):
         expand = True
         new_li = li.copy()
         while expand:
-            if DEBUG:
-                print(f"eval():  will try to expand macros in {new_li}")
+            debug(f"eval():  will try to expand macros in {new_li}")
 
             new_li, found_macro = _expand_macro(new_li, scope)
 
-            if DEBUG:
-                print(f"eval():  new_li: {new_li} found_macro: {found_macro}")
+            debug(f"eval():  new_li: {new_li} found_macro: {found_macro}")
 
             expand = found_macro
 
-        if DEBUG:
-            print(f"eval():  expansion ended - new_li: {new_li}")
+        debug(f"eval():  expansion ended - new_li: {new_li}")
 
         li = new_li
 
-    if DEBUG:
-        print(f"eval():  macro expanded li: {li}")
+    debug(f"eval():  macro expanded li: {li}")
 
     # if the list is empty, return it
     if len(li) == 0:
-        if DEBUG:
-            print(f"eval():  exiting eval {li}")
+        debug(f"eval():  exiting eval {li}")
 
         return li
 
     is_list = isinstance(li[0], list)
     if is_list:
-        if DEBUG:
-            print(f"eval():  is_list - li: {li}")
+        debug(f"eval():  is_list - li: {li}")
         evaled_li = []
         for key, item in enumerate(li):
-            if DEBUG:
-                print(f"eval():  li item: {item}")
+            debug(f"eval():  li item: {item}")
 
             evaluated_list_ = eval(item, scope)
             if len(evaluated_list_) > 0:
                 evaled_li.append(evaluated_list_)
 
         li = evaled_li
-        if DEBUG:
-            print(f"evaled_li: {evaled_li}")
+        debug(f"evaled_li: {evaled_li}")
 
     else:
         # get name value from scope
@@ -99,8 +89,7 @@ def eval(li, scope):
         #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
 
         if name_match[2] in ["fn", "internal"]:
-            if DEBUG:
-                print(f"eval():  li calls fn/internal - name_match: {name_match}")
+            debug(f"eval():  li calls fn/internal - name_match: {name_match}")
 
             # len == 1, so it's a reference
             if len(li) == 1:
@@ -110,13 +99,11 @@ def eval(li, scope):
             # len > 1, so it's a function call
             else:
                 if name_match[2] == "fn":
-                    if DEBUG:
-                        print(f"eval():  name_match is function - name_match: {name_match}")
+                    debug(f"eval():  name_match is function - name_match: {name_match}")
 
                     retv = _call_fn(li, name_match, scope)
 
-                    if DEBUG:
-                        print(f"eval():  retv: {retv}")
+                    debug(f"eval():  retv: {retv}")
 
                     if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
                         scope["forced_handler"] = retv[1]
@@ -125,18 +112,15 @@ def eval(li, scope):
                     li = retv
 
                 elif name_match[2] == "internal":
-                    if DEBUG:
-                        print(f"eval():  name_match is internal - name_match: {name_match}")
+                    debug(f"eval():  name_match is internal - name_match: {name_match}")
 
                     li = name_match[3](li, scope)
 
-                if DEBUG:
-                    print(f"eval():  internal result li: {li}")
+                debug(f"eval():  internal result li: {li}")
 
         # not function nor internal
         else:
-            if DEBUG:
-                print(f"eval():  not function nor internal: {li}")
+            debug(f"eval():  not function nor internal: {li}")
 
             # if is list of single item
             if len(li) == 1:
@@ -146,8 +130,7 @@ def eval(li, scope):
                 if isinstance(name_match_value, list):
 
                     # evaluate the list
-                    if DEBUG:
-                        print(f"eval():  evaluating list: {name_match[3]}")
+                    debug(f"eval():  evaluating list: {name_match[3]}")
                     evaled_name_match_value = eval(name_match_value, scope)
                     method_type = evaled_name_match_value[0]
 
@@ -177,23 +160,17 @@ def eval(li, scope):
                 else:
                     li = name_match[2:]
             else:
-                if DEBUG:
-                    print(f"eval():  struct member li: {li}")
+                debug(f"eval():  struct member li: {li}")
 
                 li = _get_struct_member(li, scope)
 
-    if DEBUG:
-        print(f"eval():  exiting {end_str}: {old_li}  ->  {li}")
+    debug(f"eval():  exiting {end_str}: {old_li}  ->  {li}")
 
     return li
 
 
 def _call_fn(li, fn, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_call_fn():  li: {li} fn: {fn}")
+    debug(f"_call_fn():  li: {li} fn: {fn}")
 
     name = fn[0]
     methods = fn[3]
@@ -201,8 +178,7 @@ def _call_fn(li, fn, scope):
 
     found_method, solved_arguments = find_function_method(li, fn, scope)
 
-    if DEBUG:
-        print(f"found_method: {found_method} - solved_arguments: {solved_arguments}")
+    debug(f"found_method: {found_method} - solved_arguments: {solved_arguments}")
     # print(f"solved_arguments: {solved_arguments}")
 
     # set new scope
@@ -218,8 +194,7 @@ def _call_fn(li, fn, scope):
         # for arg_i, arg in enumerate(li[1:]):
         for arg_i, arg in enumerate(solved_arguments):
             method_arg = found_method[0][arg_i]
-            if DEBUG:
-                print(f"_call_fn():  method_arg: {method_arg} arg_i: {arg_i} arg: {arg}")
+            debug(f"_call_fn():  method_arg: {method_arg} arg_i: {arg_i} arg: {arg}")
 
             if scope["backend_scope"]:
                 to_append = [method_arg[0], "const", method_arg[0][1], arg[1]]
@@ -228,27 +203,23 @@ def _call_fn(li, fn, scope):
 
             fn_scope["names"].append(to_append)
 
-    # if DEBUG:
-    #    print(f"fn_scope: {fn_scope}")
+    #    debug(f"fn_scope: {fn_scope}")
 
     return_calls = scope["return_call"] is not None
 
-    if DEBUG:
-        print(f"return_calls: {return_calls}")
+    debug(f"return_calls: {return_calls}")
 
     # check for functions without return value
     if len(found_method) == 2:
         if return_calls:
             return_call_function = scope["return_call"]
 
-            if DEBUG:
-                print(f"_call_fn():  CALLING return_call() - li: {li}")
+            debug(f"_call_fn():  CALLING return_call() - li: {li}")
 
             value, stack = return_call_function(li, scope)
             value = f"\t\t{value}"
 
-            if DEBUG:
-                print(f"_call_fn():  value: {value}  stack: {stack}")
+            debug(f"_call_fn():  value: {value}  stack: {stack}")
 
             # stack.append(value)
             # return stack
@@ -261,8 +232,7 @@ def _call_fn(li, fn, scope):
 
     # return calls if we need the call output
     if return_calls:
-        if DEBUG:
-            print(f"returning call _call_fn {li}")
+        debug(f"returning call _call_fn {li}")
         return_value = li
 
     else:
@@ -279,8 +249,7 @@ def _call_fn(li, fn, scope):
 
     return_value[0]: {return_value[0]}""")
 
-    if DEBUG:
-        print(f"_call_fn:  exiting {li} -> {return_value}")
+    debug(f"_call_fn:  exiting {li} -> {return_value}")
 
     return return_value
 
@@ -292,24 +261,18 @@ def find_function_method(li, fn, scope):
     scope - scope list
     """
 
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"\nfind_function_method - li: {li} fn: {fn}\n")
+    debug(f"\nfind_function_method - li: {li} fn: {fn}\n")
 
     name = fn[0]
     methods = fn[3]
     candidates = []
 
-    if DEBUG:
-        print(f"methods: {methods}")
+    debug(f"methods: {methods}")
 
     solved_arguments = []
 
     for method in methods:
-        if DEBUG:
-            print(f"\nmethod: {method}")
+        debug(f"\nmethod: {method}")
 
         # clean solved_arguments from previous functions
         solved_arguments = []
@@ -317,8 +280,7 @@ def find_function_method(li, fn, scope):
         # match types
         match = True
         for arg_i, arg in enumerate(li[1:]):
-            if DEBUG:
-                print(f"\nargument - arg_i: {arg_i} arg: {arg}")
+            debug(f"\nargument - arg_i: {arg_i} arg: {arg}")
 
             # break in methods without the arguments
             if scope["backend_scope"]:
@@ -327,8 +289,7 @@ def find_function_method(li, fn, scope):
                 m0 = method[0]
 
             if len(m0) < arg_i + 1 and not (len(m0) == 0 and len(li[1:]) == 1 and li[1] == []):
-                if DEBUG:
-                    print(f"not matching - len(m0) < arg_i + 1")
+                debug(f"not matching - len(m0) < arg_i + 1")
 
                 match = False
                 break
@@ -342,9 +303,8 @@ def find_function_method(li, fn, scope):
 
             # if it's a list
             if is_list:
-                if DEBUG:
-                    print(f"is_list: {is_list} arg: {arg} m0: {m0}")
-                    print(f"""is backend scope: {scope["backend_scope"]}""")
+                debug(f"is_list: {is_list} arg: {arg} m0: {m0}")
+                debug(f"""is backend scope: {scope["backend_scope"]}""")
 
                 # if it's calling a function without arguments with a single empty list as argument
                 if len(arg) == 0 and len(method[0]) == 0:
@@ -354,15 +314,13 @@ def find_function_method(li, fn, scope):
                 if scope["backend_scope"] == True:
                     # get function
                     list_function = get_name_value(arg[0], scope)
-                    if DEBUG:
-                        print(f"list_function: {list_function}")
+                    debug(f"list_function: {list_function}")
 
                     # if found function
                     if len(list_function) > 0:
                         # find function method for argument
                         argument_method, argument_solved_arguments = find_function_method(arg, list_function, scope)
-                        if DEBUG:
-                            print(f"argument_method: {argument_method} argument_solved_arguments: {argument_solved_arguments}")
+                        debug(f"argument_method: {argument_method} argument_solved_arguments: {argument_solved_arguments}")
 
                         # set a dummy solved_argument just with the correct type
                         solved_argument = [argument_method[1], '?']
@@ -370,30 +328,25 @@ def find_function_method(li, fn, scope):
                 # if it's a frontend scope, eval argument
                 else:
                     # eval it
-                    if DEBUG:
-                        print(f"calling eval() to solve argument {arg}")
+                    debug(f"calling eval() to solve argument {arg}")
 
                     solved_argument = eval(arg, scope)
 
-                if DEBUG:
-                    print(f"find_function_method(): list solved_argument: {solved_argument}")
+                debug(f"find_function_method(): list solved_argument: {solved_argument}")
 
             # if it's not a list
             else:
-                if DEBUG:
-                    print(f"find_function_method():  argument {arg} isn't a list")
+                debug(f"find_function_method():  argument {arg} isn't a list")
 
                 # get name value
                 name_value = get_name_value(arg, scope)
-                if DEBUG:
-                    print(f"find_function_method():  name_value: {name_value} arg: {arg}")
-                    print(f"""find_function_method():  names: {[i[0] for i in scope["names"]]}""")
-                    print(f"""find_function_method():  scope["names"]: {scope["names"]}""")
+                debug(f"find_function_method():  name_value: {name_value} arg: {arg}")
+                debug(f"""find_function_method():  names: {[i[0] for i in scope["names"]]}""")
+                debug(f"""find_function_method():  scope["names"]: {scope["names"]}""")
 
                 found_value = list(name_value[2:]) != []
 
-                if DEBUG:
-                    print(f"find_function_method():  found_value: {found_value}")
+                debug(f"find_function_method():  found_value: {found_value}")
 
                 # if found value, set solved_argument with the value
                 if found_value:
@@ -409,8 +362,7 @@ def find_function_method(li, fn, scope):
             #
 
             if solved_argument is None:
-                if DEBUG:
-                    print(f"not matching - solved_argument is None")
+                debug(f"not matching - solved_argument is None")
 
                 match = False
                 break
@@ -418,33 +370,28 @@ def find_function_method(li, fn, scope):
             solved_arguments.append(solved_argument)
 
             if len(solved_argument) == 0:
-                if DEBUG:
-                    print("len(sorved_arg) == 0")
+                debug("len(sorved_arg) == 0")
                 pass
 
             else:
-                if DEBUG:
-                    print(f"solved_argument: {solved_argument}")
-                    print(f"method: {method}")
-                    print(f"m0[arg_i]: {m0[arg_i]} - arg_i: {arg_i}")
+                debug(f"solved_argument: {solved_argument}")
+                debug(f"method: {method}")
+                debug(f"m0[arg_i]: {m0[arg_i]} - arg_i: {arg_i}")
 
                 # get the type of the method argument
                 method_argument_type = m0[arg_i][1]
 
-                if DEBUG:
-                    print(f"method_argument_type: {method_argument_type}")
+                debug(f"method_argument_type: {method_argument_type}")
 
                 # if the type of the solved argument is different from the type of the method argument, don't match
                 if solved_argument[0] != method_argument_type:
-                    if DEBUG:
-                        print(f"not matching - solved_argument[0] != method_argument_type - {solved_argument[0]} != {method_argument_type}")
+                    debug(f"not matching - solved_argument[0] != method_argument_type - {solved_argument[0]} != {method_argument_type}")
 
                     match = False
                     break
 
         if match:
-            if DEBUG:
-                print(f"matching - appending to candidates: {method}")
+            debug(f"matching - appending to candidates: {method}")
             candidates.append(method)
 
     if len(candidates) == 0:
@@ -453,28 +400,21 @@ def find_function_method(li, fn, scope):
     if len(candidates) > 1:
         raise Exception(f"Method candidates mismatch: {name} {candidates}")
 
-    if DEBUG:
-        print(f"candidates: {candidates}")
+    debug(f"candidates: {candidates}")
 
     found_method = candidates[0]
 
-    if DEBUG:
-        print(f"exiting find_function_method - li: {li} -> found_method: {found_method} solved_arguments: {solved_arguments}\n")
+    debug(f"exiting find_function_method - li: {li} -> found_method: {found_method} solved_arguments: {solved_arguments}\n")
 
     return (found_method, solved_arguments)
 
 
 def get_name_value(name, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"get_name_value()  - name: {get_name_value}")
+    debug(f"get_name_value()  - name: {get_name_value}")
 
     def iterup(scope):
         for each_name in scope["names"]:
-            if DEBUG:
-                print(f"get_name_value()  - each_name: {each_name}")
+            debug(f"get_name_value()  - each_name: {each_name}")
 
             if each_name[0] == name:
                 return each_name  # list(n[2:])
@@ -492,11 +432,7 @@ def get_name_value(name, scope):
 
 
 def _infer_type(arg):
-    # DEBUG = False
-    # DEBUG = True
-
-    # if DEBUG:
-    #    print(f"_infer_type():  arg: {arg}")
+    #    debug(f"_infer_type():  arg: {arg}")
 
     candidates = []
 
@@ -660,11 +596,7 @@ def match_macro(li, index, macro):
 
 
 def _get_struct_member(li, scope):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_get_struct_member:  li: {li}")
+    debug(f"_get_struct_member:  li: {li}")
 
     def myfn(n, index):
         new_li = n[3][index]
@@ -693,11 +625,7 @@ def _get_struct_member(li, scope):
 
 
 def _seek_struct_ref(li, scope, fn):
-    DEBUG = False
-    # DEBUG = True
-
-    if DEBUG:
-        print(f"_seek_struct_ref():  li: {li} fn: {fn}")
+    debug(f"_seek_struct_ref():  li: {li} fn: {fn}")
 
     # seeks names matching with li[0]
     name_matches = [n for n in scope["names"] if n[0] == li[0]]
@@ -742,9 +670,6 @@ def _seek_struct_ref(li, scope, fn):
 
 
 def _seek_array_ref(li, scope, fn):
-    DEBUG = False
-    # DEBUG = True
-
     # seeks names matching with li[0]
     name_matches = [n for n in scope["names"] if n[0] == li[0]]
     n = name_matches[0]
@@ -754,14 +679,12 @@ def _seek_array_ref(li, scope, fn):
 
     # check if there's some struct set with this name
     candidates = [s for s in scope["names"] if s[2] == array_type]  # type(s[2]) == list and s[2][0] == "Array" ] #and s[0] == struct_name]
-    if DEBUG:
-        print(f"candidates: {candidates}")
+    debug(f"candidates: {candidates}")
 
     # get the candidate struct
     candidate = candidates[0]
 
-    if DEBUG:
-        print(f"_seek_array_ref():  candidate: {candidate}")
+    debug(f"_seek_array_ref():  candidate: {candidate}")
 
     index = int(li[1])
 
