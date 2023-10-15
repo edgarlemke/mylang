@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import shared
 import argparse
 import inspect as i
 from subprocess import Popen, PIPE, run as run_
@@ -11,6 +10,7 @@ import sys
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 root_path = os.path.dirname(dir_path)
 sys.path.append(dir_path)
+import shared
 
 OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
