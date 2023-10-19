@@ -1,2 +1,2 @@
 fn main ()
-	bool result = 12 < 34
+	bool result := 12 < 34

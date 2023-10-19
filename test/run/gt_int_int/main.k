@@ -1,2 +1,2 @@
 fn main ()
-	bool result = 2 > 1
+	bool result := 2 > 1

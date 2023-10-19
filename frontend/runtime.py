@@ -6,18 +6,54 @@ from shared import debug
 
 
 def __fn__(node, scope):
+    debug(f"__fn__():  frontend runtime - node: {node}")
+
     compiletime.__fn__(node, scope)
+    # _validate_fn(node, scope)
+
+    split_arguments = compiletime.split_function_arguments(node[2])
+
     node_copy = node.copy()
-    node_copy[2] = compiletime.split_function_arguments(node_copy[2])
+    node_copy[2] = split_arguments
+
     return node_copy
 
 
+def _validate_fn(node, scope):
+
+    if len(node) == 4:
+        fn_, name, arguments, body = node
+
+    elif len(node) == 5:
+        fn_, name, arguments, return_type, body = node
+
+    split_arguments = compiletime.split_function_arguments(arguments)
+
+    # create body scope
+    parent_scope = copy.deepcopy(scope)
+    body_scope = copy.deepcopy(eval.default_scope)
+
+    # set dummy arguments in the body scope
+    body_scope["parent"] = parent_scope
+    for argument in split_arguments:
+        debug("__fn__():  frontend runtime - argument: {argument}")
+        compiletime.__set__(["set", "const", argument[0], [argument[1], '?']], body_scope)
+
+    debug(f"__fn__():  frontend runtime - body_scope: {body_scope}")
+
+    # evaluate body to check for errors
+    eval.eval(body, body_scope)
+
+
+def __def__(node, scope):
+    debug(f"__def__():  frontend runtime")
+    compiletime.__def__(node, scope)
+    return node
+
+
 def __set__(node, scope):
-    debug(f"calling runtime __set__")
-
-    # compiletime._validate_set(node, scope)
+    debug(f"__set__():  frontend runtime")
     compiletime.__set__(node, scope)
-
     return node
 
 
@@ -77,6 +113,7 @@ def __unsafe__(node, scope):
 scope = copy.deepcopy(eval.default_scope)
 scope["names"] = [  # names
     ["fn", "mut", "internal", __fn__],
+    ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],

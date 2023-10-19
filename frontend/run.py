@@ -206,18 +206,15 @@ macro op_lte ('a <= 'b) ((le 'a 'b))
 
 macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c))
 
-#macro op_set_fn_with_return (fn 'f 'args 'rt 'body) (set mut 'f (fn ('args 'rt 'body)))
-#macro op_set_fn_without_return (fn 'f 'args 'body) (set mut 'f (fn ('args 'body)))
+#macro op_def_mut_generic_struct (mut struct 'a = 'b 'c) (def mut 'a (struct 'b 'c))
+macro op_def_generic_struct (struct 'a := 'b 'c) (def const 'a (struct ('b 'c)))
 
-macro op_set_mut_generic_struct (mut struct 'a = 'b 'c) (set mut 'a (struct 'b 'c))
-macro op_set_generic_struct (struct 'a = 'b 'c) (set const 'a (struct ('b 'c)))
+macro op_def_mut_struct (mut struct 'a := 'b) (def mut 'a (struct (() 'b)))
+macro op_def_struct (struct 'a := 'b) (def const 'a (struct 'b))
 
-macro op_set_mut_struct (mut struct 'a = 'b) (set mut 'a (struct (() 'b)))
-macro op_set_struct (struct 'a = 'b) (set const 'a (struct 'b))
-
-macro op_set_mut (mut 'type 'name = 'value) (set mut 'name ('type 'value))
-macro op_set_const ('type 'name = 'value) (set const 'name ('type 'value))
-macro op_reset_mut ('name = 'value) (set mut 'name ('value))
+macro op_def_mut (mut 'type 'name := 'value) (def mut 'name ('type 'value))
+macro op_def_const ('type 'name := 'value) (def const 'name ('type 'value))
+macro op_set ('name = 'value) (set 'name 'value)
 
 macro ret (ret) ()
 """

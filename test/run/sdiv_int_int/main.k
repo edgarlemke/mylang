@@ -1,2 +1,2 @@
 fn main ()
-	float result = 15 / 3
+	float result := 15 / 3

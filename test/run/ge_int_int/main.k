@@ -1,2 +1,2 @@
 fn main ()
-	bool result = 12 >= 12
+	bool result := 12 >= 12

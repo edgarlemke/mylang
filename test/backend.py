@@ -11,7 +11,7 @@ OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
 
 
-def _test(fn_name, expected_stdout, expected_stderr, expr):
+def _test(fn_name, expected_stdout, expected_stderr, expr, debug=True):
     print(f"TEST {fn_name} - ", end="")
 
     cmd = f"/usr/bin/python3 ../backend/run.py --print-output --expr \"{expr}\""
@@ -54,36 +54,49 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 
 
 # Typing tests
-def test_set_type():
+def test_def_type(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Constant assignment has invalid type",
-        "set const x (wrong 0)"
+        "def const x (wrong 0)",
+        debug,
     )
 
 
-def test_fn_args():
+def test_fn_args(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function argument has invalid type",
-        "fn main ((x wrong)(y wrong)) int ()"
+        "fn main ((x wrong)(y wrong)) int ()",
+        debug,
     )
 
 
-def test_fn_ret_type():
+def test_fn_ret_type(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Function return type has invalid type",
-        "fn main ((x int) (y int)) wrong ()"
+        "fn main ((x int) (y int)) wrong ()",
+        debug,
     )
 #
 
 
+def test_set(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Resetting constant name",
+        "fn main () ((def const x (int 0)) (set x 0))",
+        debug,
+    )
+
+
 # LLVM IR generation tests
-def test_llvm_fn_void_ret_type():
+def test_llvm_fn_void_ret_type(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define void @main() {
@@ -92,11 +105,12 @@ def test_llvm_fn_void_ret_type():
 }
 """,
         "",
-        """fn main () ()"""
+        """fn main () ()""",
+        debug,
     )
 
 
-def test_llvm_fn_cvt_int():
+def test_llvm_fn_cvt_int(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define i64 @main() {
@@ -105,11 +119,12 @@ def test_llvm_fn_cvt_int():
 }
 """,
         "",
-        """fn main () int ()"""
+        """fn main () int ()""",
+        debug,
     )
 
 
-def test_llvm_fn_cvt_uint():
+def test_llvm_fn_cvt_uint(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define i64 @main() {
@@ -118,11 +133,12 @@ def test_llvm_fn_cvt_uint():
 }
 """,
         "",
-        """fn main () uint ()"""
+        """fn main () uint ()""",
+        debug,
     )
 
 
-def test_llvm_fn_unoverload():
+def test_llvm_fn_unoverload(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """define i64 @test__int_uint(i64 %x, i64 %y) {
@@ -135,11 +151,12 @@ define i64 @test__uint_int(i64 %x, i64 %y) {
 }
 """,
         "",
-        """((fn test ((x int)(y uint)) int ()) (fn test ((x uint)(y int)) uint ()))"""
+        """((fn test ((x int)(y uint)) int ()) (fn test ((x uint)(y int)) uint ()))""",
+        debug,
     )
 
 
-def test_llvm_constant_propagation():
+def test_llvm_constant_propagation(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """@main_CONSTANT = constant i64 1;
@@ -152,7 +169,8 @@ define void @main() {
 }
 """,
         "",
-        """fn main () ((set const CONSTANT (int 1)))"""
+        """fn main () ((def const CONSTANT (int 1)))""",
+        debug,
     )
 #
 

@@ -1,2 +1,2 @@
 fn main ()
-	float result = 1.0 / 2.0
+	float result := 1.0 / 2.0

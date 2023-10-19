@@ -51,7 +51,7 @@ def _test(fn_name, expected, expr):
     return True
 
 
-def test_par_open():
+def test_par_open(debug=False):
     """
     `(` expresssion should return only one PAR_OPEN token
     """
@@ -62,7 +62,7 @@ def test_par_open():
         "(")
 
 
-def test_par_close():
+def test_par_close(debug=False):
     """
     `)` expression should return only one PAR_CLOSE token
     """
@@ -73,7 +73,7 @@ def test_par_close():
         ")")
 
 
-def test_space():
+def test_space(debug=False):
     """
     ` ` expression should return only one SPACE token
     """
@@ -84,7 +84,7 @@ def test_space():
         " ")
 
 
-def test_par_open_space_par_close():
+def test_par_open_space_par_close(debug=False):
     """
     `( )` expression should return three tokens == PAR_OPEN, SPACE, PAR_CLOSE
 
@@ -98,7 +98,7 @@ def test_par_open_space_par_close():
     )
 
 
-def test_quote():
+def test_quote(debug=False):
     """
     `"` expression should return only one QUOTE token
     """
@@ -109,14 +109,14 @@ def test_quote():
         """((TOKEN QUOTE 0 1 "\\\""))\n""",
         expr)
 
-# def test_value () :
+# def test_value (debug=False) :
 #    """
 #    `mynametoken` expression should return only one VALUE token
 #    """
 #    return _test(i.getframeinfo( i.currentframe() ).function, """((VALUE 0 11 mynametoken))\n""", "mynametoken")
 
 
-def test_lit_int():
+def test_lit_int(debug=False):
     return _test(
         i.getframeinfo(
             i.currentframe()).function,
@@ -124,7 +124,7 @@ def test_lit_int():
         "123")
 
 
-def test_lit_float():
+def test_lit_float(debug=False):
     return _test(
         i.getframeinfo(
             i.currentframe()).function,
@@ -132,7 +132,7 @@ def test_lit_float():
         "3.14")
 
 
-def test_abc_xyz():
+def test_abc_xyz(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
 #        """((TOKEN PAR_OPEN 0 1 "(") (TOKEN QUOTE 1 2 "\\\"") (TOKEN LIT 2 5 abc) (TOKEN QUOTE 5 6 "\\\"") (TOKEN SPACE 6 7 " ") (TOKEN QUOTE 7 8 "\\\"") (TOKEN LIT 8 11 xyz) (TOKEN QUOTE 11 12 "\\\"") (TOKEN PAR_CLOSE 12 13 ")"))\n""",
@@ -220,7 +220,7 @@ def _get_codepoints():
     return codepoints
 
 
-def test_quoted_unicode():
+def test_quoted_unicode(debug=False):
     """
     All valid Unicode chars between QUOTE tokens should return a VALUE token
     " char should be escaped
@@ -252,7 +252,7 @@ def test_quoted_unicode():
     print(OK)
 
 
-# def test_use():
+# def test_use(debug=False):
 #    _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -260,14 +260,14 @@ def test_quoted_unicode():
 #        "use")
 #
 #
-# def test_fn():
+# def test_fn(debug=False):
 #    return _test(i.getframeinfo(i.currentframe()).function, "((FN 0 2 fn))\n", "fn")
 #
-# def test_call () :
+# def test_call (debug=False) :
 # return _test(i.getframeinfo( i.currentframe() ).function, "((CALL 0 4 call))\n", "call")
 #
 #
-# def test_ret():
+# def test_ret(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -275,7 +275,7 @@ def test_quoted_unicode():
 #        "ret")
 #
 #
-# def test_set():
+# def test_set(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -283,7 +283,7 @@ def test_quoted_unicode():
 #        "set")
 #
 #
-# def test_mut():
+# def test_mut(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -291,7 +291,7 @@ def test_quoted_unicode():
 #        "mut")
 #
 #
-# def test_res():
+# def test_res(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -299,11 +299,11 @@ def test_quoted_unicode():
 #        "res")
 #
 #
-# def test_if():
+# def test_if(debug=False):
 #    return _test(i.getframeinfo(i.currentframe()).function, "((IF 0 2 if))\n", "if")
 #
 #
-# def test_else():
+# def test_else(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -311,7 +311,7 @@ def test_quoted_unicode():
 #        "else")
 #
 #
-# def test_elif():
+# def test_elif(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -319,7 +319,7 @@ def test_quoted_unicode():
 #        "elif")
 #
 #
-# def test_while():
+# def test_while(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -327,7 +327,7 @@ def test_quoted_unicode():
 #        "while")
 #
 #
-# def test_for():
+# def test_for(debug=False):
 #    return _test(
 #        i.getframeinfo(
 #            i.currentframe()).function,
@@ -335,7 +335,7 @@ def test_quoted_unicode():
 #        "for")
 #
 #
-# def test_comment():
+# def test_comment(debug=False):
 #    return _test(
 #        i.getframeinfo(i.currentframe()).function,
 #        "()\n",
@@ -343,7 +343,7 @@ def test_quoted_unicode():
 #    )
 
 
-def test_no_token_match():
+def test_no_token_match(debug=False):
     print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="")
 
     p = Popen(split("/usr/bin/python3 ../lex.py --expr \"\""),
@@ -363,7 +363,7 @@ def test_no_token_match():
     return True
 
 
-# def test_check_nontokenized_start():
+# def test_check_nontokenized_start(debug=False):
 #    print(
 #        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
 #        end="",
@@ -380,7 +380,7 @@ def test_no_token_match():
 #    print("OK")
 #
 #
-# def test_check_nontokenized_middle():
+# def test_check_nontokenized_middle(debug=False):
 #    print(
 #        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
 #        end="",
@@ -397,7 +397,7 @@ def test_no_token_match():
 #    print("OK")
 #
 #
-# def test_check_nontokenized_end():
+# def test_check_nontokenized_end(debug=False):
 #    print(
 #        f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
 #        end="",
@@ -414,7 +414,7 @@ def test_no_token_match():
 #    print("OK")
 
 
-def test_single_line_comment():
+def test_single_line_comment(debug=False):
     return _test(
         i.getframeinfo(
             i.currentframe()).function,
@@ -423,7 +423,7 @@ def test_single_line_comment():
 3.14""")
 
 
-def test_fn_indent():
+def test_fn_indent(debug=False):
     return _test(
         i.getframeinfo(
             i.currentframe()).function,
@@ -435,7 +435,7 @@ somefn 12 34
 )
 
 
-def test_check_no_argument():
+def test_check_no_argument(debug=False):
     print(
         f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
         end="",

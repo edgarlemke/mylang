@@ -16,9 +16,9 @@ def run_li(li, print_output=False):
     # print(f"!! run_li: {li}")
 
     default = """(
-(set const stdin (int 0))
-(set const stdout (int 1))
-(set const stderr (int 2))
+(def const stdin (int 0))
+(def const stdout (int 1))
+(def const stderr (int 2))
 
 (fn print ((text Str)) ((linux_write stdout text)))
 (fn print ((text (Array byte))) ((linux_write stdout text)))

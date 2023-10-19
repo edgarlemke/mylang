@@ -54,17 +54,17 @@ def validate_fn(node, scope):
         raise Exception(f"Wrong number of arguments for fn: {node}")
 
 
-def __set__(node, scope):
-    debug(f"__set__():  compiletime - node: {node}")
+def __def__(node, scope):
+    debug(f"__def__():  compiletime - node: {node}")
 
-    _validate_set(node, scope)
+    _validate_def(node, scope)
 
     names = scope["names"]
-    set_, mutdecl, name, data = node
+    def_, mutdecl, name, data = node
 
     if len(data) == 1:
         if isinstance(name, list):
-            debug(f"__set__():  compiletime - name is list - name: {name}")
+            debug(f"__def__():  compiletime - name is list - name: {name}")
 
             type_ = _solve_list_name_type(name, scope)
 
@@ -85,7 +85,7 @@ def __set__(node, scope):
         value = data[1]
 
     if not isinstance(name, list):
-        debug(f"__set__():  value: {value} - typeof {name} not list")
+        debug(f"__def__():  value: {value} - typeof {name} not list")
 
         # remove old value from names
         for index, v in enumerate(names):
@@ -101,7 +101,7 @@ def __set__(node, scope):
         names.append([name, mutdecl, type_, value])
 
     else:
-        debug(f"__set__():  frontend compiletime - name is list - name: {name} type: {type_}")
+        debug(f"__def__():  frontend compiletime - name is list - name: {name} type: {type_}")
 
         if isinstance(type_, list):
             if type_[0] == "Array":
@@ -110,35 +110,30 @@ def __set__(node, scope):
         else:
             _set_struct_member(name, scope, value)
 
-    debug(f"\n__set__():  frontend compiletime - names after set: {names}\n")
+    debug(f"\n__def__():  frontend compiletime - names after def: {names}\n")
 
     # retv = ["data", [type_, value]]
     # print(f"returning {retv}")
     return []
 
 
-def _validate_set(node, scope):
-    debug(f"""_validate_set():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
+def _validate_def(node, scope):
+    debug(f"""_validate_def():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
 
-    # check set arguments number
+    # check def arguments number
     if len(node) != 4:
-        raise Exception(f"Wrong number of arguments for set: {node}")
+        raise Exception(f"Wrong number of arguments for def: {node}")
 
-    set_, mutdecl, name, data = node
+    def_, mutdecl, name, data = node
 
     is_reassignment = False
     type_ = None
 
-    # types = [t[0] for t in scope["names"] if t[2] == "type"]
-    # debug(f"_validate_set():  types: {types}")
-
     generic_types_values = [t for t in scope["names"] if isinstance(t[2], list) and len(t[2]) > 0]
-    debug(f"_validate_set():  generic_types_values: {generic_types_values}")
+    debug(f"_validate_def():  generic_types_values: {generic_types_values}")
 
     structs = [s[0] for s in scope["names"] if s[2] == "struct"]
-    debug(f"_validate_set():  structs: {structs}")
-
-    # exceptions = ["fn"]
+    debug(f"_validate_def():  structs: {structs}")
 
     if len(data) == 1:
 
@@ -170,7 +165,7 @@ def _validate_set(node, scope):
 
     if type_ in structs:
         struct_type = [st for st in scope["names"] if st[2] == "struct" and st[0] == type_][0]
-        debug(f"_validate_set():  frontend compiletime - struct_type: {struct_type}")
+        debug(f"_validate_def():  frontend compiletime - struct_type: {struct_type}")
 
         if len(value) != len(struct_type[3]):
             raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
@@ -209,19 +204,19 @@ def _validate_set(node, scope):
                 elif struct_member[0] == "mut":
                     struct_member_type = struct_member[2]
                 else:
-                    debug(f"_validate_set():  frontend compiletime - struct_member: {struct_member}")
+                    debug(f"_validate_def():  frontend compiletime - struct_member: {struct_member}")
 
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
 
     elif type_ in generic_types_values:
-        print(f"Generic type value!")
+        debug(f"_validate_def():  frontend compiletime - Generic type value!")
 
     # check reassignment over const
     # check const reassignment over mut
     if type_ != "fn" and not isinstance(name, list):
-        debug(f"_validate_set():  frontend compiletime - value isn't function and name isn't list")
-        debug(f"""_validate_set():  frontend compiletime - scope["names"]:  {scope["names"]}""")
+        debug(f"_validate_def():  frontend compiletime - value isn't function and name isn't list")
+        debug(f"""_validate_def():  frontend compiletime - scope["names"]:  {scope["names"]}""")
 
         for index, v in enumerate(scope["names"]):
             if v[0] == name:
@@ -268,7 +263,7 @@ def _set_array_member(li, scope, value):
         if not scope["backend_scope"]:
             n[3][index] = value
 
-        debug(f"myfn():  - n after set: {n}")
+        debug(f"myfn():  - n after def: {n}")
 
     return eval._seek_array_ref(li, scope, myfn)
 
@@ -323,6 +318,37 @@ def split_function_arguments(arg_pieces):
     debug(f"split_function_arguments():  split_args: {split_args}")
 
     return split_args
+
+
+def __set__(node, scope):
+    debug("__set__():  frontend compiletime")
+
+    _validate_set(node, scope)
+
+    set, name, value = node
+
+    name_value = eval.get_name_value(name, scope)
+    name_value[3] = value
+
+    return []
+
+
+def _validate_set(node, scope):
+    debug("_validate_set():  frontend compiletime")
+
+    # validate node size
+    if len(node) != 3:
+        raise Exception(f"Wrong number of arguments for set: {node}")
+
+    # validate name
+    name_value = eval.get_name_value(node[1], scope)
+    if name_value == []:
+        raise Exception(f"Resetting undefined name: {node}")
+
+    # validate name mutability
+    debug(f"_validate_set():  name_value: {name_value}")
+    if name_value[1] == "const":
+        raise Exception(f"Resetting constant name: {node} {name_value}")
 
 
 def __macro__(node, scope):
@@ -497,6 +523,7 @@ def _validate_unsafe(node, scope):
 scope = copy.deepcopy(eval.default_scope)
 scope["names"] = [  # names
     ["fn", "mut", "internal", __fn__],
+    ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],

@@ -1,3 +1,3 @@
 fn main ()
-	(Array byte) msg = "Hello world! ❤️"
+	(Array byte) msg := "Hello world! ❤️"
 	print msg

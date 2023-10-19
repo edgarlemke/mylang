@@ -12,10 +12,12 @@ OK = "\033[92mOK\033[0m"
 FAIL = "\033[91mFAIL\033[0m"
 
 
-def _test(fn_name, expected_stdout, expected_stderr, expr):
+def _test(fn_name, expected_stdout, expected_stderr, expr, debug=False):
     print(f"TEST {fn_name} - ", end="")
 
-    cmd = f"/usr/bin/python3 ../frontend/run.py --print-output --compile-time-scope --expr \"{expr}\""
+    debug_str = "--debug" if debug else ""
+
+    cmd = f"/usr/bin/python3 ../frontend/run.py --print-output --compile-time-scope {debug_str} --expr \"{expr}\""
     p = Popen(
         split(cmd),
         stdout=PIPE,
@@ -57,26 +59,28 @@ def _test(fn_name, expected_stdout, expected_stderr, expr):
 #
 # RUNTIME
 # __data__
-def test_data():
+def test_data(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """((abc 123))\n""",
         "",
-        "data abc 123"
+        "data abc 123",
+        debug,
     )
 
 
 # __fn__
-def test_fn():
+def test_fn(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
-        "fn main (x int, y int) int ()"
+        "fn main (x int, y int) int ()",
+        debug,
     )
 
 
-# def test_fn_node_size():
+# def test_fn_node_size(debug=False):
 #    return _test(
 #        i.getframeinfo(i.currentframe()).function,
 #        "",
@@ -85,68 +89,74 @@ def test_fn():
 #    )
 
 
-def test_fn_without_args():
+def test_fn_without_args(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """fn main () ()"""
+        """fn main () ()""",
+        debug,
     )
 
 
-def test_fn_arg_type_infer_int():
+def test_fn_arg_type_infer_int(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
         """fn myfn (x int) ()
-myfn 1234"""
+myfn 1234""",
+        debug,
     )
 
 
-def test_fn_arg_type_infer_float():
+def test_fn_arg_type_infer_float(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
         """fn myfn (x float) ()
-myfn 3.14"""
+myfn 3.14""",
+        debug,
     )
 
 
-def test_fn_arg_type_infer_bool_true():
+def test_fn_arg_type_infer_bool_true(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
         """fn myfn (x bool) ()
-myfn true"""
+myfn true""",
+        debug,
     )
 
 
-def test_fn_arg_type_infer_bool_false():
+def test_fn_arg_type_infer_bool_false(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
         """fn myfn (x bool) ()
-myfn false"""
+myfn false""",
+        debug,
     )
 
 
-def test_fn_arg_name():
+def test_fn_arg_name(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((bool true))\n",
         "",
         """fn myfn (x bool) bool
 	x
-set const mybool (bool true)
-myfn mybool"""
+def const mybool (bool true)
+myfn mybool""",
+        debug,
     )
 
 
-def test_fn_arg_fncall():
+def test_fn_arg_fncall(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
@@ -154,36 +164,39 @@ def test_fn_arg_fncall():
         """fn myfn (x bool) ()
 fn retbool () bool
 	data bool true
-myfn (retbool ())"""
+myfn (retbool ())""",
+        debug,
     )
 
 
-def test_fn_arg_inside_scope():
+def test_fn_arg_inside_scope(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
         """fn myfn (x int) int
 	x
-myfn 1"""
+myfn 1""",
+        debug,
     )
 
 
-def test_ret():
+def test_ret(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
         """fn x ()
 	ret
-x ()"""
+x ()""",
+        debug,
     )
 
 
 # This test was commented out because the proper checking of ret being outside of a function
 # needs executing a function at compile time, and it was chosen not to provide it in Python
 #
-# def test_ret_outside_function():
+# def test_ret_outside_function(debug=False):
 #    return _test(
 #        i.getframeinfo(i.currentframe()).function,
 #        "",
@@ -193,7 +206,7 @@ x ()"""
 #    )
 
 
-def test_ret_type():
+def test_ret_type(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -201,111 +214,167 @@ def test_ret_type():
         """fn x () bool
 	ret data int 0
 x ()
-"""
+""",
+        debug,
     )
 
 
-# __set__
-def test_set_const():
+# __def__
+def test_def_const(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         """()\n""",
         "",
-        "set const x (int 0)"
+        "def const x (int 0)",
+        debug,
     )
 
 
-def test_set_node_size():
+def test_def_node_size(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
-        "Wrong number of arguments for set",
-        "set const x (int 0) wrong"
+        "Wrong number of arguments for def",
+        "def const x (int 0) wrong",
+        debug,
     )
 
 
-def test_set_mutdecl():
+def test_def_mutdecl(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Assignment with invalid mutability declaration",
-        "set wrong x (int 0)"
+        "def wrong x (int 0)",
+        debug,
     )
 
 
-def test_set_const_over_mut():
+def test_def_const_over_mut(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Trying to reassign a constant name over a mutable name",
-        """(set mut x (int 0))
-(set const x (int 0))"""
+        """(def mut x (int 0))
+(def const x (int 0))""",
+        debug,
     )
 
 
-def test_set_const_reassignment():
+def test_def_const_reassignment(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Trying to reassign constant",
-        """(set const x (int 0))
-(set mut x (int 0))"""
+        """(def const x (int 0))
+(def mut x (int 0))""",
+        debug,
     )
 
 
-def test_set_call_fn():
+def test_def_call_fn(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 10))\n",
         "",
         """fn somefn () int
 	ret data int 10
-int x = (somefn ())
-x"""
+int x := (somefn ())
+x""",
+        debug,
+    )
+
+
+# __set__
+def test_set(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 15))\n",
+        "",
+        """mut int x := 10
+x = 15
+x""",
+        debug,
+    )
+
+
+def test_set_node_size(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for set",
+        """mut int x := 10
+set x 15 wrong""",
+        debug,
+    )
+
+
+def test_set_undefined_name(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Resetting undefined name",
+        """set x 15""",
+        debug,
+    )
+
+
+def test_set_constant_name(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Resetting constant name",
+        """int x := 10
+set x 15""",
+        debug,
     )
 
 
 # __macro__
-def test_macro_node_size():
+def test_macro_node_size(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for macro",
-        "macro alias () () wrong"
+        "macro alias () () wrong",
+        debug,
     )
 
 
-def test_macro_expansion():
+def test_macro_expansion(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((1 2))\n",
         "",
         """macro test ('a ! 'b) (data 'a 'b)
-1 ! 2"""
+1 ! 2""",
+        debug,
     )
 
 
-def test_default_macros():
+def test_default_macros(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Unassigned name: add",
-        """(1 + 2)"""
+        """(1 + 2)""",
+        debug,
     )
 
 
 # __if__
-def test_if_node_size():
+def test_if_node_size(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Wrong number of arguments for if",
-        "if (true) () () wrong"
+        "if (true) () () wrong",
+        debug,
     )
 
 
 # __data__
-# def test_data_node_size():
+# def test_data_node_size(debug=False):
 #    return _test(
 #        i.getframeinfo(i.currentframe()).function,
 #        "",
@@ -315,7 +384,7 @@ def test_if_node_size():
 
 
 # __repeat__
-# def test_repeat():
+# def test_repeat(debug=False):
 #    return _test(
 #        i.getframeinfo(i.currentframe()).function,
 #        "(((0 0 0 0 0)))\n",
@@ -325,196 +394,214 @@ def test_if_node_size():
 
 
 # unsafe
-def test_unsafe():
+def test_unsafe(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((data (OK)))\n",
         "",
-        "unsafe (data (OK))"
+        "unsafe (data (OK))",
+        debug,
     )
 
 
 # ptr
-def test_ptr():
+def test_ptr(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        "set const x ((ptr int) 0xdeadbeef)"
+        "def const x ((ptr int) 0xdeadbeef)",
+        debug,
     )
 
 
-def test_read_ptr():
+def test_read_ptr(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((read_ptr int 0xdeadbeef))\n",
         "",
-        "unsafe (read_ptr int 0xdeadbeef)"
+        "unsafe (read_ptr int 0xdeadbeef)",
+        debug,
     )
 
 
-def test_write_ptr():
+def test_write_ptr(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((write_ptr (int 0) 0xdeadbeef))\n",
         "",
-        "unsafe (write_ptr (int 0) 0xdeadbeef)"
+        "unsafe (write_ptr (int 0) 0xdeadbeef)",
+        debug,
     )
 
 
-def test_get_ptr():
+def test_get_ptr(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((get_ptr x))\n",
         "",
-        """set const x (int 0)
-get_ptr x"""
+        """def const x (int 0)
+get_ptr x""",
+        debug,
     )
 
 
-def test_size_of():
+def test_size_of(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((size_of x))\n",
         "",
-        """set const x (int 0)
-size_of x"""
+        """def const x (int 0)
+size_of x""",
+        debug,
     )
 
 
 # struct
-def test_struct_decl():
+def test_struct_decl(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        "set const mystruct (struct ((mut x int)))"
+        "def const mystruct (struct ((mut x int)))",
+        debug,
     )
 
 
-def test_struct_init():
+def test_struct_init(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(set const mystruct (struct ((mut x int))))
-(set const mystruct_ (mystruct (1)))"""
+        """(def const mystruct (struct ((mut x int))))
+(def const mystruct_ (mystruct (1)))""",
+        debug,
     )
 
 
-def test_struct_member_access():
+def test_struct_member_access(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-mystruct_ x"""
+        """def const mystruct (struct ((mut x int)))
+def const mystruct_ (mystruct (1))
+mystruct_ x""",
+        debug,
     )
 
 
-def test_struct_deep_member_access():
+def test_struct_deep_member_access(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """set const mystruct (struct ((member_x int)))
-set const mystruct2 (struct ((member_mystruct mystruct)))
-set const st_mystruct (mystruct (1))
-set const st_mystruct2 (mystruct2 (st_mystruct))
-st_mystruct2 member_mystruct member_x"""
+        """def const mystruct (struct ((member_x int)))
+def const mystruct2 (struct ((member_mystruct mystruct)))
+def const st_mystruct (mystruct (1))
+def const st_mystruct2 (mystruct2 (st_mystruct))
+st_mystruct2 member_mystruct member_x""",
+        debug,
     )
 
 
-def test_struct_member_set():
+def test_struct_member_def(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 2))\n",
         "",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-set mut (mystruct_ x) (int 2)
-mystruct_ x"""
+        """def const mystruct (struct ((mut x int)))
+def const mystruct_ (mystruct (1))
+def mut (mystruct_ x) (int 2)
+mystruct_ x""",
+        debug,
     )
 
 
-def test_struct_member_set_wrong_type():
+def test_struct_member_def_wrong_type(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Setting struct member with invalid value type",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-set mut (mystruct_ x) (float 3.14)
-mystruct_ x"""
+        """def const mystruct (struct ((mut x int)))
+def const mystruct_ (mystruct (1))
+def mut (mystruct_ x) (float 3.14)
+mystruct_ x""",
+        debug,
     )
 
 
-def test_struct_member_access_for_name():
+def test_struct_member_access_for_name(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """set const mystruct (struct ((mut x int)))
-set const mystruct_ (mystruct (1))
-set const randomvar (int (mystruct_ x))
-randomvar"""
+        """def const mystruct (struct ((mut x int)))
+def const mystruct_ (mystruct (1))
+def const randomvar (int (mystruct_ x))
+randomvar""",
+        debug,
     )
 
 
-def test_struct_init_wrong_number_of_members():
+def test_struct_init_wrong_number_of_members(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Initializing struct with wrong number of member values",
-        """(set const mystruct (struct ((mut x int)(mut y int))))
-(set const mystruct_ (mystruct (1)))
-"""
+        """(def const mystruct (struct ((mut x int)(mut y int))))
+(def const mystruct_ (mystruct (1)))
+""",
+        debug,
     )
 
 
-def test_struct_init_wrong_type_for_member():
+def test_struct_init_wrong_type_for_member(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Initializing struct with invalid value type for member",
-        """(set const mystruct (struct ((mut x int)(mut y int))))
-(set const mystruct_ (mystruct (1 3.14)))
-"""
+        """(def const mystruct (struct ((mut x int)(mut y int))))
+(def const mystruct_ (mystruct (1 3.14)))
+""",
+        debug,
     )
 
 
 # eval tests
-def test_eval_name():
+def test_eval_name(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """set const randomvar (int 1)
-randomvar"""
+        """def const randomvar (int 1)
+randomvar""",
+        debug,
     )
 
 
 # unlispifcation tests
-def test_unlisp_set_value():
+def test_unlisp_def_value(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """int somename = 1"""
+        """int somename := 1""",
+        debug,
     )
 
 
-def test_unlisp_set_mut_value():
+def test_unlisp_def_mut_value(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """mut int somename = 1"""
+        """mut int somename := 1""",
+        debug,
     )
 
 
-def test_unlisp_set_fn():
+def test_unlisp_fn(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
@@ -522,11 +609,12 @@ def test_unlisp_set_fn():
         """fn somefn (x int, y int) ()
 	ret
 somefn 12 34
-"""
+""",
+        debug,
     )
 
 
-def test_unlisp_set_fn_with_return():
+def test_unlisp_fn_with_return(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
@@ -534,19 +622,21 @@ def test_unlisp_set_fn_with_return():
         """fn somefn (x int, y int)
 	ret
 somefn 12 34
-"""
+""",
+        debug,
     )
 
 
-def test_unlisp_struct():
+def test_unlisp_struct(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """struct file =
+        """struct File :=
 	a int
-file xyz = (1)
-"""
+File xyz := (1)
+""",
+        debug,
     )
 
 

@@ -1,2 +1,2 @@
 fn main ()
-	bool result = 42 == 41
+	bool result := 42 == 41

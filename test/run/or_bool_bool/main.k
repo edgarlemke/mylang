@@ -1,2 +1,2 @@
 fn main ()
-	bool result = true or false
+	bool result := true or false

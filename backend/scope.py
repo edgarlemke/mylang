@@ -171,22 +171,22 @@ functions_stack = []
 function_global_stack = []
 
 
-def __set__(node, scope):
+def __def__(node, scope):
     global function_global_stack
 
-    debug(f"__set__():  backend {node}")
+    debug(f"__def__():  backend {node}")
 
     # compile-time validation
     import frontend.compiletime as ct
-    ct.__set__(node, scope)
+    ct.__def__(node, scope)
 
     # debug(f"\nscope: {scope}\n\n")
 
     # back-end validation
-    _validate_set(node, scope)
+    _validate_def(node, scope)
 
     names = scope["names"]
-    set_, mutdecl, name, data = node
+    def_, mutdecl, name, data = node
 
     name_candidate = []
     if len(data) == 1:
@@ -223,7 +223,7 @@ def __set__(node, scope):
         # print(f"YAY: {name}")
         pass
 
-    debug(f"__set__():  tmp_name: {tmp_name}")
+    debug(f"__def__():  tmp_name: {tmp_name}")
 
     if type_ == "Str":
         str_, size = _converted_str(data[1])
@@ -252,7 +252,7 @@ def __set__(node, scope):
 """.split("\n")
 
     elif type_ in ["int", "uint", "float", "bool"]:
-        debug("__set__():  backend - type_ is int uint float or bool")
+        debug("__def__():  backend - type_ is int uint float or bool")
 
         t = _convert_type(type_)
 
@@ -268,16 +268,16 @@ def __set__(node, scope):
             if value[:2] == "0x":
                 value = int(value, base=16)
 
-        debug(f"__set__():  backend - value: {value}")
+        debug(f"__def__():  backend - value: {value}")
 
         if isinstance(value, list):
-            debug(f"__set__():  backend - calling return_call()")
+            debug(f"__def__():  backend - calling return_call()")
             value, stack = return_call(value, scope, [])
-            debug(f"__set__():  backend - value: {value} stack: {stack}")
+            debug(f"__def__():  backend - value: {value} stack: {stack}")
 
             stack.append(f"\t\t%{tmp_name} = {value}")
             retv = "\n".join(stack)
-            debug(f"__set__():  backend - retv: {retv}")
+            debug(f"__def__():  backend - retv: {retv}")
 
             # clean stack from return_call
             stack = []
@@ -285,12 +285,12 @@ def __set__(node, scope):
         else:
             # check if it's at global backend scope
             if scope["parent"] is None:
-                debug(F"__set__():  backend - global scope")
+                debug(F"__def__():  backend - global scope")
                 retv = f"@{name} = global {t} {value}"
 
             # not global backend scope
             else:
-                debug(f"__set__():  backend - not global scope")
+                debug(f"__def__():  backend - not global scope")
 
             # handle constants
             if mutdecl == "const":
@@ -322,7 +322,7 @@ def __set__(node, scope):
 \t\tstore {t} {value}, {t}* %{name}_stack
 \t\t%{tmp_name} = load {t}, {t}* %{name}_stack
 """
-        debug(f"__set__():  backend - retv: {retv}")
+        debug(f"__def__():  backend - retv: {retv}")
 
     elif type_ == "struct":
         if len(data) == 1:
@@ -347,17 +347,17 @@ def __set__(node, scope):
 
     # test for composite types
     elif isinstance(type_, list):
-        debug(f"__set__():  backend - type_: {type_}")
+        debug(f"__def__():  backend - type_: {type_}")
 
         type_value = eval.get_name_value(type_[0], scope)
-        debug(f"__set__():  backend - type_value: {type_value}")
+        debug(f"__def__():  backend - type_value: {type_value}")
 
         # check for arrays
         # print(type_value)
         if type_value[0] == "Array":
-            debug(f"__set__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
+            debug(f"__def__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
 
-            # check if array is already set
+            # check if array is already def
             retv = None
             if name_candidate != []:
                 member_index = 0
@@ -366,11 +366,11 @@ def __set__(node, scope):
                 retv = _set_array_member(type_value, member_index, type_, data[0], name[0], array_size)
 
             else:
-                retv = _set_array(type_value, type_, data, name)
+                retv = _def_array(type_value, type_, data, name)
 
         # check for pointers
         elif type_value[0] == "ptr":
-            debug(f"__set__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
+            debug(f"__def__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
 
             retv = "RETV_PTR"
 
@@ -380,12 +380,12 @@ def __set__(node, scope):
     else:
         raise Exception(f"Unknown type: {type_}")
 
-    debug(f"__set__():  backend - exiting __set__()")
+    debug(f"__def__():  backend - exiting __def__()")
 
     return retv
 
 
-def _set_array(type_value, type_, data, name):
+def _def_array(type_value, type_, data, name):
     unset = False
     end = len(type_)
     if end == 2:
@@ -399,7 +399,7 @@ def _set_array(type_value, type_, data, name):
     array_struct_name = "_".join([type_value[0]] + type_[1:end])
     array_members_type = _convert_type(type_[1])
 
-    debug(f"_set_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
+    debug(f"_def_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
 
     # setup stack with start of array initialization
     stack = [f"""\t\t; start of initialization of "{name}" Array
@@ -480,15 +480,15 @@ def _converted_str(str_):
     return (result, size)
 
 
-def _validate_set(node, scope):
-    debug(f"_validate_set():  backend - node: {node}")
+def _validate_def(node, scope):
+    debug(f"_validate_def():  backend - node: {node}")
 
     import eval
 
-    set_, mutdecl, name, data = node
+    def_, mutdecl, name, data = node
 
     if len(data) == 1:
-        debug(f"_validate_set():  backend - len(data) == 1 - name: {name}")
+        debug(f"_validate_def():  backend - len(data) == 1 - name: {name}")
 
         if isinstance(name, list):
             name_to_get = name[0]
@@ -500,36 +500,36 @@ def _validate_set(node, scope):
         if name_candidate == []:
             raise Exception(f"Reassigning not assigned name: {name} {data}")
 
-        debug(f"_validate_set():  backend - name_candidate: {name_candidate}")
+        debug(f"_validate_def():  backend - name_candidate: {name_candidate}")
 
         type_ = name_candidate[2]
-        debug(f"_validate_set():  backend - type_: {type_}")
+        debug(f"_validate_def():  backend - type_: {type_}")
 
     elif len(data) == 2:
-        debug(f"_validate_set():  backend - len(data) == 2")
+        debug(f"_validate_def():  backend - len(data) == 2")
 
         type_ = data[0]
         # value = data[1]
 
         if isinstance(type_, list):
-            debug(f"_vadidate_set():  backend - type_ is list")
+            debug(f"_vadidate_def():  backend - type_ is list")
 
             if len(type_) < 2 or len(type_) > 3:
                 raise Exception("Constant assignment has invalid type - type_: {type_}")
 
             if type_[0] == "Array":
-                debug(f"_validate_set():  backend - type is Array: {type_}")
+                debug(f"_validate_def():  backend - type is Array: {type_}")
 
                 # validate generic type
                 valid_member_type = _validate_members_type(type_[1], scope)
                 if not valid_member_type:
                     raise Exception("Constant assignment has invalid type - type_[1]: {type_[1]}")
 
-                debug(f"_validate_set():  backend - valid member type")
+                debug(f"_validate_def():  backend - valid member type")
 
-                # check for array size and unset
+                # check for array size and undef
                 if len(type_) == 3:
-                    debug(f"_validate_set():  backend - len of type_ is 3")
+                    debug(f"_validate_def():  backend - len of type_ is 3")
 
                     array_size = type_[2]
                     try:
@@ -546,7 +546,7 @@ def _validate_set(node, scope):
     if not _validate_type(type_, scope):
         raise Exception(f"Constant assignment has invalid type - type_: {type_} - node: {node}")
 
-    debug(f"_validate_set():  backend - node OK: {node}")
+    debug(f"_validate_def():  backend - node OK: {node}")
 
     return
 
@@ -575,7 +575,7 @@ def _unoverload(name, function_arguments):
     debug(f"_unoverload():  name: {name} function_arguments: {function_arguments} ")
 
     # extract node, get function name
-    # set_, mutdecl, name, data = node
+    # def_, mutdecl, name, data = node
     # type_ = data[0]
     # fn_content = data[1]
 
@@ -745,6 +745,36 @@ def _serialize_body(body):
     debug(f"_serialize_body():  - exiting -> serialized: {serialized}\n")
 
     return serialized
+
+
+def __set__(node, scope):
+    debug(f"__set__():  backend")
+
+    import eval
+
+    _validate_set(node, scope)
+
+    value = node[2]
+    name = node[1]
+
+    name_value = eval.get_name_value(name, scope)
+    type_ = _convert_type(name_value[2])
+
+    template = f"""\t\t; set "{name}" value as "{value}"
+\t\tstore {type_} {value}, {type_}* %{name}_stack"""
+
+    return template
+
+
+def _validate_set(node, scope):
+
+    # validate name mutability
+    name_value = eval.get_name_value(node[1], scope)
+    debug(f"_validate_set():  name_value: {name_value}")
+
+    # useful for checking set inside functions that couldn't be checked at frontend phase
+    if name_value[1] == "const":
+        raise Exception(f"Resetting constant name: {node} {name_value}")
 
 
 def __macro__(node, scope):
@@ -1165,7 +1195,7 @@ scope = copy.deepcopy(eval.default_scope)
 #  [  # names
 #    ["fn", "mut", "internal", __fn__],
 #    ["handle", "mut", "internal", __handle__],
-#    ["set", "mut", "internal", __set__],
+#    ["def", "mut", "internal", __def__],
 #    ["macro", "mut", "internal", __macro__],
 #
 #    ["if", "mut", "internal", __if__],
@@ -1215,6 +1245,7 @@ def _setup_scope():
 
     names = [
     ["fn", "mut", "internal", __fn__],
+    ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
     ["macro", "mut", "internal", __macro__],
 

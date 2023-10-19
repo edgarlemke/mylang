@@ -1,3 +1,3 @@
 fn main () int
-	int result = (not 1)
+	int result := (not 1)
 	result

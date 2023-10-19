@@ -1,3 +1,3 @@
 fn main () int
-	int result = (and 42 42)
+	int result := (and 42 42)
 	result
