@@ -625,6 +625,22 @@ def test_shr_uint_int(keep=False, debug=False):
 #
 
 
+# BYTE TESTS
+#
+# def test_add_byte_byte(keep=False, debug=False):
+#    return _test_exit_code(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "",
+#        "46",
+#        f"{dir_path}/run/add_byte_byte/main.k",
+#        keep,
+#        debug,
+#    )
+#
+#
+
+
 # FLOAT TESTS
 #
 def test_add_float_float(keep=False, debug=False):
@@ -935,7 +951,7 @@ def test_bin(keep=False, debug=False):
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
-        "",
+        "0000000000000000000000000000000001001001100101100000001011010010",
         "",
         f"{dir_path}/run/bin/main.k",
         keep,

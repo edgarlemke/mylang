@@ -55,6 +55,8 @@ def run_li(li, print_output=False):
 (fn shl ((x uint) (y int)) int ((shl_uint_int x y)))
 (fn shr ((x uint) (y int)) int ((shr_uint_int x y)))
 
+(fn add ((x byte) (y byte)) byte ((add_byte_byte x y)))
+
 (fn add ((x float) (y float)) float ((add_float_float x y)))
 (fn sub ((x float) (y float)) float ((sub_float_float x y)))
 (fn mul ((x float) (y float)) float ((mul_float_float x y)))

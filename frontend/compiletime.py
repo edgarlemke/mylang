@@ -57,7 +57,7 @@ def validate_fn(node, scope):
 def __def__(node, scope):
     debug(f"__def__():  compiletime - node: {node}")
 
-    _validate_def(node, scope)
+    validate_def(node, scope)
 
     names = scope["names"]
     def_, mutdecl, name, data = node
@@ -117,8 +117,8 @@ def __def__(node, scope):
     return []
 
 
-def _validate_def(node, scope):
-    debug(f"""_validate_def():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
+def validate_def(node, scope):
+    debug(f"""validate_def():  frontend compiletime - node: {node} scope["names"]: {scope["names"]}""")
 
     # check def arguments number
     if len(node) != 4:
@@ -130,10 +130,10 @@ def _validate_def(node, scope):
     type_ = None
 
     generic_types_values = [t for t in scope["names"] if isinstance(t[2], list) and len(t[2]) > 0]
-    debug(f"_validate_def():  generic_types_values: {generic_types_values}")
+    debug(f"validate_def():  generic_types_values: {generic_types_values}")
 
     structs = [s[0] for s in scope["names"] if s[2] == "struct"]
-    debug(f"_validate_def():  structs: {structs}")
+    debug(f"validate_def():  structs: {structs}")
 
     if len(data) == 1:
 
@@ -165,7 +165,7 @@ def _validate_def(node, scope):
 
     if type_ in structs:
         struct_type = [st for st in scope["names"] if st[2] == "struct" and st[0] == type_][0]
-        debug(f"_validate_def():  frontend compiletime - struct_type: {struct_type}")
+        debug(f"validate_def():  frontend compiletime - struct_type: {struct_type}")
 
         if len(value) != len(struct_type[3]):
             raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
@@ -204,19 +204,19 @@ def _validate_def(node, scope):
                 elif struct_member[0] == "mut":
                     struct_member_type = struct_member[2]
                 else:
-                    debug(f"_validate_def():  frontend compiletime - struct_member: {struct_member}")
+                    debug(f"validate_def():  frontend compiletime - struct_member: {struct_member}")
 
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
 
     elif type_ in generic_types_values:
-        debug(f"_validate_def():  frontend compiletime - Generic type value!")
+        debug(f"validate_def():  frontend compiletime - Generic type value!")
 
     # check reassignment over const
     # check const reassignment over mut
     if type_ != "fn" and not isinstance(name, list):
-        debug(f"_validate_def():  frontend compiletime - value isn't function and name isn't list")
-        debug(f"""_validate_def():  frontend compiletime - scope["names"]:  {scope["names"]}""")
+        debug(f"validate_def():  frontend compiletime - value isn't function and name isn't list")
+        debug(f"""validate_def():  frontend compiletime - scope["names"]:  {scope["names"]}""")
 
         for index, v in enumerate(scope["names"]):
             if v[0] == name:
@@ -323,7 +323,7 @@ def split_function_arguments(arg_pieces):
 def __set__(node, scope):
     debug("__set__():  frontend compiletime")
 
-    _validate_set(node, scope)
+    validate_set(node, scope)
 
     set, name, value = node
 
@@ -333,8 +333,8 @@ def __set__(node, scope):
     return []
 
 
-def _validate_set(node, scope):
-    debug("_validate_set():  frontend compiletime")
+def validate_set(node, scope):
+    debug("validate_set():  frontend compiletime")
 
     # validate node size
     if len(node) != 3:
@@ -346,9 +346,20 @@ def _validate_set(node, scope):
         raise Exception(f"Resetting undefined name: {node}")
 
     # validate name mutability
-    debug(f"_validate_set():  name_value: {name_value}")
+    debug(f"validate_set():  name_value: {name_value}")
     if name_value[1] == "const":
         raise Exception(f"Resetting constant name: {node} {name_value}")
+
+
+def __set_member__(node, scope):
+    validate_set_member(node, scope)
+
+    return []
+
+
+def validate_set_member(node, scope):
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for set_member: {node}")
 
 
 def __macro__(node, scope):
@@ -465,11 +476,11 @@ def __data__(node, scope):
 
 
 def __write_ptr__(node, scope):
-    _validate_write_ptr(node, scope)
+    validate_write_ptr(node, scope)
     return node
 
 
-def _validate_write_ptr(node, scope):
+def validate_write_ptr(node, scope):
     if len(node) != 4:
         raise Exception(f"Wrong number of arguments for write_ptr: {node}")
 
@@ -478,11 +489,11 @@ def _validate_write_ptr(node, scope):
 
 
 def __read_ptr__(node, scope):
-    _validate_read_ptr(node, scope)
+    validate_read_ptr(node, scope)
     return node
 
 
-def _validate_read_ptr(node, scope):
+def validate_read_ptr(node, scope):
     if len(node) != 3:
         raise Exception(f"Wrong number of arguments for read_ptr: {node}")
 
@@ -491,31 +502,31 @@ def _validate_read_ptr(node, scope):
 
 
 def __get_ptr__(node, scope):
-    _validate_get_ptr(node, scope)
+    validate_get_ptr(node, scope)
     return node
 
 
-def _validate_get_ptr(node, scope):
+def validate_get_ptr(node, scope):
     if len(node) != 2:
         raise Exception(f"Wrong number of arguments for get_ptr: {node}")
 
 
 def __size_of__(node, scope):
-    _validate_size_of(node, scope)
+    validate_size_of(node, scope)
     return node
 
 
-def _validate_size_of(node, scope):
+def validate_size_of(node, scope):
     if len(node) != 2:
         raise Exception(f"Wrong number of arguments for size_of: {node}")
 
 
 def __unsafe__(node, scope):
-    _validate_unsafe(node, scope)
+    validate_unsafe(node, scope)
     return node[1]
 
 
-def _validate_unsafe(node, scope):
+def validate_unsafe(node, scope):
     if len(node) != 2:
         raise Exception(f"Wrong number of arguments for unsafe: {node}")
 
@@ -525,6 +536,7 @@ scope["names"] = [  # names
     ["fn", "mut", "internal", __fn__],
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
+    ["set_member", "mut", "internal", __set_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

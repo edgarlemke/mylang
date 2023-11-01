@@ -12,9 +12,12 @@ def __fn__(node, scope):
     # _validate_fn(node, scope)
 
     split_arguments = compiletime.split_function_arguments(node[2])
+    debug(f"__fn__():  frontend runtime - split_arguments: {split_arguments}")
 
     node_copy = node.copy()
     node_copy[2] = split_arguments
+
+    debug(f"__fn__():  frontend runtime - node_copy: {node_copy}")
 
     return node_copy
 
@@ -37,12 +40,18 @@ def _validate_fn(node, scope):
     body_scope["parent"] = parent_scope
     for argument in split_arguments:
         debug("__fn__():  frontend runtime - argument: {argument}")
-        compiletime.__set__(["set", "const", argument[0], [argument[1], '?']], body_scope)
+
+        mutdecl = "const"
+        if argument[0][0] == "mut":
+            mutdecl = "mut"
+            argument[0].remove(0)
+
+        compiletime.__set__(["set", mutdecl, argument[0], [argument[1], '?']], body_scope)
 
     debug(f"__fn__():  frontend runtime - body_scope: {body_scope}")
 
     # evaluate body to check for errors
-    eval.eval(body, body_scope)
+    # eval.eval(body, body_scope)
 
 
 def __def__(node, scope):
@@ -54,6 +63,12 @@ def __def__(node, scope):
 def __set__(node, scope):
     debug(f"__set__():  frontend runtime")
     compiletime.__set__(node, scope)
+    return node
+
+
+def __set_member__(node, scope):
+    debug(f"__set_member__():  frontend runtime")
+    compiletime.__set_member__(node, scope)
     return node
 
 
@@ -106,7 +121,7 @@ def __size_of__(node, scope):
 
 
 def __unsafe__(node, scope):
-    compiletime._validate_unsafe(node, scope)
+    compiletime.validate_unsafe(node, scope)
     return node[1]
 
 
@@ -115,6 +130,7 @@ scope["names"] = [  # names
     ["fn", "mut", "internal", __fn__],
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
+    ["set_member", "mut", "internal", __set_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

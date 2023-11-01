@@ -230,7 +230,7 @@ def test_def_const(debug=False):
     )
 
 
-def test_def_node_size(debug=False):
+def test_def_node_size_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -240,7 +240,7 @@ def test_def_node_size(debug=False):
     )
 
 
-def test_def_mutdecl(debug=False):
+def test_def_mutdecl_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -250,7 +250,7 @@ def test_def_mutdecl(debug=False):
     )
 
 
-def test_def_const_over_mut(debug=False):
+def test_def_const_over_mut_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -261,7 +261,7 @@ def test_def_const_over_mut(debug=False):
     )
 
 
-def test_def_const_reassignment(debug=False):
+def test_def_const_reassignment_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -298,7 +298,7 @@ x""",
     )
 
 
-def test_set_node_size(debug=False):
+def test_set_node_size_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -309,7 +309,7 @@ set x 15 wrong""",
     )
 
 
-def test_set_undefined_name(debug=False):
+def test_set_undefined_name_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -319,7 +319,7 @@ def test_set_undefined_name(debug=False):
     )
 
 
-def test_set_constant_name(debug=False):
+def test_set_constant_name_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -331,7 +331,7 @@ set x 15""",
 
 
 # __macro__
-def test_macro_node_size(debug=False):
+def test_macro_node_size_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -363,7 +363,7 @@ def test_default_macros(debug=False):
 
 
 # __if__
-def test_if_node_size(debug=False):
+def test_if_node_size_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -518,7 +518,7 @@ mystruct_ x""",
     )
 
 
-def test_struct_member_def_wrong_type(debug=False):
+def test_struct_member_def_type_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -544,7 +544,7 @@ randomvar""",
     )
 
 
-def test_struct_init_wrong_number_of_members(debug=False):
+def test_struct_init_number_of_members_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -556,13 +556,26 @@ def test_struct_init_wrong_number_of_members(debug=False):
     )
 
 
-def test_struct_init_wrong_type_for_member(debug=False):
+def test_struct_init_type_for_member_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
         "Initializing struct with invalid value type for member",
         """(def const mystruct (struct ((mut x int)(mut y int))))
 (def const mystruct_ (mystruct (1 3.14)))
+""",
+        debug,
+    )
+
+
+# __set_member__
+def test_set_member_number_arguments_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for set_member",
+        """(def const mystruct (struct ((mut x int))))
+(set_member mystruct (x) 1 wrong)
 """,
         debug,
     )

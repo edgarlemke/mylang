@@ -37,18 +37,15 @@ def __fn__(node, scope):
     args = []
     # convert argument types
     for arg in arguments:
-        # print(f"arg: {arg}")
-        args.append(f"{_convert_type(arg[1])} %{arg[0]}")
+        debug(f"__fn__(): arg in arguments: {arg}")
 
+        if len(arg) == 2:
+            converted_argument_type = _convert_type(arg[1])
 
-#    # get return type and body
-#    if len(fn_content) == 2:
-#        fn_return_type = None
-#        fn_body = fn_content[1]
-#
-#    elif len(fn_content) == 3:
-#        fn_return_type = fn_content[1]
-#        fn_body = fn_content[2]
+        elif len(arg) == 3 and arg[1] == "mut":
+            converted_argument_type = _convert_type(arg[2])
+
+        args.append(f"{converted_argument_type} %{arg[0]}")
 
     # convert return type
     if len(node) == 4:
@@ -78,7 +75,15 @@ def __fn__(node, scope):
     for function_argument in arguments:
         debug(f"__fn__():  backend - function_argument: {function_argument}")
 
-        argument_list = [function_argument[0], "const", function_argument[1], None]
+        if len(function_argument) == 2:
+            mutdecl = "const"
+            argument_type = function_argument[1]
+
+        elif len(function_argument) == 3 and function_argument[1] == "mut":
+            mutdecl = "mut"
+            argument_type = function_argument[2]
+
+        argument_list = [function_argument[0], mutdecl, argument_type, None]
         function_body_scope["names"].append(argument_list)
 
     # debug(f"__fn__():  backend - function_body_scope: {function_body_scope}")
@@ -86,7 +91,9 @@ def __fn__(node, scope):
     functions_stack.append([uname, function_body_scope, arguments])
 
     # sort out body IR
+    function_body_scope["function_depth"] += 1
     result = eval.eval(body, function_body_scope)
+    function_body_scope["function_depth"] -= 1
 
     functions_stack.pop()
 
@@ -102,21 +109,21 @@ def __fn__(node, scope):
 
     serialized_body = _serialize_body(body)
 
-    debug(f"__fn__():  serialized_body: {serialized_body}")
+    debug(f"__fn__():  backend - serialized_body: {serialized_body}")
 
     if "ret" not in serialized_body[len(serialized_body) - 1]:
         serialized_body.append([f"\t\tret {return_type}"])
 
     # declaration, definition = _write_fn(uname, args, return_type, body
     function_global = "\n".join(function_global_stack)
-    debug(f"__fn__():  function_global: {function_global}")
+    debug(f"__fn__():  backend - function_global: {function_global}")
 
     retv = _write_fn(uname, args, return_type, serialized_body)
 
     if len(function_global) > 0:
         retv.insert(0, function_global)
 
-    debug(f"__fn__():  retv: {retv}")
+    debug(f"__fn__():  backend - retv: {retv}")
 
     function_global_stack = []
 
@@ -143,12 +150,23 @@ def _validate_fn(node, scope):
     for arg in args:
         debug(f"_validate_fn():  backend - arg: {arg} args: {args}")
 
-        name, type_ = arg
+        if len(arg) == 2:
+            name, type_ = arg
+            mutdecl = "const"
+
+        elif len(arg) == 3 and arg[1] == "mut":
+            name, mutdecl, type_ = arg
+
         debug(f"_validate_fn():  backend - name: {name} type_: {type_}")
 
         # check for composite type
         if isinstance(type_, list):
-            search_type = type_[0]
+
+            if type_[0] == "mut":
+                search_type = type_[1]
+
+            else:
+                search_type = type_[0]
 
         # check for simple type
         else:
@@ -156,8 +174,9 @@ def _validate_fn(node, scope):
 
         # name_value = eval.get_name_value(type_, scope)
         # debug(f"_validate_fn():  backend - name_value: {name_value}")
+        debug(f"_validate_fn():  backend - search_type: {search_type}")
 
-        if not _validate_type(type_, scope):  # name_value == [] or (name_value != [] and name_value[2] != "type"):
+        if not _validate_type(search_type, scope):  # name_value == [] or (name_value != [] and name_value[2] != "type"):
             raise Exception(f"Function argument has invalid type: {type_} {node}")
 
     # check if the return type is valid
@@ -218,6 +237,7 @@ def __def__(node, scope):
             _increment_NAME(function_name, name)
 
         tmp_name = _get_NAME(function_name, name)
+        _increment_NAME(function_name, name)
 
     else:
         # print(f"YAY: {name}")
@@ -251,8 +271,8 @@ def __def__(node, scope):
 \t\tstore i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
-    elif type_ in ["int", "uint", "float", "bool"]:
-        debug("__def__():  backend - type_ is int uint float or bool")
+    elif type_ in ["int", "uint", "float", "bool", "byte"]:
+        debug("__def__():  backend - type_ is int uint float or bool or byte")
 
         t = _convert_type(type_)
 
@@ -264,7 +284,7 @@ def __def__(node, scope):
         elif len(data) == 2:
             value = data[1]
 
-        if type_ in ["int", "uint"]:
+        if type_ in ["int", "uint", "byte"]:
             if value[:2] == "0x":
                 value = int(value, base=16)
 
@@ -275,7 +295,12 @@ def __def__(node, scope):
             value, stack = return_call(value, scope, [])
             debug(f"__def__():  backend - value: {value} stack: {stack}")
 
-            stack.append(f"\t\t%{tmp_name} = {value}")
+            if mutdecl == "const":
+                stack.append(f"\t\t%{name} = {value}")
+
+            elif mutdecl == "mut":
+                stack.append(f"\t\t%{tmp_name} = {value}")
+
             retv = "\n".join(stack)
             debug(f"__def__():  backend - retv: {retv}")
 
@@ -301,13 +326,12 @@ def __def__(node, scope):
                 else:
                     debug(f"functions_stack: {functions_stack}")
 
-                    # TODO: get correct fn_name
-                    fn_name = "main"
+                    fn_name = functions_stack[0][0]
 
-                    function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value};")
+                    function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value}")
 
                     # if is an integer read the pointer
-                    if type_ in ["int", "uint"]:
+                    if type_ in ["int", "uint", "byte"]:
                         retv = f"""\t\t; load value of constant "{name}"
 \t\t%{name} = load {t}, {t}* @{fn_name}_{name}
 """
@@ -401,9 +425,21 @@ def _def_array(type_value, type_, data, name):
 
     debug(f"_def_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
 
+    if not unset and not isinstance(data[1], list) and type_[1] == "byte":
+        converted_str = _converted_str(data[1])
+        array_size = converted_str[1]
+
     # setup stack with start of array initialization
     stack = [f"""\t\t; start of initialization of "{name}" Array
-\t\t%{name}_Array_ptr = alloca %{array_struct_name}
+\t\t; allocate stack for "{name}" Array
+\t\t%{name} = alloca %{array_struct_name}
+
+\t\t; allocate stack for Array members
+\t\t%{name}_members = alloca [{array_size} x {array_members_type}]
+
+\t\t; setup members pointer in Array
+\t\t%{name}_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}, i32 0, i32 0
+\t\tstore [{array_size} x {array_members_type}]* %{name}_members, [{array_size} x {array_members_type}]* %{name}_members_ptr
 """]
 
     if not unset:
@@ -411,8 +447,6 @@ def _def_array(type_value, type_, data, name):
 
         # check for array of bytes
         if not isinstance(data[1], list) and type_[1] == "byte":
-            converted_str = _converted_str(data[1])
-            array_size = converted_str[1]
             value_to_store = f"c\"{converted_str[0]}\""
 
 #            stack.append(f"""\t\t; member {member_index} initialization
@@ -428,20 +462,14 @@ def _def_array(type_value, type_, data, name):
 
             value_to_store = f"""[{",".join(array_ir_buffer)}]"""
 
-        stack.append(f"""\t\t; allocate and init stack for members
-\t\t%{name}_Array_members = alloca [{array_size} x {array_members_type}]
-\t\tstore [{array_size} x {array_members_type}] {value_to_store}, [{array_size} x {array_members_type}]* %{name}_Array_members
-
-\t\t; setup members pointer in Array
-\t\t%{name}_Array_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 0
-\t\tstore [{array_size} x {array_members_type}]* %{name}_Array_members, [{array_size} x {array_members_type}]* %{name}_Array_members_ptr
+        stack.append(f"""\t\t; init stack for "{name}" Array members
+\t\tstore [{array_size} x {array_members_type}] {value_to_store}, [{array_size} x {array_members_type}]* %{name}_members
 """)
 
     # end of array initialization
-    stack.append(f"""\t\t; setup Array size as {array_size}
-\t\t%{name}_Array_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}_Array_ptr, i32 0, i32 1
-\t\tstore i64 {array_size}, i64* %{name}_Array_size_ptr
-
+    stack.append(f"""\t\t; setup "{name}" Array size as {array_size}
+\t\t%{name}_size_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}, i32 0, i32 1
+\t\tstore i64 {array_size}, i64* %{name}_size_ptr
 \t\t; end of initialization of "{name}" Array
 """)
 
@@ -574,17 +602,9 @@ def _validate_members_type(members_type, scope):
 def _unoverload(name, function_arguments):
     debug(f"_unoverload():  name: {name} function_arguments: {function_arguments} ")
 
-    # extract node, get function name
-    # def_, mutdecl, name, data = node
-    # type_ = data[0]
-    # fn_content = data[1]
-
-    # function_arguments = fn_content[0]
-    # print(f"function_arguments: {function_arguments}")
-
     arg_types = []
     for arg in function_arguments:
-        # print(f"arg: {arg} -  {node}")
+        debug(f"_unoverload():  arg: {arg}")
         arg_types.append(arg[1])
 
     unamel = [name]
@@ -654,6 +674,8 @@ def _convert_type(type_):
     #    converted_type
     # except:
     #    raise Exception(f"Not convertable type: {type_}")
+
+    debug(f"_convert_type:  converted_type: {converted_type}")
 
     return converted_type
 
@@ -751,30 +773,165 @@ def __set__(node, scope):
     debug(f"__set__():  backend")
 
     import eval
+    import list as list_
 
     _validate_set(node, scope)
 
-    value = node[2]
     name = node[1]
+    value = node[2]
 
     name_value = eval.get_name_value(name, scope)
+    debug(f"__set__():  backend - name: {name} name_value: {name_value} value: {value} {type(value)}")
+
     type_ = _convert_type(name_value[2])
 
-    template = f"""\t\t; set "{name}" value as "{value}"
-\t\tstore {type_} {value}, {type_}* %{name}_stack"""
+    template = []
+
+    if isinstance(value, list):
+        debug(f"__set__():  backend - value is list, going to return_call() it - value: {value}")
+
+        tmp_name = _get_NAME(functions_stack[0][0], name)
+        _increment_NAME(functions_stack[0][0], name)
+
+        printed_list = list_.list_print(value)
+
+        evaluated_value = return_call(value, scope)
+
+        template.append(evaluated_value[1])
+        template.append(f"""\t\t; set "{name}" value as result of "{printed_list}"
+\t\t%{tmp_name} = {evaluated_value[0]}
+\t\tstore {type_} %{tmp_name}, {type_}* %{name}_stack""")
+
+    else:
+
+        template.append(f"""\t\t; set "{name}" value as "{value}"
+\t\tstore {type_} {value}, {type_}* %{name}_stack""")
+
+    debug(f"__set__():  backend - template: {template}")
 
     return template
 
 
 def _validate_set(node, scope):
 
+    debug(f"_validate_set():  backend - node: {node}")
+
     # validate name mutability
-    name_value = eval.get_name_value(node[1], scope)
-    debug(f"_validate_set():  name_value: {name_value}")
+    name = None
+    if isinstance(node[1], list):
+        name = node[1][0]
+
+    else:
+        name = node[1]
+
+    name_value = eval.get_name_value(name, scope)
+    debug(f"_validate_set():  backend - name_value: {name_value}")
 
     # useful for checking set inside functions that couldn't be checked at frontend phase
     if name_value[1] == "const":
         raise Exception(f"Resetting constant name: {node} {name_value}")
+
+
+def __set_member__(node, scope):
+    _validate_set_member(node, scope)
+
+    node, name, indexes, value = node
+
+    name_value = eval.get_name_value(name, scope)
+
+    type_ = name_value[2]
+    converted_type = _convert_type(type_)
+    if converted_type[-1] == "*":
+        converted_type = converted_type[0:-1]
+
+    import list as list_
+
+    # iter over indexes
+    template = []
+    index = None
+    lp_reference = list_.list_print(indexes)
+
+    debug(f"__set_member__():  backend - indexes: {indexes}")
+    for i in indexes:
+        debug(f"__set_member__():  backend - i: {i}")
+        # test if they're int-able
+        int_index = True
+        try:
+            int(i)
+        except BaseException:
+            int_index = False
+
+        debug(f"__set_member__():  backend - int_index: {int_index}")
+
+        # not int-able
+        if int_index:
+            index = i
+
+        else:
+            # try to solve variable name
+            index_name_value = eval.get_name_value(i, scope)
+            i_name, i_mutdecl, i_type, i_value = index_name_value
+
+            index = f"%{i_name}"
+
+            debug(f"__set_member__():  backend - index: {index} index_name_value: {index_name_value}")
+
+        # index is set
+        template.append(f"""\t\t; set "{name}" member "{lp_reference}"
+\t\t; get members pointer
+\t\t%{name}_members_ptr = getelementptr i8*, i8** %{name}
+\t\t%{name}_members_ptr_ = load i8*, i8* %{name}_members_ptr
+
+\t\t; get specific member pointer
+\t\t%{name}_member_ptr = getelementptr i8, i8** %{name}_members_ptr_, i64 {index}
+""")
+
+        # TODO: multidimensional arrays
+        # break at first index
+        break
+
+    debug(f"__set_member__():  backend - index: {index}")
+
+    infered_value = eval._infer_type(value)
+    debug(f"__set_member__():  backend - value: {value} infered_value: {infered_value}")
+
+    if infered_value is not None:
+        converted_infered_type = _convert_type(infered_value[0])
+        debug(f"__set_member__():  backend - converted_infered_type: {converted_infered_type}")
+
+        if infered_value[0] in ["int", "uint"] and value[:2] == "0x":
+            mangled_value = int(value, base=16)
+        else:
+            mangled_value = value
+
+        template.append(f"""\t\t; store "{value}" value at member pointer
+\t\tstore {converted_infered_type} {mangled_value}, i8** %{name}_member_ptr
+""")
+
+    else:
+
+        name_value_ = eval.get_name_value(value, scope)
+        function_name = functions_stack[0][0]
+
+        if name_value_[1] == "const":
+            template.append(f"""\t\tstore {converted_type} %{name_value_[0]}, i8** %{name}_member_ptr
+""")
+
+        elif name_value[1] == "mut":
+            tmp_name_value = _get_NAME(function_name, value)
+            _increment_NAME(function_name, value)
+
+            template.append(f"""\t\t%{tmp_name_value} = load {converted_type}, {converted_type}* %{value}_stack
+\t\t; store value at member pointer
+\t\tstore {converted_type} %{tmp_name_value}, i8** %{name}_member_ptr
+""")
+
+    return template
+
+
+def _validate_set_member(node, scope):
+    import frontend.compiletime as ct
+    ct.validate_set_member(node, scope)
 
 
 def __macro__(node, scope):
@@ -891,7 +1048,7 @@ def __if__(node, scope):
 
     stack += [f"""\t\t; if - end block
 \t{end_label}:
-\t\t; if end
+\t; if end
 """]
 
     debug(f"__if__():  backend - stack: {stack}")
@@ -973,7 +1130,22 @@ def __read_ptr__(node, scope):
 
 
 def __get_ptr__(node, scope):
-    return []
+    debug(f"__get_ptr__():  backend - node: {node}")
+
+    import frontend.compiletime as ct
+    ct.validate_get_ptr(node, scope)
+
+    get_ptr, name = node
+
+    name_value = eval.get_name_value(name, scope)
+    debug(f"__get__ptr__():  backend - name_value: {name_value}")
+    type_ = _convert_type(name[2])
+
+    template = f"\t\t%{name}_ptr = getelementptr {type_}, {type_}* %{name}"
+
+    debug(f"__get_ptr__():  backend - template: {template}")
+
+    return template
 
 
 def __size_of__(node, scope):
@@ -985,32 +1157,41 @@ def __unsafe__(node, scope):
 
 
 def __linux_write__(node, scope):
-    # print(f"calling __linux_write__: {node}")
-    # print(f"SCOPE: {scope}")
+    debug(f"__linux_write__():  node: {node}")
 
     _validate_linux_write(node, scope)
 
     # convert fd
-    from eval import eval
-    fd = eval([node[1]], scope)
-    fd[0] = _convert_type(fd[0])
-    fd_arg = " ".join(fd)
-    # print(f"fd: {fd}")
+    from eval import eval, get_name_value, is_global_name
 
-    # if type(node[2]) == list:
-    #    print(f"node[2]: {node[2]}")
-    # text = eval([ node[2] ], scope)
+    # fd = eval([node[1]], scope)
+    # debug(f"__linux_write__():  fd: {fd}")
+    # fd[0] = _convert_type(fd[0])
+    # fd_arg = " ".join(fd)
+
+    name_value = get_name_value(node[1], scope)
+    debug(f"__linux_write__():  name_value: {name_value}")
+
+    is_global = is_global_name(name_value, scope)
+    debug(f"__linux_write__():  is_global: {is_global}")
+    if is_global and name_value[1] == "const":
+        converted_type = _convert_type(name_value[2])
+        fd_arg = f"{converted_type}* @{node[1]}"
+
+    else:
+        debug(f"__linux_write__(): other!")
+
     text = node[2]
-    # print(f"text: {text}")
 
     template = f"""
-%str_addr_ptr = getelementptr %struct.Str, %struct.Str* %text, i32 0, i32 0
-%str_size_ptr = getelementptr %struct.Str, %struct.Str* %text, i32 0, i32 1
+\t\t%str_addr_ptr = getelementptr i8*, %struct.Str* %text, i64 0
+\t\t%str_size_ptr = getelementptr i64, %struct.Str* %text, i64 1
 
-%addr = load i8*, %struct.Str* %str_addr_ptr
-%size = load i64, %struct.Str* %str_size_ptr
+\t\t%fd = load i64, {fd_arg}
+\t\t%addr = load i8*, i8** %str_addr_ptr
+\t\t%size = load i64, i64* %str_size_ptr
 
-call void @linux_write({fd_arg}, i8* %addr, i64 %size)
+\t\tcall void @linux_write(i64 %fd, i8* %addr, i64 %size)
 """
 
     return template.split("\n")
@@ -1024,135 +1205,154 @@ def _validate_linux_write(node, scope):
 def return_call(node, scope, stack=[]):
     debug(f"return_call():  node: {node} scope: {hex(id(scope))} stack: {stack}")
 
-    # find out function name
-    li_function_name = node[0]
+    li_name = node[0]
 
-    value = eval.get_name_value(li_function_name, scope)
+    value = eval.get_name_value(li_name, scope)
     debug(f"return_call():  value: {value}")
 
-    # matches = [name for name in scope["names"] if name[0] == li_function_name]
+    if value == []:
+        raise Exception(f"No name matches for name: {li_name}")
 
-    # if len(matches) == 0:
-    #    raise Exception(f"No name matches for function: {li_function_name}")
+    if value[2] == "fn":
+        debug(f"return_call():  calling a function")
 
-    # value = matches[0]
-    # print(f"value2: {value}")
+        method, solved_arguments = eval.find_function_method(node, value, scope)
+        debug(f"return_call():  method: {method}")
 
-    if value == False:
-        raise Exception(f"No name matches for function: {li_function_name}")
+        function_arguments = method[0][0]
+        debug(f"return_call():  function_arguments: {function_arguments}")
 
-    method, solved_arguments = eval.find_function_method(node, value, scope)
-    debug(f"return_call():  method: {method}")
+        function_name = _unoverload(li_name, function_arguments)
+        debug(f"return_call():  function_name: {function_name}")
 
-    function_arguments = method[0][0]
-    debug(f"return_call():  function_arguments: {function_arguments}")
+        # find out arguments
+        converted_arguments = []
+        for argument_index, argument in enumerate(function_arguments):
+            debug(f"return_call():  argument: {argument}")
 
-    function_name = _unoverload(li_function_name, function_arguments)
-    debug(f"return_call():  function_name: {function_name}")
+            if len(argument) == 2:
+                name, type_ = argument
+            elif len(argument) == 3 and argument[1] == "mut":
+                name, mutdecl, type_ = argument
 
-    # find out arguments
-    converted_arguments = []
-    for argument_index, argument in enumerate(function_arguments):
-        debug(f"return_call():  argument: {argument}")
+            converted_type = _convert_type(type_)
 
-        name, type_ = argument
-        converted_type = _convert_type(type_)
+            # fulfill llvm requirement to convert float values types to doubles
+            if converted_type == "float":
+                converted_type = "double"
 
-        # fulfill llvm requirement to convert float values types to doubles
-        if converted_type == "float":
-            converted_type = "double"
+            argument_value = node[argument_index + 1]
+            debug(f"return_call():  argument_value: {argument_value}")
 
-        argument_value = node[argument_index + 1]
-        debug(f"return_call():  argument_value: {argument_value}")
+            if isinstance(argument_value, list):
+                debug(f"return_call():  argument_value is list - argument_value: {argument_value}")
 
-        if isinstance(argument_value, list):
-            scope_argument_value = eval.get_name_value(argument_value[0], scope)
+                scope_argument_value = eval.get_name_value(argument_value[0], scope)
 
-            debug(f"return_call():  before return_call() call - stack: {stack}\n")
+                debug(f"return_call():  before return_call() call - stack: {stack}\n")
 
-            result, stack = return_call(argument_value, scope, stack)
+                result, stack = return_call(argument_value, scope, stack.copy())
 
-            debug(f"return_call():  result: {result} stack_: {stack}")
+                debug(f"return_call():  after return_call() call - result: {result} stack_: {stack}")
 
-            tmp = _get_var_name(function_name, "tmp_")
-            call_ = f"\t\t%{tmp} = {result}"
+                var_name_function = functions_stack[0][0]
 
-            debug(f"return_call():  appending call_ {call_} to stack")
+                tmp = _get_var_name(var_name_function, "tmp_")
+                call_ = f"\t\t%{tmp} = {result}"
 
-            stack.append(call_)
+                debug(f"return_call():  appending call_ {call_} to stack")
 
-            debug(f"return_call():  stack after append: {stack}")
+                stack.append(call_)
 
-            argument_value = f"%{tmp}"
+                debug(f"return_call():  stack after append: {stack}")
 
-        else:
-            scope_argument_value = eval.get_name_value(argument_value, scope)
-            debug(f"return_call():  scope_argument_value: {scope_argument_value}")
+                argument_value = f"%{tmp}"
 
-            if scope_argument_value != []:
-                argument_name = False
-                if len(functions_stack) > 0:
-                    debug(f"return_call():  len(functions_stack) > 0")
+            else:
+                debug(f"return_call():  argument_value isn't list - argument_value: {argument_value}")
 
-                    arguments_matches = [arg for arg in functions_stack[len(functions_stack) - 1][2] if argument_value == arg[0]]
-                    # print(f"arguments_matches: {arguments_matches}")
+                scope_argument_value = eval.get_name_value(argument_value, scope)
+                debug(f"return_call():  scope_argument_value: {scope_argument_value}")
 
-                    if len(arguments_matches) > 0:
-                        argument_value = f"%{argument_value}"
-                        argument_name = True
+                if scope_argument_value != []:
+                    argument_name = False
+                    if len(functions_stack) > 0:
+                        debug(f"return_call():  len(functions_stack) > 0")
 
-                if not argument_name:
-                    debug(f"return_call():  not argument_name")
+                        arguments_matches = [arg for arg in functions_stack[len(functions_stack) - 1][2] if argument_value == arg[0]]
+                        # print(f"arguments_matches: {arguments_matches}")
 
-                    # check for generic types
-                    if isinstance(scope_argument_value[2], list):
-                        if scope_argument_value[2][0] == "Array":
-                            argument_value = f"%{argument_value}_Array_ptr"
+                        if len(arguments_matches) > 0:
+                            argument_value = f"%{argument_value}"
+                            argument_name = True
 
-                    # not generic types
-                    else:
-                        if scope_argument_value[1] == 'const':
+                    if not argument_name:
+                        debug(f"return_call():  not argument_name")
 
-                            if scope_argument_value[2] in ["int", "uint"]:
+                        # check for generic types
+                        if isinstance(scope_argument_value[2], list):
+                            debug(f"return_call():  scope_arguent_value[2] is list")
+
+                            if scope_argument_value[2][0] == "Array":
                                 argument_value = f"%{argument_value}"
 
-                            else:
-                                cur_function_name = "main_"
-                                argument_value = f"@{cur_function_name}{argument_value}"
-                                converted_type += "*"
+                        # not generic types
+                        else:
+                            debug(f"return_call():  scope_arguent_value[2] isn't list")
 
-                        elif scope_argument_value[1] == 'mut':
-                            NAME = _get_NAME(function_name, argument_value)
-                            argument_value = f"%{NAME}"
+                            if scope_argument_value[1] == 'const':
+                                debug(f"return_call():  scope_argument_value is const - argument_value: {argument_value}")
 
-                # print(f"argument_value: {argument_value}")
+                                if scope_argument_value[2] in ["int", "uint", "byte"]:
+                                    debug(f"return_call():  scope_argument_value is int")
+                                    argument_value = f"%{argument_value}"
 
-        converted_argument = f"{converted_type} {argument_value}"
+                                else:
+                                    debug(f"return_call():  scope_argument_value isn't int")
+                                    cur_function_name = functions_stack[0][0]  # "main_"
+                                    argument_value = f"@{cur_function_name}{argument_value}"
+                                    converted_type += "*"
 
-        debug(f"return_call():  converted_argument: {converted_argument}")
+                            elif scope_argument_value[1] == 'mut':
+                                debug(f"return_call():  scope_argument_value is mut")
+                                NAME = _get_NAME(function_name, argument_value)
+                                argument_value = f"%{NAME}"
 
-        converted_arguments.append(converted_argument)
+                    # print(f"argument_value: {argument_value}")
 
-    converted_function_arguments = ", ".join(converted_arguments)
+            converted_argument = f"{converted_type} {argument_value}"
 
-    # find out return type
-    if len(method) == 2:
-        function_return_type = "void"
+            debug(f"return_call():  converted_argument: {converted_argument}")
 
-    elif len(method) == 3:
-        function_return_type = _convert_type(method[1])
+            converted_arguments.append(converted_argument)
 
-    value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
+        converted_function_arguments = ", ".join(converted_arguments)
 
-    debug(f"return_call():  exiting return_call():  value: {value}  stack: {stack}\n")
+        # find out return type
+        if len(method) == 2:
+            function_return_type = "void"
 
-    return value, stack
+        elif len(method) == 3:
+            function_return_type = _convert_type(method[1])
+
+        ret_value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
+
+        debug(f"return_call():  exiting return_call():  value: {value} ret_value: {ret_value} stack: {stack}\n")
+
+    elif value[2] == "internal":
+        debug(f"return_call():  calling an internal")
+
+        ret_value = value[3](node, scope)
+
+    return ret_value, stack
 
 
 _var_names = {}
 
 
 def _get_var_name(function_name, prefix):
+    debug(f"_get_var_name():  function_name: {function_name} prefix: {prefix}")
+
     # initialize key in _var_names for function_name
     if function_name not in _var_names.keys():
         _var_names[function_name] = 0
@@ -1163,6 +1363,8 @@ def _get_var_name(function_name, prefix):
     # increment counter
     _var_names[function_name] += 1
 
+    debug(f"_get_var_name():  var_name: {var_name}")
+
     return var_name
 
 
@@ -1170,6 +1372,8 @@ _names_storage = {}
 
 
 def _get_NAME(function_name, name):
+    debug(f"_get_NAME():  function_name: {function_name} name: {name}")
+
     # initialize key in _names_storage for function_name
     if function_name not in _names_storage.keys():
         _names_storage[function_name] = {}
@@ -1179,6 +1383,8 @@ def _get_NAME(function_name, name):
         _names_storage[function_name][name] = 0
 
     NAME = f"{name}_{_names_storage[function_name][name]}"
+
+    debug(f"_get_NAME():  NAME: {name}")
 
     return NAME  # _names_storage[function_name][name]
 
@@ -1242,11 +1448,13 @@ def _setup_scope():
     from . import uint as uint
     from . import int as int_
     from . import float as float_
+    from . import byte as byte
 
     names = [
     ["fn", "mut", "internal", __fn__],
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
+    ["set_member", "mut", "internal", __set_member__],
     ["macro", "mut", "internal", __macro__],
 
     ["if", "mut", "internal", __if__],
@@ -1315,6 +1523,8 @@ def _setup_scope():
     ["le_uint_uint", "const", "internal", uint.__le_uint_uint__],
     ["shl_uint_int", "const", "internal", uint.__shl_uint_int__],
     ["shr_uint_int", "const", "internal", uint.__shr_uint_int__],
+
+    ["add_byte_byte", "const", "internal", byte.__add_byte_byte__],
 
     ["add_float_float", "const", "internal", float_.__add_float_float__],
     ["sub_float_float", "const", "internal", float_.__sub_float_float__],

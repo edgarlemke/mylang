@@ -54,7 +54,7 @@ def _test(fn_name, expected_stdout, expected_stderr, expr, debug=True):
 
 
 # Typing tests
-def test_def_type(debug=False):
+def test_def_type_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -64,7 +64,7 @@ def test_def_type(debug=False):
     )
 
 
-def test_fn_args(debug=False):
+def test_fn_args_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -74,7 +74,7 @@ def test_fn_args(debug=False):
     )
 
 
-def test_fn_ret_type(debug=False):
+def test_fn_ret_type_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -85,7 +85,7 @@ def test_fn_ret_type(debug=False):
 #
 
 
-def test_set(debug=False):
+def test_set_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
@@ -159,7 +159,7 @@ define i64 @test__uint_int(i64 %x, i64 %y) {
 def test_llvm_constant_propagation(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        """@main_CONSTANT = constant i64 1;
+        """@main_CONSTANT = constant i64 1
 define void @main() {
 	start:
 		; load value of constant "CONSTANT"

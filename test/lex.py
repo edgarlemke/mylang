@@ -343,7 +343,7 @@ def test_quoted_unicode(debug=False):
 #    )
 
 
-def test_no_token_match(debug=False):
+def test_no_token_match_invalid(debug=False):
     print(f"TEST {i.getframeinfo( i.currentframe() ).function} - ", end="")
 
     p = Popen(split("/usr/bin/python3 ../lex.py --expr \"\""),
@@ -435,7 +435,7 @@ somefn 12 34
 )
 
 
-def test_check_no_argument(debug=False):
+def test_check_no_argument_invalid(debug=False):
     print(
         f"TEST {i.getframeinfo( i.currentframe() ).function} - ",
         end="",
