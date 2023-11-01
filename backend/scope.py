@@ -69,7 +69,7 @@ def __fn__(node, scope):
     function_body_scope["return_call"] = scope["return_call"]
 
     # set scope as backend scope
-    function_body_scope["backend_scope"] = True
+    function_body_scope["step"] = "backend"
 
     # setup function arguments
     for function_argument in arguments:
@@ -1542,7 +1542,7 @@ def _setup_scope():
         scope["names"].append(name)
 
     scope["return_call"] = return_call
-    scope["backend_scope"] = True
+    scope["step"] = "backend"
 
 
 _setup_scope()

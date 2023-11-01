@@ -142,3 +142,4 @@ scope["names"] = [  # names
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
   ]
+scope["step"] = "frontend"

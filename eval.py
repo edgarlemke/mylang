@@ -3,36 +3,22 @@ import re
 from shared import debug
 
 
-# default scope is given for creating copies
-# default_scope = [
-#    [],    # 0 names
-#    [],    # 1 macros
-#    None,  # 2 parent scope
-#    [],    # 3 children scopes
-#    True,  # 4 is safe scope
-#    None,  # 5 forced handler
-#    None,  # 6 eval returns calls
-#    False,  # 7 backend scope
-# ]
 default_scope = {
     "names": [],
     "macros": [],
     "parent": None,
     "children": [],
     "safe": True,
-    "forced_handler": None,
+    "step": None,
+
     "return_call": None,
-    "backend_scope": False,
     "is_last": False,
     "function_depth": 0
 }
 
 
 def eval(li, scope):
-    is_backend_scope = scope["backend_scope"] == True
-    end_str = "backend" if is_backend_scope else "frontend"
-
-    debug(f"""\neval():  {end_str} - li: {li}""")
+    debug(f"""\neval():  {scope["step"]} - li: {li}""")
     # print(f"\neval {li} {scope}")
 
     old_li = li
@@ -107,12 +93,7 @@ def eval(li, scope):
                     debug(f"eval():  name_match is function - name_match: {name_match}")
 
                     retv = _call_fn(li, name_match, scope)
-
                     debug(f"eval():  retv: {retv}")
-
-                    # if len(retv) == 2 and isinstance(retv[0], list) and isinstance(retv[1], list):
-                    #    scope["forced_handler"] = retv[1]
-                    #    retv = retv[0]
 
                     li = retv
 
@@ -170,7 +151,7 @@ def eval(li, scope):
                 else:
                     debug(f"eval():  name_match_value isn't list")
 
-                    if scope["backend_scope"]:
+                    if scope["step"] == "backend":
                         debug(f"""eval():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]} - li: {li}""")
 
                         if scope["is_last"] and scope["function_depth"] == 1:
@@ -180,14 +161,15 @@ def eval(li, scope):
 
                         else:
                             li = ["\t\t; NOT IMPLEMENTED"]
-                    else:
+
+                    elif scope["step"] == "frontend":
                         li = name_match[2:]
 
             else:
                 debug(f"eval():  struct member li: {li}")
                 li = _get_struct_member(li, scope)
 
-    debug(f"eval():  exiting {end_str}: {old_li}  ->  {li}")
+    debug(f"""eval():  exiting {scope["step"]}: {old_li}  ->  {li}""")
 
     return li
 
@@ -209,7 +191,7 @@ def _call_fn(li, fn, scope):
     fn_scope = copy.deepcopy(default_scope)
     fn_scope["parent"] = scope  # parent scope
     fn_scope["safe"] = scope["safe"]  # handler descriptor
-    fn_scope["backend_scope"] = scope["backend_scope"]  # backend scope
+    fn_scope["step"] = scope["step"]  # backend scope
 
     # populate new scope's names with function call arguments
     if li[1:] != [[]]:
@@ -220,10 +202,10 @@ def _call_fn(li, fn, scope):
         for arg_i, arg in enumerate(solved_arguments):
             debug(f"_call_fn():  arg_i: {arg_i} arg: {arg} found_method[0]: {found_method[0]}")
 
-            if scope["backend_scope"]:
+            if scope["step"] == "backend":
                 method_arg = found_method[0][0][arg_i]
                 arg = arg[0]
-            else:
+            elif scope["step"] == "frontend":
                 method_arg = found_method[0][arg_i]
 
             debug(f"_call_fn():  method_arg: {method_arg}")
@@ -316,9 +298,9 @@ def find_function_method(li, fn, scope):
             debug(f"find_function_method():  argument - arg_i: {arg_i} arg: {arg}")
 
             # break in methods without the arguments
-            if scope["backend_scope"]:
+            if scope["step"] == "backend":
                 m0 = method[0][0]
-            else:
+            elif scope["step"] == "frontend":
                 m0 = method[0]
 
             if len(m0) < arg_i + 1 and not (len(m0) == 0 and len(li[1:]) == 1 and li[1] == []):
@@ -337,14 +319,14 @@ def find_function_method(li, fn, scope):
             # if it's a list
             if is_list:
                 debug(f"find_function_method():  is_list: {is_list} arg: {arg} m0: {m0}")
-                debug(f"""find_function_method():  is backend scope: {scope["backend_scope"]}""")
+                debug(f"""find_function_method():  is backend scope: {scope["step"] == "backend"}""")
 
                 # if it's calling a function without arguments with a single empty list as argument
                 if len(arg) == 0 and len(method[0]) == 0:
                     continue
 
                 # if it's a backend scope
-                if scope["backend_scope"] == True:
+                if scope["step"] == "backend":
                     debug(f"find_function_method():  backend scope")
 
                     # get name value
@@ -392,7 +374,7 @@ def find_function_method(li, fn, scope):
                         debug(f"find_function_method():  fn/internal solved_argument: {solved_argument}")
 
                 # if it's a frontend scope, eval argument
-                else:
+                elif scope["step"] == "frontend":
                     debug(f"find_function_method():  frontend scope")
 
                     # eval it

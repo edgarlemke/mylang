@@ -260,7 +260,7 @@ def _set_array_member(li, scope, value):
     def myfn(n, index):
         debug(f"myfn():  - n: {n} index: {index} value: {value}")
 
-        if not scope["backend_scope"]:
+        if scope["step"] in ["frontend"]:
             n[3][index] = value
 
         debug(f"myfn():  - n after def: {n}")
@@ -548,3 +548,4 @@ scope["names"] = [  # names
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
   ]
+scope["step"] = "frontend"
