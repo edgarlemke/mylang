@@ -346,42 +346,43 @@ def find_function_method(li, fn, scope):
                     # if found name value
                     if len(name_value) > 0:
 
-                        # handle functions
-                        if name_value[2] == "fn":
-                            debug(f"find_function_method():  handling function")
+                        #                        # handle functions
+                        #                        if name_value[2] == "fn":
+                        debug(f"find_function_method():  handling function")
 
-                            # find function method for argument
-                            debug(f"find_function_method():  calling find_function_method() now - arg: {arg}")
+                        # find function method for argument
+                        debug(f"find_function_method():  calling find_function_method() now - arg: {arg}")
 
-                            argument_method, argument_solved_arguments = find_function_method(arg, name_value, scope)
-                            debug(f"find_function_method():  argument_method: {argument_method} argument_solved_arguments: {argument_solved_arguments}")
+                        argument_method, argument_solved_arguments = find_function_method(arg, name_value, scope)
+                        debug(f"find_function_method():  argument_method: {argument_method} argument_solved_arguments: {argument_solved_arguments}")
 
-                            # set a dummy solved_argument just with the correct type
-                            solved_argument = [argument_method[1], '?']
+                        # set a dummy solved_argument just with the correct type
+                        solved_argument = [argument_method[1], '?']
 
-                        # handle internals
-                        elif name_value[2] == "internal":
-                            debug(f"find_function_method():  handling internal")
+#                        # DIRTY: handle internals
+#                        elif name_value[2] == "internal":
+#                            debug(f"find_function_method():  handling internal")
+#                            raise Exception(f"aAAA: {name_value}")
+#
+#                            if name_value[0] in ["get_ptr", "read_ptr", "write_ptr"]:
+#                                debug(f"find_function_method():  ptr internals")
+#
+#                                fake_type = ["ptr"]
+#                                target_name_value = get_name_value(arg[1], scope)
+#
+#                                if target_name_value[2][0] == "Array":
+#                                    debug(f"find_function_method():  internal target_name_value is Array")
+#
+#                                    if len(target_name_value[2]) == 3:
+#                                        if target_name_value[1] == "mut":
+#                                            fake_type.append(["Array", target_name_value[2][1]])
+#
+#                                        elif target_name_value[1] == "const":
+#                                            fake_type_append(["Array", target_name_value[1]])
+#
+#                                solved_argument = [fake_type, '?']
 
-                            if name_value[0] in ["get_ptr", "read_ptr", "write_ptr"]:
-                                debug(f"find_function_method():  ptr internals")
-
-                                fake_type = ["ptr"]
-                                target_name_value = get_name_value(arg[1], scope)
-
-                                if target_name_value[2][0] == "Array":
-                                    debug(f"find_function_method():  internal target_name_value is Array")
-
-                                    if len(target_name_value[2]) == 3:
-                                        if target_name_value[1] == "mut":
-                                            fake_type.append(["Array", target_name_value[2][1]])
-
-                                        elif target_name_value[1] == "const":
-                                            fake_type_append(["Array", target_name_value[1]])
-
-                                solved_argument = [fake_type, '?']
-
-                        debug(f"find_function_method():  fn/internal solved_argument: {solved_argument}")
+                    debug(f"find_function_method():  solved_argument: {solved_argument}")
 
                 # if it's a frontend scope, eval argument
                 elif scope["step"] == "frontend":
