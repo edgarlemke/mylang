@@ -653,6 +653,28 @@ File xyz := (1)
     )
 
 
+def test_space_indentation_0_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Invalid space at beginning of line",
+        """ fn main () ()""",
+        debug,
+    )
+
+
+def test_space_indentation_1_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Invalid space at beginning of line",
+        """fn main ()
+    int x := 0
+""",
+        debug,
+    )
+
+
 def run(**args):
     return shared.run("Frontend Compiletime Tests", [], globals(), **args)
 

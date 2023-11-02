@@ -32,6 +32,8 @@ def run(
     expr_li = _get_list_from_expr(expr, print_token_list=print_token_list, print_token_tree=print_token_tree)
     # print(f"expr_li: {expr_li}")
 
+    debug(f"run():  frontend - expr_li: {expr_li}")
+
     if compile_time_scope:
         eval_li = eval.eval(expr_li, compiletime.scope)
     else:

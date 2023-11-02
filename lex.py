@@ -59,6 +59,8 @@ def tokenize(code, autolist=True):
 
     # sort autolist if needed
     if autolist:
+        _check_indentation(token_list)
+
         token_list = _sort_autolist(token_list)
         debug(f"tokenize():  token_list after _sort_autolist: {token_list}")
 
@@ -228,6 +230,38 @@ def _decide_dup_tokens(token_list, to_remove):
                 rem(token2)
 
     return token_list_iter
+
+
+def _check_indentation(token_list):
+    debug(f"_check_indentation():  token_list: {token_list}")
+
+    lines = []
+    buf = []
+
+    for token in token_list:
+        if token[1] == "BREAKLINE":
+            lines.append(buf.copy())
+            buf = []
+        else:
+            buf.append(token)
+
+    if len(buf) > 0:
+        lines.append(buf.copy())
+
+    debug(f"_check_indentation():  lines: {lines}")
+
+    for line in lines:
+        debug(f"_check_indentation():  line: {line}")
+
+        for token in line:
+            if token[1] == "SPACE":
+                raise Exception("Invalid space at beginning of line")
+
+            elif token[1] == "TAB":
+                continue
+
+            else:
+                break
 
 
 def _sort_autolist(token_list):
