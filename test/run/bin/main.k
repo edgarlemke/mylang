@@ -5,7 +5,7 @@ fn loop (i int, buffer mut (Array byte), index int)
 	if (and i 1) == 1
 		value = value + one
 
-	set_member buffer (index) value
+	set_array_member buffer (index) value
 
 	if index > 0
 		loop (shr (or i 0) 1) buffer (sub index 1)

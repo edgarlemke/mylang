@@ -66,9 +66,9 @@ def __set__(node, scope):
     return node
 
 
-def __set_member__(node, scope):
-    debug(f"__set_member__():  frontend runtime")
-    compiletime.__set_member__(node, scope)
+def __set_array_member__(node, scope):
+    debug(f"__set_array_member__():  frontend runtime")
+    compiletime.__set_array_member__(node, scope)
     return node
 
 
@@ -130,7 +130,7 @@ scope["names"] = [  # names
     ["fn", "mut", "internal", __fn__],
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
-    ["set_member", "mut", "internal", __set_member__],
+    ["set_array_member", "mut", "internal", __set_array_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

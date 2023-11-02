@@ -834,8 +834,8 @@ def _validate_set(node, scope):
         raise Exception(f"Resetting constant name: {node} {name_value}")
 
 
-def __set_member__(node, scope):
-    _validate_set_member(node, scope)
+def __set_array_member__(node, scope):
+    _validate_set_array_member(node, scope)
 
     node, name, indexes, value = node
 
@@ -853,9 +853,9 @@ def __set_member__(node, scope):
     index = None
     lp_reference = list_.list_print(indexes)
 
-    debug(f"__set_member__():  backend - indexes: {indexes}")
+    debug(f"__set_array_member__():  backend - indexes: {indexes}")
     for i in indexes:
-        debug(f"__set_member__():  backend - i: {i}")
+        debug(f"__set_array_member__():  backend - i: {i}")
         # test if they're int-able
         int_index = True
         try:
@@ -863,7 +863,7 @@ def __set_member__(node, scope):
         except BaseException:
             int_index = False
 
-        debug(f"__set_member__():  backend - int_index: {int_index}")
+        debug(f"__set_array_member__():  backend - int_index: {int_index}")
 
         # not int-able
         if int_index:
@@ -876,7 +876,7 @@ def __set_member__(node, scope):
 
             index = f"%{i_name}"
 
-            debug(f"__set_member__():  backend - index: {index} index_name_value: {index_name_value}")
+            debug(f"__set_array_member__():  backend - index: {index} index_name_value: {index_name_value}")
 
         # index is set
         template.append(f"""\t\t; set "{name}" member "{lp_reference}"
@@ -892,14 +892,14 @@ def __set_member__(node, scope):
         # break at first index
         break
 
-    debug(f"__set_member__():  backend - index: {index}")
+    debug(f"__set_array_member__():  backend - index: {index}")
 
     infered_value = eval._infer_type(value)
-    debug(f"__set_member__():  backend - value: {value} infered_value: {infered_value}")
+    debug(f"__set_array_member__():  backend - value: {value} infered_value: {infered_value}")
 
     if infered_value is not None:
         converted_infered_type = _convert_type(infered_value[0])
-        debug(f"__set_member__():  backend - converted_infered_type: {converted_infered_type}")
+        debug(f"__set_array_member__():  backend - converted_infered_type: {converted_infered_type}")
 
         if infered_value[0] in ["int", "uint"] and value[:2] == "0x":
             mangled_value = int(value, base=16)
@@ -931,9 +931,9 @@ def __set_member__(node, scope):
     return template
 
 
-def _validate_set_member(node, scope):
+def _validate_set_array_member(node, scope):
     import frontend.compiletime as ct
-    ct.validate_set_member(node, scope)
+    ct.validate_set_array_member(node, scope)
 
 
 def __macro__(node, scope):
@@ -1447,7 +1447,7 @@ def _setup_scope():
     ["fn", "mut", "internal", __fn__],
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
-    ["set_member", "mut", "internal", __set_member__],
+    ["set_array_member", "mut", "internal", __set_array_member__],
     ["macro", "mut", "internal", __macro__],
 
     ["if", "mut", "internal", __if__],

@@ -1,6 +1,6 @@
-fn somefn (x int)
-	#
+struct ArrayOfByte :=
+	mut (ptr (Array byte)) array_ptr
+	int size
 
 fn main ()
-	int x := 0
-	somefn x
+	#

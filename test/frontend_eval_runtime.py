@@ -557,14 +557,14 @@ def test_struct_init_type_for_member_invalid(debug=False):
     )
 
 
-# __set_member__
-def test_set_member_number_arguments_invalid(debug=False):
+# __set_array_member__
+def test_set_array_member_number_arguments_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
-        "Wrong number of arguments for set_member",
+        "Wrong number of arguments for set_array_member",
         """(def const mystruct (struct ((mut x int))))
-(set_member mystruct (x) 1 wrong)
+(set_array_member mystruct (x) 1 wrong)
 """,
         debug,
     )

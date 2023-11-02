@@ -351,15 +351,15 @@ def validate_set(node, scope):
         raise Exception(f"Resetting constant name: {node} {name_value}")
 
 
-def __set_member__(node, scope):
-    validate_set_member(node, scope)
+def __set_array_member__(node, scope):
+    validate_set_array_member(node, scope)
 
     return []
 
 
-def validate_set_member(node, scope):
+def validate_set_array_member(node, scope):
     if len(node) != 4:
-        raise Exception(f"Wrong number of arguments for set_member: {node}")
+        raise Exception(f"Wrong number of arguments for set_array_member: {node}")
 
 
 def __macro__(node, scope):
@@ -536,7 +536,7 @@ scope["names"] = [  # names
     ["fn", "mut", "internal", __fn__],
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
-    ["set_member", "mut", "internal", __set_member__],
+    ["set_array_member", "mut", "internal", __set_array_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],
