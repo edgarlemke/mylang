@@ -12,171 +12,181 @@ default_scope = {
     "step": None,
 
     "return_call": None,
+    "return_call_common_list": None,
+    "return_call_common_not_list": None,
+
     "is_last": False,
-    "function_depth": 0
+    "function_depth": 0,
 }
 
 
 def eval(li, scope):
     debug(f"""\neval():  {scope["step"]} - li: {li}""")
-    # print(f"\neval {li} {scope}")
 
-    old_li = li
+    new_li = li.copy()
 
-    # expand macros until there are no more macros to expand
-    new_li = None
-    macros = scope["macros"]
+    new_li = _eval_handle_macros(new_li, scope)
 
-    if len(macros):
+    debug(f"eval():  macro expanded li: {new_li}")
+
+    # if the list is empty, return it
+    if len(new_li) == 0:
+        debug(f"eval():  exiting eval, empty list {new_li}")
+        return new_li
+
+    is_list = isinstance(new_li[0], list)
+    if is_list:
+        new_li = _eval_handle_list(new_li, scope)
+
+    else:
+        new_li = _eval_handle_not_list(new_li, scope)
+
+    debug(f"""eval():  exiting {scope["step"]}: {li}  ->  {new_li}""")
+
+    return new_li
+
+
+def _eval_handle_macros(li, scope):
+
+    if len(scope["macros"]):
         expand = True
         new_li = li.copy()
+
+        # expand macros until there are no more macros to expand
         while expand:
-            debug(f"eval():  will try to expand macros in {new_li}")
+            debug(f"_eval_handle_macros():  will try to expand macros in {new_li}")
 
             new_li, found_macro = _expand_macro(new_li, scope)
 
-            debug(f"eval():  new_li: {new_li} found_macro: {found_macro}")
+            debug(f"_eval_handle_macros():  new_li: {new_li} found_macro: {found_macro}")
 
             expand = found_macro
 
-        debug(f"eval():  expansion ended - new_li: {new_li}")
+        debug(f"_eval_handle_macros():  expansion ended - new_li: {new_li}")
 
-        li = new_li
-
-    debug(f"eval():  macro expanded li: {li}")
-
-    # if the list is empty, return it
-    if len(li) == 0:
-        debug(f"eval():  exiting eval {li}")
-
-        return li
-
-    is_list = isinstance(li[0], list)
-    if is_list:
-        debug(f"eval():  is_list - li: {li}")
-        evaled_li = []
-        for key, item in enumerate(li):
-            debug(f"eval():  li item: {item}")
-
-            # check for last item in list
-            scope["is_last"] = key == (len(li) - 1)
-
-            evaluated_list_ = eval(item, scope)
-            if len(evaluated_list_) > 0:
-                evaled_li.append(evaluated_list_)
-
-        li = evaled_li
-        debug(f"evaled_li: {evaled_li}")
+        return new_li
 
     else:
-        # get name value from scope
-        name_match = get_name_value(li[0], scope)
+        return li
 
-        # check name_matches size
-        if name_match == []:
-            raise Exception(f"Unassigned name: {li[0]}")
 
-        # elif len(name_matches) > 1:
-        #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
+def _eval_handle_list(li, scope):
+    debug(f"_eval_handle_list():  li: {li}")
+    evaled_li = []
 
-        if name_match[2] in ["fn", "internal"]:
-            debug(f"eval():  li calls fn/internal - name_match: {name_match}")
+    for key, item in enumerate(li):
+        debug(f"_eval_handle_list():  li item: {item}")
 
-            # len == 1, so it's a reference
-            if len(li) == 1:
-                # print(f"fn ref {li}")
-                li = name_match
+        # check for last item in list
+        scope["is_last"] = key == (len(li) - 1)
 
-            # len > 1, so it's a function call
+        evaluated_list_ = eval(item, scope)
+        if len(evaluated_list_) > 0:
+            evaled_li.append(evaluated_list_)
+
+    debug(f"_eval_handle_list():  evaled_li: {evaled_li}")
+
+    return evaled_li
+
+
+def _eval_handle_not_list(li, scope):
+    # get name value from scope
+    name_match = get_name_value(li[0], scope)
+    if name_match == []:
+        raise Exception(f"Unassigned name: {li[0]}")
+
+    # elif len(name_matches) > 1:
+    #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
+
+    if name_match[2] in ["fn", "internal"]:
+        debug(f"_eval_handle_not_list():  li calls fn/internal - name_match: {name_match}")
+        li = _eval_handle_fn_internal(li, scope, name_match)
+
+    # not function nor internal
+    else:
+        debug(f"_eval_handle_not_list():  not function nor internal: {li}")
+        li = _eval_handle_common(li, scope, name_match)
+
+    return li
+
+
+def _eval_handle_fn_internal(li, scope, name_match):
+    # if len == 1 it's a reference
+    if len(li) == 1:
+        li = name_match
+
+    # if len > 1 it's a function call
+    else:
+        if name_match[2] == "fn":
+            debug(f"eval():  name_match is function - name_match: {name_match}")
+
+            retv = _call_fn(li, name_match, scope)
+            debug(f"eval():  retv: {retv}")
+
+            li = retv
+
+        elif name_match[2] == "internal":
+            debug(f"eval():  name_match is internal - name_match: {name_match}")
+
+            li = name_match[3](li, scope)
+
+        debug(f"eval():  internal result li: {li}")
+
+    return li
+
+
+def _eval_handle_common(li, scope, name_match):
+    # if is list of single item
+    if len(li) == 1:
+        debug(f"_eval_handle_common():  list of single item")
+        name_match_value = name_match[3]
+        debug(f"_eval_handle_common():  name_match_value: {name_match_value}")
+
+        # if name match value is list
+        if isinstance(name_match_value, list):
+            debug(f"_eval_handle_common():  name_match_value is list")
+
+            # evaluate the list
+            debug(f"_eval_handle_common():  evaluating list: {name_match[3]}")
+            evaled_name_match_value = eval(name_match_value, scope)
+            method_type = evaled_name_match_value[0]
+
+            # if return_calls is set, get correct method type
+            return_calls = scope["return_call"] is not None
+            if return_calls:
+                if not callable(scope["return_call_common_list"]):
+                    raise Exception(f"""return_call_common_list not callable: {scope["return_call_common_list"]}""")
+
+                li = scope["return_call_common_list"](evaled_name_match_value, name_match, scope)
+
             else:
-                if name_match[2] == "fn":
-                    debug(f"eval():  name_match is function - name_match: {name_match}")
+                if name_match[2] != method_type:
+                    raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
 
-                    retv = _call_fn(li, name_match, scope)
-                    debug(f"eval():  retv: {retv}")
+                li = evaled_name_match_value
 
-                    li = retv
-
-                elif name_match[2] == "internal":
-                    debug(f"eval():  name_match is internal - name_match: {name_match}")
-
-                    li = name_match[3](li, scope)
-
-                debug(f"eval():  internal result li: {li}")
-
-        # not function nor internal
         else:
-            debug(f"eval():  not function nor internal: {li}")
+            debug(f"_eval_handle_common():  name_match_value isn't list")
 
-            # if is list of single item
-            if len(li) == 1:
-                debug(f"eval():  list of single item")
-                name_match_value = name_match[3]
-                debug(f"eval():  name_match_value: {name_match_value}")
+            return_call_common_not_list = scope["return_call_common_not_list"] is not None
+            if return_call_common_not_list:
+                if not callable(scope["return_call_common_not_list"]):
+                    raise Exception(f"""return_call_common_not_list not callable: {scope["return_call_common"]}""")
 
-                # if name match value is list
-                if isinstance(name_match_value, list):
-                    debug(f"eval():  name_match_value is list")
-
-                    # evaluate the list
-                    debug(f"eval():  evaluating list: {name_match[3]}")
-                    evaled_name_match_value = eval(name_match_value, scope)
-                    method_type = evaled_name_match_value[0]
-
-                    # if return_calls is set, get correct method type
-                    return_calls = scope["return_call"] is not None
-                    if return_calls:
-                        evaled_fn = get_name_value(evaled_name_match_value[0], scope)
-                        method, solved_arguments = find_function_method(evaled_name_match_value, evaled_fn, scope)
-                        method_type = method[1]
-
-                    # if type of name match and type of list result are different
-                    if name_match[2] != method_type:
-                        raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
-
-                    if return_calls:
-                        # TODO: get correct return type and result name
-
-                        # get type
-                        type_return_call = "i64"
-
-                        # get var name
-                        name_return_call = "%result"
-
-                        li = [f"\tret {type_return_call} {name_return_call}"]
-
-                    else:
-                        li = evaled_name_match_value
-
-                else:
-                    debug(f"eval():  name_match_value isn't list")
-
-                    if scope["step"] == "backend":
-                        debug(f"""eval():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]} - li: {li}""")
-
-                        if scope["is_last"] and scope["function_depth"] == 1:
-                            import backend.scope as bes
-                            converted_type = bes._convert_type(name_match[2])
-                            li = [f"\t\tret {converted_type} %{name_match[0]}"]
-
-                        else:
-                            li = ["\t\t; NOT IMPLEMENTED"]
-
-                    elif scope["step"] == "frontend":
-                        li = name_match[2:]
+                li = scope["return_call_common_not_list"]()
 
             else:
-                debug(f"eval():  struct member li: {li}")
-                li = _get_struct_member(li, scope)
+                li = name_match[2:]
 
-    debug(f"""eval():  exiting {scope["step"]}: {old_li}  ->  {li}""")
+    else:
+        debug(f"_eval_handle_common():  struct member li: {li}")
+        li = _get_struct_member(li, scope)
 
     return li
 
 
 def _call_fn(li, fn, scope):
     debug(f"_call_fn():  li: {li} fn: {fn}")
-
     name = fn[0]
     methods = fn[3]
     candidates = []

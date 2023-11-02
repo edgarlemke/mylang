@@ -67,6 +67,8 @@ def __fn__(node, scope):
 
     # set scope return calls
     function_body_scope["return_call"] = scope["return_call"]
+    function_body_scope["return_call_common_list"] = scope["return_call_common_list"]
+    function_body_scope["return_call_common_not_list"] = scope["return_call_common_not_list"]
 
     # set scope as backend scope
     function_body_scope["step"] = "backend"
@@ -1395,52 +1397,43 @@ def _increment_NAME(function_name, name):
     _names_storage[function_name][name] += 1
 
 
-scope = copy.deepcopy(eval.default_scope)
+def return_call_common_list(evaled, name_match, scope):
+    evaled_fn = eval.get_name_value(evaled[0], scope)
+    method, solved_arguments = eval.find_function_method(evaled, evaled_fn, scope)
+    method_type = method[1]
 
-# scope = [
-#  [  # names
-#    ["fn", "mut", "internal", __fn__],
-#    ["handle", "mut", "internal", __handle__],
-#    ["def", "mut", "internal", __def__],
-#    ["macro", "mut", "internal", __macro__],
-#
-#    ["if", "mut", "internal", __if__],
-#    ["elif", "mut", "internal", __elif__],
-#
-#    ["data", "mut", "internal", __data__],
-#    ["write_ptr", "mut", "internal", __write_ptr__],
-#    ["read_ptr", "mut", "internal", __read_ptr__],
-#    ["get_ptr", "mut", "internal", __get_ptr__],
-#    ["size_of", "mut", "internal", __size_of__],
-#    ["unsafe", "mut", "internal", __unsafe__],
-#
-#    ["linux_write", "const", "internal", __linux_write__],
-#
-#    ["int", "const", "type", [8]],
-#
-#    ["uint", "const", "type", [8]],
-#
-#    ["ptr", "const", "type", [8]],
-#
-#    ["byte", "const", "type", [1]],
-#    ["bool", "const", "type", [1]],
-#
-#    ["float", "const", "type", [8]],
-#
-#    ["Array", "const", "type", ['?']],
-#    ["struct", "const", "type", ['?']],
-#    ["enum", "const", "type", ['?']],
-#
-#    ["Str", "const", "type", ['?']],
-#  ],
-#  [],    # macros
-#  None,  # parent scope
-#  [],    # children scope
-#  True,  # is safe scope
-#  None,  # forced handler
-#  return_call,   # eval return call handler
-#  True,   # backend scope
-# ]
+    if name_match[2] != method_type:
+        raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
+
+    debug(f"_return_call_common():  new method_type: {method_type}")
+
+    # TODO: get correct return type and result name
+
+    # get type
+    type_return_call = "i64"
+
+    # get var name
+    name_return_call = "%result"
+
+    li = [f"\tret {type_return_call} {name_return_call}"]
+
+    return li
+
+
+def return_call_common_not_list(name_match, scope):
+    debug(f"""_eval_handle_common():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]} - li: {li}""")
+
+    if scope["is_last"] and scope["function_depth"] == 1:
+        converted_type = _convert_type(name_match[2])
+        li = [f"\t\tret {converted_type} %{name_match[0]}"]
+
+    else:
+        li = ["\t\t; NOT IMPLEMENTED"]
+
+    return li
+
+
+scope = copy.deepcopy(eval.default_scope)
 
 
 def _setup_scope():
@@ -1542,6 +1535,8 @@ def _setup_scope():
         scope["names"].append(name)
 
     scope["return_call"] = return_call
+    scope["return_call_common_list"] = return_call_common_list
+    scope["return_call_common_not_list"] = return_call_common_not_list
     scope["step"] = "backend"
 
 
