@@ -173,14 +173,14 @@ def _eval_handle_common(li, scope, name_match):
                 if not callable(scope["return_call_common_not_list"]):
                     raise Exception(f"""return_call_common_not_list not callable: {scope["return_call_common"]}""")
 
-                li = scope["return_call_common_not_list"]()
+                li = scope["return_call_common_not_list"](name_match, scope)
 
             else:
                 li = name_match[2:]
 
     else:
         debug(f"_eval_handle_common():  struct member li: {li}")
-        li = _get_struct_member(li, scope)
+        # li = _get_struct_member(li, scope)
 
     return li
 
@@ -667,100 +667,100 @@ def match_macro(li, index, macro):
     return (True, full_match, bindings)
 
 
-def _get_struct_member(li, scope):
-    debug(f"_get_struct_member:  li: {li}")
-
-    def myfn(n, index):
-        new_li = n[3][index]
-
-        if len(li) > 2:
-            return _get_struct_member([new_li] + li[2:], scope)
-        else:
-            # print(f"n: {n}")
-            # print(f"new_li: {new_li}")
-            matches = [name for name in scope["names"] if name[0] == n[2] and name[2] == "struct"]
-            # print(f"matches: {matches}")
-
-            # member_type = matches[0][3][index][1]
-            member = matches[0][3][index]
-            if len(member) == 3 and member[0] == "mut":
-                member_type = member[2]
-            else:
-                member_type = member[1]
-            # print(f"member_type: {member_type}")
-
-            result = [member_type, new_li]
-            # print(f"result: {result}")
-            return result
-
-    return _seek_struct_ref(li, scope, myfn)
-
-
-def _seek_struct_ref(li, scope, fn):
-    debug(f"_seek_struct_ref():  li: {li} fn: {fn}")
-
-    # seeks names matching with li[0]
-    name_matches = [n for n in scope["names"] if n[0] == li[0]]
-    n = name_matches[0]
-
-    # get possible struct name
-    struct_name = n[2]
-
-    # check if there's some struct set with this name
-    candidates = [s for s in scope["names"] if s[2] == "struct" and s[0] == struct_name]
-    # print(f"candidates: {candidates}")
-
-    # get the candidate struct
-    candidate = candidates[0]
-    # print(f"candidate: {candidate}")
-
-    # check if member name exists
-    member_name = li[1]
-    # print(f"member_name: {member_name}")
-
-    members_matches = []
-    for index, m in enumerate(candidate[3]):
-        if m[0] == "mut":
-            if m[1] == member_name:
-                members_matches.append((index, m))
-        elif m[0] == member_name:
-            members_matches.append((index, m))
-
-    # members_matches = [(index, m) for index, m in enumerate(c[3]) if m[0] == member_name]
-
-    members_match = members_matches[0]
-    # print(f"members_match: {members_match}")
-
-    if len(members_match) == 0:
-        raise Exception(f"Struct {struct_name} has no member {member_name}")
-
-    # get value
-    # print(f"n: {n}")
-    index, m = members_match
-    # new_li = n[3][index]
-    return fn(n, index)
-
-
-def _seek_array_ref(li, scope, fn):
-    # seeks names matching with li[0]
-    name_matches = [n for n in scope["names"] if n[0] == li[0]]
-    n = name_matches[0]
-
-    # get possible array_type
-    array_type = n[2]
-
-    # check if there's some struct set with this name
-    candidates = [s for s in scope["names"] if s[2] == array_type]  # type(s[2]) == list and s[2][0] == "Array" ] #and s[0] == struct_name]
-    debug(f"candidates: {candidates}")
-
-    # get the candidate struct
-    candidate = candidates[0]
-
-    debug(f"_seek_array_ref():  candidate: {candidate}")
-
-    index = int(li[1])
-
-    return fn(n, index)
+# def _get_struct_member(li, scope):
+#    debug(f"_get_struct_member:  li: {li}")
+#
+#    def myfn(n, index):
+#        new_li = n[3][index]
+#
+#        if len(li) > 2:
+#            return _get_struct_member([new_li] + li[2:], scope)
+#        else:
+#            # print(f"n: {n}")
+#            # print(f"new_li: {new_li}")
+#            matches = [name for name in scope["names"] if name[0] == n[2] and name[2] == "struct"]
+#            # print(f"matches: {matches}")
+#
+#            # member_type = matches[0][3][index][1]
+#            member = matches[0][3][index]
+#            if len(member) == 3 and member[0] == "mut":
+#                member_type = member[2]
+#            else:
+#                member_type = member[1]
+#            # print(f"member_type: {member_type}")
+#
+#            result = [member_type, new_li]
+#            # print(f"result: {result}")
+#            return result
+#
+#    return _seek_struct_ref(li, scope, myfn)
+#
+#
+# def _seek_struct_ref(li, scope, fn):
+#    debug(f"_seek_struct_ref():  li: {li} fn: {fn}")
+#
+#    # seeks names matching with li[0]
+#    name_matches = [n for n in scope["names"] if n[0] == li[0]]
+#    n = name_matches[0]
+#
+#    # get possible struct name
+#    struct_name = n[2]
+#
+#    # check if there's some struct set with this name
+#    candidates = [s for s in scope["names"] if s[2] == "struct" and s[0] == struct_name]
+#    # print(f"candidates: {candidates}")
+#
+#    # get the candidate struct
+#    candidate = candidates[0]
+#    # print(f"candidate: {candidate}")
+#
+#    # check if member name exists
+#    member_name = li[1]
+#    # print(f"member_name: {member_name}")
+#
+#    members_matches = []
+#    for index, m in enumerate(candidate[3]):
+#        if m[0] == "mut":
+#            if m[1] == member_name:
+#                members_matches.append((index, m))
+#        elif m[0] == member_name:
+#            members_matches.append((index, m))
+#
+#    # members_matches = [(index, m) for index, m in enumerate(c[3]) if m[0] == member_name]
+#
+#    members_match = members_matches[0]
+#    # print(f"members_match: {members_match}")
+#
+#    if len(members_match) == 0:
+#        raise Exception(f"Struct {struct_name} has no member {member_name}")
+#
+#    # get value
+#    # print(f"n: {n}")
+#    index, m = members_match
+#    # new_li = n[3][index]
+#    return fn(n, index)
+#
+#
+# def _seek_array_ref(li, scope, fn):
+#    # seeks names matching with li[0]
+#    name_matches = [n for n in scope["names"] if n[0] == li[0]]
+#    n = name_matches[0]
+#
+#    # get possible array_type
+#    array_type = n[2]
+#
+#    # check if there's some struct set with this name
+#    candidates = [s for s in scope["names"] if s[2] == array_type]  # type(s[2]) == list and s[2][0] == "Array" ] #and s[0] == struct_name]
+#    debug(f"candidates: {candidates}")
+#
+#    # get the candidate struct
+#    candidate = candidates[0]
+#
+#    debug(f"_seek_array_ref():  candidate: {candidate}")
+#
+#    index = int(li[1])
+#
+#    return fn(n, index)
 
 
 def get_global_scope(scope):

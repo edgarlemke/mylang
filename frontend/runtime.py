@@ -66,10 +66,45 @@ def __set__(node, scope):
     return node
 
 
+# ARRAY INTERNALS
+#
 def __set_array_member__(node, scope):
     debug(f"__set_array_member__():  frontend runtime")
     compiletime.__set_array_member__(node, scope)
     return node
+
+
+def __get_array_member__(node, scope):
+    debug(f"__get_array_member__():  frontend runtime")
+    compiletime.__get_array_member__(node, scope)
+    return node
+#
+#
+
+
+# STRUCT INTERNALS
+#
+def __set_struct_member__(node, scope):
+    debug(f"__set_struct_member__():  frontend runtime")
+    compiletime.__set_struct_member__(node, scope)
+    return node
+
+
+def __get_struct_member__(node, scope):
+    debug(f"__get_struct_member__():  frontend runtime")
+    compiletime.__get_struct_member__(node, scope)
+    return node
+#
+#
+
+
+def __macro__(node, scope):
+    # print(f"__macro__ {node}")
+    return compiletime.__macro__(node, scope)
+
+
+def __if__(node, scope):
+    debug(f"__if__():  frontend runtime - node: {node}")
 
 
 def __macro__(node, scope):
@@ -131,6 +166,9 @@ scope["names"] = [  # names
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
     ["set_array_member", "mut", "internal", __set_array_member__],
+    ["get_array_member", "mut", "internal", __get_array_member__],
+    ["set_struct_member", "mut", "internal", __set_struct_member__],
+    ["get_struct_member", "mut", "internal", __get_struct_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

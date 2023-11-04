@@ -84,31 +84,32 @@ def __def__(node, scope):
     elif len(data) == 2:
         value = data[1]
 
-    if not isinstance(name, list):
-        debug(f"__def__():  value: {value} - typeof {name} not list")
+#    if not isinstance(name, list):
 
-        # remove old value from names
-        for index, v in enumerate(names):
-            if v[0] == name:
-                names.remove(v)
-                break
+    debug(f"__def__():  value: {value} - typeof {name} not list")
 
-        # add string length to output ;)
-        if type_ == "Str":
-            value = [value, len(value)]
+    # remove old value from names
+    for index, v in enumerate(names):
+        if v[0] == name:
+            names.remove(v)
+            break
 
-        # insert new value into names
-        names.append([name, mutdecl, type_, value])
+    # add string length to output ;)
+    if type_ == "Str":
+        value = [value, len(value)]
 
-    else:
-        debug(f"__def__():  frontend compiletime - name is list - name: {name} type: {type_}")
+    # insert new value into names
+    names.append([name, mutdecl, type_, value])
 
-        if isinstance(type_, list):
-            if type_[0] == "Array":
-                _set_array_member(name, scope, value)
-
-        else:
-            _set_struct_member(name, scope, value)
+#    else:
+#        debug(f"__def__():  frontend compiletime - name is list - name: {name} type: {type_}")
+#
+#        if isinstance(type_, list):
+#            if type_[0] == "Array":
+#                _set_array_member(name, scope, value)
+#
+#        else:
+#            _set_struct_member(name, scope, value)
 
     debug(f"\n__def__():  frontend compiletime - names after def: {names}\n")
 
@@ -227,31 +228,31 @@ def validate_def(node, scope):
                     raise Exception(f"Trying to reassign a constant name over a mutable name: {node}")
 
 
-def _set_struct_member(li, scope, value):
-    # print(f"_set_struct_member {li} {scope} {value}")
-
-    def myfn(n, index):
-        new_li = n[3][index]
-        if len(li) > 2:
-            return _set_struct_member([new_li] + li[2:], scope)
-        else:
-            # print(f"n: {n}")
-            value_type = eval._infer_type(value)[0]
-            # print(f"value_type: {value_type}")
-
-            n_type = n[2]
-            struct_matches = [n for n in scope["names"] if n[0] == n_type and n[2] == "struct"]
-            member_type = struct_matches[0][3][0][2]
-
-            # print(f"member_type: {member_type}")
-
-            if value_type != member_type:
-                raise Exception("Setting struct member with invalid value type: {value_type}")
-
-            n[3][index] = value
-            # print(f"value: {value}")
-
-    return eval._seek_struct_ref(li, scope, myfn)
+# def _set_struct_member(li, scope, value):
+#    # print(f"_set_struct_member {li} {scope} {value}")
+#
+#    def myfn(n, index):
+#        new_li = n[3][index]
+#        if len(li) > 2:
+#            return _set_struct_member([new_li] + li[2:], scope)
+#        else:
+#            # print(f"n: {n}")
+#            value_type = eval._infer_type(value)[0]
+#            # print(f"value_type: {value_type}")
+#
+#            n_type = n[2]
+#            struct_matches = [n for n in scope["names"] if n[0] == n_type and n[2] == "struct"]
+#            member_type = struct_matches[0][3][0][2]
+#
+#            # print(f"member_type: {member_type}")
+#
+#            if value_type != member_type:
+#                raise Exception("Setting struct member with invalid value type: {value_type}")
+#
+#            n[3][index] = value
+#            # print(f"value: {value}")
+#
+#    return eval._seek_struct_ref(li, scope, myfn)
 
 
 def _set_array_member(li, scope, value):
@@ -351,6 +352,8 @@ def validate_set(node, scope):
         raise Exception(f"Resetting constant name: {node} {name_value}")
 
 
+# ARRAY INTERNALS
+#
 def __set_array_member__(node, scope):
     validate_set_array_member(node, scope)
 
@@ -360,6 +363,90 @@ def __set_array_member__(node, scope):
 def validate_set_array_member(node, scope):
     if len(node) != 4:
         raise Exception(f"Wrong number of arguments for set_array_member: {node}")
+
+
+def __get_array_member__(node, scope):
+    validate_get_array_member(node, scope)
+
+    return []
+
+
+def validate_get_array_member(node, scope):
+    if len(node) != 3:
+        raise Exception("Wrong number of arguments for get_array_member: {node}")
+#
+#
+
+
+# STRUCT INTERNALS
+#
+def __set_struct_member__(node, scope):
+    validate_set_struct_member(node, scope)
+
+    get_struct_member_, struct_name, struct_member, value = node
+
+    struct_name_value = eval.get_name_value(struct_name, scope)
+    struct_type = struct_name_value[2]
+
+    struct_type_value = eval.get_name_value(struct_type, scope)
+    for struct_type_member in struct_type_value[3]:
+        debug(f"__set_struct_member__():  member: {member}")
+        if struct_type_member[1] == struct_member:
+            debug(f"__set_struct_member__():  member match: {member}")
+            break
+
+    member_type = struct_type_member[0]
+
+    for member_index, member in enumerate(struct_name_value[3]):
+        if member[0] == struct_member:
+            struct_name_value[3][member_index] = [struct_member, member_type, value]
+            debug(f"__set_struct_member__():  new member value: {struct_name_value[3][member_index]}")
+            break
+
+    return []
+
+
+def validate_set_struct_member(node, scope):
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for set_struct_member: {node}")
+
+
+def __get_struct_member__(node, scope):
+    validate_get_struct_member(node, scope)
+
+    get_struct_member_, struct_name, struct_member = node
+
+    struct_name_value = eval.get_name_value(struct_name, scope)
+    struct_type = struct_name_value[2]
+
+    struct_type_value = eval.get_name_value(struct_type, scope)
+    member_type = None
+    for member_index, struct_type_member in enumerate(struct_type_value[3]):
+        debug(f"__get_struct_member__():  struct_type_member: {struct_type_member}")
+        if struct_type_member[0] == struct_member:
+            # debug(f"__get_struct_member__():  member match: {member}")
+            member_type = struct_type_member[1]
+            break
+
+    member_value = struct_name_value[3][member_index]
+
+    retv = [member_type, member_value]
+    debug(f"__get_struct_member__():  retv: {retv}")
+
+    return retv
+
+
+def validate_get_struct_member(node, scope):
+    if len(node) != 3:
+        raise Exception("Wrong number of arguments for get_struct_member: {node}")
+
+    get_struct_member_, struct_name, struct_member = node
+
+    struct_name_value = eval.get_name_value(struct_name, scope)
+    if struct_name_value == []:
+        raise Exception(f"Unassigned name: {struct_name}")
+#
+#
 
 
 def __macro__(node, scope):
@@ -537,6 +624,9 @@ scope["names"] = [  # names
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
     ["set_array_member", "mut", "internal", __set_array_member__],
+    ["get_array_member", "mut", "internal", __get_array_member__],
+    ["set_struct_member", "mut", "internal", __set_struct_member__],
+    ["get_struct_member", "mut", "internal", __get_struct_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

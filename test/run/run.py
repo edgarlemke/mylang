@@ -943,6 +943,41 @@ def test_scope(keep=False, debug=False):
 #
 #
 
+
+# ARRAY TESTS
+#
+def test_set_get_array_member(keep=False, debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        f"{dir_path}/run/set_get_array_member/main.k",
+        keep,
+        debug,
+    )
+#
+#
+
+
+# STRUCT TESTS
+#
+def test_set_get_struct_member(keep=False, debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        f"{dir_path}/run/set_get_struct_member/main.k",
+        keep,
+        debug,
+    )
+#
+#
+
+
 # FORMATTING TESTS
 
 

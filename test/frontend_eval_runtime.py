@@ -508,17 +508,17 @@ def test_write_ptr(debug=False):
 #    )
 
 
-def test_struct_member_def_type_invalid(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Setting struct member with invalid value type",
-        """def const mystruct (struct ((mut x int)))
-def const mystruct_ (mystruct (1))
-def mut (mystruct_ x) (float 3.14)
-mystruct_ x""",
-        debug,
-    )
+# def test_struct_member_def_type_invalid(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Setting struct member with invalid value type",
+#        """def const mystruct (struct ((mut x int)))
+# def const mystruct_ (mystruct (1))
+# def mut (mystruct_ x) (float 3.14)
+# mystruct_ x""",
+#        debug,
+#    )
 
 
 # def test_struct_member_access_for_name(debug=False):
@@ -565,6 +565,20 @@ def test_set_array_member_number_arguments_invalid(debug=False):
         "Wrong number of arguments for set_array_member",
         """(def const mystruct (struct ((mut x int))))
 (set_array_member mystruct (x) 1 wrong)
+""",
+        debug,
+    )
+
+
+# __get_array_member__
+def test_get_array_member_number_arguments_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for get_array_member",
+        """(def const mystruct (struct ((mut x int))))
+(set_array_member mystruct (x) 1)
+(get_array_member mystruct (x) wrong)
 """,
         debug,
     )

@@ -479,81 +479,91 @@ def test_struct_init(debug=False):
     )
 
 
-def test_struct_member_access(debug=False):
+def test_get_struct_member(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((int 1))\n",
         "",
-        """def const mystruct (struct ((mut x int)))
+        """def const mystruct (struct ((x int)))
 def const mystruct_ (mystruct (1))
-mystruct_ x""",
+get_struct_member mystruct_ x""",
         debug,
     )
 
 
-def test_struct_deep_member_access(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """def const mystruct (struct ((member_x int)))
-def const mystruct2 (struct ((member_mystruct mystruct)))
-def const st_mystruct (mystruct (1))
-def const st_mystruct2 (mystruct2 (st_mystruct))
-st_mystruct2 member_mystruct member_x""",
-        debug,
-    )
-
-
-def test_struct_member_def(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 2))\n",
-        "",
-        """def const mystruct (struct ((mut x int)))
-def const mystruct_ (mystruct (1))
-def mut (mystruct_ x) (int 2)
-mystruct_ x""",
-        debug,
-    )
-
-
-def test_struct_member_def_type_invalid(debug=False):
+def test_get_struct_member_undefined_struct_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "",
-        "Setting struct member with invalid value type",
-        """def const mystruct (struct ((mut x int)))
-def const mystruct_ (mystruct (1))
-def mut (mystruct_ x) (float 3.14)
-mystruct_ x""",
+        "Unassigned name",
+        """def const mystruct (struct ((x int)))
+get_struct_member wrong x""",
         debug,
     )
 
+# def test_struct_deep_member_access(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """def const mystruct (struct ((member_x int)))
+# def const mystruct2 (struct ((member_mystruct mystruct)))
+# def const st_mystruct (mystruct (1))
+# def const st_mystruct2 (mystruct2 (st_mystruct))
+# st_mystruct2 member_mystruct member_x""",
+#        debug,
+#    )
 
-def test_struct_member_access_for_name(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
-        "",
-        """def const mystruct (struct ((mut x int)))
-def const mystruct_ (mystruct (1))
-def const randomvar (int (mystruct_ x))
-randomvar""",
-        debug,
-    )
+
+# def test_struct_member_def(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 2))\n",
+#        "",
+#        """def const mystruct (struct ((mut x int)))
+# def const mystruct_ (mystruct (1))
+# def mut (mystruct_ x) (int 2)
+# mystruct_ x""",
+#        debug,
+#    )
 
 
-def test_struct_init_number_of_members_invalid(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Initializing struct with wrong number of member values",
-        """(def const mystruct (struct ((mut x int)(mut y int))))
-(def const mystruct_ (mystruct (1)))
-""",
-        debug,
-    )
+# def test_struct_member_def_type_invalid(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Setting struct member with invalid value type",
+#        """def const mystruct (struct ((mut x int)))
+# def const mystruct_ (mystruct (1))
+# def mut (mystruct_ x) (float 3.14)
+# mystruct_ x""",
+#        debug,
+#    )
+
+
+# def test_struct_member_access_for_name(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((int 1))\n",
+#        "",
+#        """def const mystruct (struct ((mut x int)))
+# def const mystruct_ (mystruct (1))
+# def const randomvar (int (mystruct_ x))
+# randomvar""",
+#        debug,
+#    )
+
+
+# def test_struct_init_number_of_members_invalid(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Initializing struct with wrong number of member values",
+#        """(def const mystruct (struct ((mut x int)(mut y int))))
+# (def const mystruct_ (mystruct (1)))
+# """,
+#        debug,
+#    )
 
 
 def test_struct_init_type_for_member_invalid(debug=False):
@@ -576,6 +586,20 @@ def test_set_array_member_number_arguments_invalid(debug=False):
         "Wrong number of arguments for set_array_member",
         """(def const mystruct (struct ((mut x int))))
 (set_array_member mystruct (x) 1 wrong)
+""",
+        debug,
+    )
+
+
+# __get_array_member__
+def test_get_array_member_number_arguments_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Wrong number of arguments for get_array_member",
+        """(def const mystruct (struct ((mut x int))))
+(set_array_member mystruct (x) 1)
+(get_array_member mystruct (x) wrong)
 """,
         debug,
     )

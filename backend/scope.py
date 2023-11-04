@@ -225,6 +225,8 @@ def __def__(node, scope):
     elif len(data) == 2:
         type_ = data[0]
 
+    debug(f"__def__():  type_: {type_}")
+
     tmp_name = None
 
     if isinstance(type_, list):
@@ -351,22 +353,27 @@ def __def__(node, scope):
         debug(f"__def__():  backend - retv: {retv}")
 
     elif type_ == "struct":
-        if len(data) == 1:
-            value = data[0]
-            converted_member_types = []
-
-            debug(f"value: {value}")
-
-            for struct_member in value:
-                debug(f"struct_member: {struct_member}")
-                converted_member_types.append(_convert_type(struct_member[1]))
-
-            joined_converted_member_types = ", ".join(converted_member_types)
-            retv = f"%{name} = type {{ {joined_converted_member_types} }}"
-
-        elif len(data) == 2:
+        #        if len(data) == 1:
+        #            value = data[0]
+        #            retv = "; STRUCT DEF"
+        #
+        #        elif len(data) == 2:
+        if len(data) == 2:
             value = data[1]
-            retv = ""
+
+            debug(f"__def__():  struct - value: {value}")
+
+            converted_members = []
+            for member in value:
+                debug(f"__def__():  struct - member: {member}")
+
+                converted_member_type = _convert_type(member[0])
+                converted_members.append(converted_member_type)
+
+            joined_members = ", ".join(converted_members)
+
+            retv = f"""; "{name}" struct definition
+%{name} = type {{{joined_members}}}"""
 
         else:
             raise Exception("Invalid size of struct")
@@ -404,7 +411,29 @@ def __def__(node, scope):
             raise Exception(f"Unknown composite type {type_}")
 
     else:
-        raise Exception(f"Unknown type: {type_}")
+
+        # check for structs
+        type_name_value = eval.get_name_value(type_, scope)
+        found_struct = type_name_value != [] and type_name_value[2] == "struct"
+
+        if found_struct:
+            debug(f"__def__():  backend - found_struct - type_name_value: {type_name_value}")
+
+            converted_members = []
+            for member in type_name_value[3]:
+                debug(f"__def__():  backend - struct member: {member}")
+
+                converted_member_type = _convert_type(member[0])
+                converted_members.append(converted_member_type)
+
+            joined_members = ", ".join(converted_members)
+
+            retv = f"""\t\t; "{name}" of type struct "{type_}" definition
+\t\t%{name} = alloca %{type_}
+"""
+
+        else:
+            raise Exception(f"Unknown type: {type_}")
 
     debug(f"__def__():  backend - exiting __def__()")
 
@@ -438,11 +467,16 @@ def _def_array(type_value, type_, data, name):
 
 \t\t; allocate stack for Array members
 \t\t%{name}_members = alloca [{array_size} x {array_members_type}]
-
-\t\t; setup members pointer in Array
-\t\t%{name}_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}, i32 0, i32 0
-\t\tstore [{array_size} x {array_members_type}]* %{name}_members, [{array_size} x {array_members_type}]* %{name}_members_ptr
 """]
+
+    if not _already_declared(functions_stack[0][0], f"{name}_members_ptr"):
+        _declare_name(functions_stack[0][0], f"{name}_members_ptr")
+        stack.append(f"""\t\t; setup members pointer in Array
+\t\t%{name}_members_ptr = getelementptr %{array_struct_name}, %{array_struct_name}* %{name}, i64 0
+""")
+
+    stack.append(f"""\t\tstore [{array_size} x {array_members_type}]* %{name}_members, [{array_size} x {array_members_type}]* %{name}_members_ptr
+""")
 
     if not unset:
         # initialize array members
@@ -833,6 +867,9 @@ def _validate_set(node, scope):
     if name_value[1] == "const":
         raise Exception(f"Resetting constant name: {node} {name_value}")
 
+# ARRAY INTERNALS
+#
+
 
 def __set_array_member__(node, scope):
     _validate_set_array_member(node, scope)
@@ -880,9 +917,15 @@ def __set_array_member__(node, scope):
 
         # index is set
         template.append(f"""\t\t; set "{name}" member "{lp_reference}"
-\t\t; get members pointer
+""")
+
+        if not _already_declared(functions_stack[0][0], f"{name}_members_ptr"):
+            _declare_name(functions_stack[0][0], f"{name}_members_ptr")
+            template.append(f"""\t\t; get members pointer
 \t\t%{name}_members_ptr = getelementptr i8*, i8** %{name}
-\t\t%{name}_members_ptr_ = load i8*, i8* %{name}_members_ptr
+""")
+
+        template.append(f"""\t\t%{name}_members_ptr_ = load i8*, i8* %{name}_members_ptr
 
 \t\t; get specific member pointer
 \t\t%{name}_member_ptr = getelementptr i8, i8** %{name}_members_ptr_, i64 {index}
@@ -934,6 +977,108 @@ def __set_array_member__(node, scope):
 def _validate_set_array_member(node, scope):
     import frontend.compiletime as ct
     ct.validate_set_array_member(node, scope)
+
+
+def __get_array_member__(node, scope):
+    _validate_get_array_member(node, scope)
+
+    template = f"""\t\t; get array member"""
+
+    return template
+
+
+def _validate_get_array_member(node, scope):
+    import frontend.compiletime as ct
+    ct.validate_get_array_member(node, scope)
+#
+#
+
+# STRUCT INTERNALS
+#
+
+
+def __set_struct_member__(node, scope):
+    _validate_set_struct_member(node, scope)
+
+    set_struct_member_, struct_name, struct_member, value = node
+
+    struct_name_value = eval.get_name_value(struct_name, scope)
+    debug(f"__set_struct_member__():  struct_name_value: {struct_name_value}")
+
+    structdef_name = struct_name_value[2]
+    structdef_name_value = eval.get_name_value(struct_name_value[2], scope)
+
+    members = structdef_name_value[3]
+    debug(f"__set_struct_member__():  members: {members}")
+
+    member_type = ""
+    for member_index, member in enumerate(members):
+        debug(f"__set_struct_member__():  member: {member}")
+
+        if member[1] == struct_member:
+            member_type = _convert_type(member[0])
+            break
+
+    stack = []
+
+    if not _already_declared(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr"):
+        _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
+        stack.append(f"""\t\t; get struct "{structdef_name}" "{struct_name}" member "{struct_member}" pointer
+\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}
+""")
+
+    stack.append(f"""\t\t; set struct "{structdef_name}" "{struct_name}" member "{struct_member}"
+\t\tstore {member_type} {value}, {member_type}* %{struct_name}_{struct_member}_member_ptr
+""")
+
+    return "\n".join(stack)
+
+
+def _validate_set_struct_member(node, scope):
+    import frontend.compiletime as ct
+    ct.validate_set_struct_member(node, scope)
+
+
+def __get_struct_member__(node, scope):
+    _validate_get_struct_member(node, scope)
+
+    get_struct_member_, struct_name, struct_member = node
+
+    struct_name_value = eval.get_name_value(struct_name, scope)
+    debug(f"__set_struct_member__():  struct_name_value: {struct_name_value}")
+
+    structdef_name = struct_name_value[2]
+    structdef_name_value = eval.get_name_value(struct_name_value[2], scope)
+
+    members = structdef_name_value[3]
+    debug(f"__set_struct_member__():  members: {members}")
+
+    member_type = ""
+    for member_index, member in enumerate(members):
+        debug(f"__set_struct_member__():  member: {member}")
+
+        if member[1] == struct_member:
+            member_type = _convert_type(member[0])
+            break
+
+    stack = []
+
+    if not _already_declared(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr"):
+        _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
+        stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}""")
+
+    stack.append(f"""\t\t; get struct "{structdef_name}" "{struct_name}" member "{struct_member}"
+\t\tload {member_type}, {member_type}* %{struct_name}_{struct_member}_member_ptr
+""")
+
+    return "\n".join(stack)
+
+
+def _validate_get_struct_member(node, scope):
+    import frontend.compiletime as ct
+    ct.validate_get_struct_member(node, scope)
+#
+#
 
 
 def __macro__(node, scope):
@@ -1393,10 +1538,25 @@ def _get_NAME(function_name, name):
 
 def _increment_NAME(function_name, name):
     debug(f"_increment_NAME():  function_name: {function_name} name: {name}")
-
     _names_storage[function_name][name] += 1
 
 
+_declared_names = {}
+
+
+def _declare_name(function_name, name):
+    if function_name not in _declared_names.keys():
+        _declared_names[function_name] = []
+
+    _declared_names[function_name].append(name)
+
+
+def _already_declared(function_name, name):
+    return function_name in _declared_names.keys() and name in _declared_names[function_name]
+
+
+# SCOPE HOOKS
+#
 def return_call_common_list(evaled, name_match, scope):
     evaled_fn = eval.get_name_value(evaled[0], scope)
     method, solved_arguments = eval.find_function_method(evaled, evaled_fn, scope)
@@ -1421,7 +1581,7 @@ def return_call_common_list(evaled, name_match, scope):
 
 
 def return_call_common_not_list(name_match, scope):
-    debug(f"""_eval_handle_common():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]} - li: {li}""")
+    debug(f"""_eval_handle_common():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]}""")
 
     if scope["is_last"] and scope["function_depth"] == 1:
         converted_type = _convert_type(name_match[2])
@@ -1431,6 +1591,8 @@ def return_call_common_not_list(name_match, scope):
         li = ["\t\t; NOT IMPLEMENTED"]
 
     return li
+#
+#
 
 
 scope = copy.deepcopy(eval.default_scope)
@@ -1448,6 +1610,9 @@ def _setup_scope():
     ["def", "mut", "internal", __def__],
     ["set", "mut", "internal", __set__],
     ["set_array_member", "mut", "internal", __set_array_member__],
+    ["get_array_member", "mut", "internal", __get_array_member__],
+    ["set_struct_member", "mut", "internal", __set_struct_member__],
+    ["get_struct_member", "mut", "internal", __get_struct_member__],
     ["macro", "mut", "internal", __macro__],
 
     ["if", "mut", "internal", __if__],
