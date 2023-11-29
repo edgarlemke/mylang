@@ -1081,6 +1081,10 @@ def _validate_get_struct_member(node, scope):
 #
 
 
+def __ref_member__(node, scope):
+    return []
+
+
 def __macro__(node, scope):
     return []
 
@@ -1613,6 +1617,7 @@ def _setup_scope():
     ["get_array_member", "mut", "internal", __get_array_member__],
     ["set_struct_member", "mut", "internal", __set_struct_member__],
     ["get_struct_member", "mut", "internal", __get_struct_member__],
+    ["ref_member", "mut", "internal", __ref_member__],
     ["macro", "mut", "internal", __macro__],
 
     ["if", "mut", "internal", __if__],

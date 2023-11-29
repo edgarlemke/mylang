@@ -533,6 +533,18 @@ def test_write_ptr(debug=False):
 #    )
 
 
+def test_GET_struct_member(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 1))\n",
+        "",
+        """def const mystruct (struct ((x int)))
+def const mystruct_ (mystruct (1))
+mystruct_ . x""",
+        debug,
+    )
+
+
 def test_struct_init_number_of_members_invalid(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,

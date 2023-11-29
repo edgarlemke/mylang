@@ -133,6 +133,7 @@ def validate_def(node, scope):
     generic_types_values = [t for t in scope["names"] if isinstance(t[2], list) and len(t[2]) > 0]
     debug(f"validate_def():  generic_types_values: {generic_types_values}")
 
+    # FIXME: get all structs from all scopes
     structs = [s[0] for s in scope["names"] if s[2] == "struct"]
     debug(f"validate_def():  structs: {structs}")
 
@@ -171,9 +172,19 @@ def validate_def(node, scope):
         if len(value) != len(struct_type[3]):
             raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
 
+        debug(f"validate_def():  value: {value}")
+
+        found_struct_members = []
         for value_member in value:
+            debug(f"validate_def():  value_member: {value_member}")
+
             for struct_member in struct_type[3]:
-                # print(f"value_member {value_member} {struct_type} {structs}")
+                debug(f"validate_def():  value_member: {value_member} struct_member: {struct_member} @@@")
+
+                if struct_member in found_struct_members:
+                    debug(f"validate_det():  struct_member already found")
+                    continue
+
                 value_member_type = None
                 struct_names = []
                 for st in structs:
@@ -181,34 +192,54 @@ def validate_def(node, scope):
                         # print(f"st {st} sts {sts}")
                         if st == sts[2]:
                             struct_names.append(sts)
-                # print(f"struct_names {struct_names}")
+
+                debug(f"validate_def():  struct_names {struct_names}")
+
                 found_value_member = False
-                value_member_type = None
                 for s in struct_names:
                     if value_member == s[0]:
                         found_value_member = True
                         value_member_type = s[2]
 
                 if found_value_member:
-                    value_member_type = value_member_type
+                    # value_member_type = value_member_type
+                    pass
+
                 else:
+                    debug(f"validate_def():  frontend compiletime - not found value member")
+
+                    it_value_member = None
                     it_value_member = eval._infer_type(value_member)
-                    # print(f"it_value_member: {it_value_member} struct_member: {struct_member}")
+                    debug(f"validate_def():  it_value_member: {it_value_member} struct_member: {struct_member}")
+
                     if it_value_member is not None:
                         value_member_type = it_value_member[0]
+
                     else:
                         # value_member_type = value_member[1]
+                        debug(f"validate_def():  value_member_type is None")
                         pass
 
+                    debug(f"validate_def():  value_member_type: {value_member_type}")
+
+                debug(f"validate_def():  struct_member: {struct_member}")
+
                 if len(struct_member) == 2:
+                    debug(f"validate_def():  len(struct_member) == 2")
                     struct_member_type = struct_member[1]
+
                 elif struct_member[0] == "mut":
                     struct_member_type = struct_member[2]
+
                 else:
                     debug(f"validate_def():  frontend compiletime - struct_member: {struct_member}")
 
                 if value_member_type != struct_member_type:
                     raise Exception(f"Initializing struct with invalid value type for member: value_member_type: {value_member_type}  struct_member_type: {struct_member_type}")
+
+                found_struct_members.append(struct_member)
+
+                break
 
     elif type_ in generic_types_values:
         debug(f"validate_def():  frontend compiletime - Generic type value!")
@@ -255,18 +286,18 @@ def validate_def(node, scope):
 #    return eval._seek_struct_ref(li, scope, myfn)
 
 
-def _set_array_member(li, scope, value):
-    debug(f"_set_array_member():  li: {li} value: {value}")
-
-    def myfn(n, index):
-        debug(f"myfn():  - n: {n} index: {index} value: {value}")
-
-        if scope["step"] in ["frontend"]:
-            n[3][index] = value
-
-        debug(f"myfn():  - n after def: {n}")
-
-    return eval._seek_array_ref(li, scope, myfn)
+# def _set_array_member(li, scope, value):
+#    debug(f"_set_array_member():  li: {li} value: {value}")
+#
+#    def myfn(n, index):
+#        debug(f"myfn():  - n: {n} index: {index} value: {value}")
+#
+#        if scope["step"] in ["frontend"]:
+#            n[3][index] = value
+#
+#        debug(f"myfn():  - n after def: {n}")
+#
+#    return eval._seek_array_ref(li, scope, myfn)
 
 
 def _solve_list_name_type(name, scope):
@@ -350,6 +381,140 @@ def validate_set(node, scope):
     debug(f"validate_set():  name_value: {name_value}")
     if name_value[1] == "const":
         raise Exception(f"Resetting constant name: {node} {name_value}")
+
+
+# MEMBERS INTERNALS
+#
+def __ref_member__(node, scope):
+    debug(f"__ref_member__():  frontend compiletime - node: {node}")
+    validate_ref_member(node, scope)
+
+    ref_member_, base, member = node
+
+    # handling simple member access
+    if not isinstance(base, list):
+        debug(f"__ref_member__():  base isn't list")
+        base_name_value = eval.get_name_value(base, scope)
+        base_type = base_name_value[2]
+
+        # handle arrays
+        if base_type[0] == "Array":
+            member_type = base_type[1][0]
+            retv = [member_type, base_name_value[3][member]]
+
+        # handle structs
+        else:
+            debug(f"__ref_member__():  handling struct")
+
+            struct_name_value = eval.get_name_value(base_type, scope)
+            for member_index, struct_member in enumerate(struct_name_value[3]):
+                member_name, member_type = struct_member
+                if member_name == member:
+                    break
+
+            member_value = base_name_value[3][member_index]
+            debug(f"__ref_member__():  member_value: {member_value}")
+
+            def _seek(mv, mt):
+                debug(f"_seek(): mv: {mv} mt: {mt}")
+
+                # check if member value isn't a name
+                member_value_name_value = eval.get_name_value(mv, scope)
+                debug(f"_seek():  member_value_name_value: {member_value_name_value}")
+                if member_value_name_value == []:
+                    debug(f"_seek():  returning [mt, mv]")
+                    return [mt, mv]
+
+                # member value is name...
+
+                member_value_type = member_value_name_value[2]
+                member_value_value = member_value_name_value[3]
+                member_value_type_name_value = eval.get_name_value(member_value_type, scope)
+                debug(f"_seek():  member_value_type_name_value: {member_value_type_name_value}")
+
+                if member_value_type_name_value[2] == "struct":
+                    return [member_value_type, member_value_value]
+
+#                     return member_value_type_name_value
+
+#                    debug(f"_seek():  referencing struct")
+#
+#                    mt = member_value_type_name_value[3][0][1]
+#                    mv = member_value_name_value[3][0]
+#
+#                    debug(f"_seek():  member value mv: {mv}")
+#                    debug(f"_seek():  member type mt: {mt}")
+#
+#                    return _seek(mv, mt)
+#                return ['int', '666']
+
+            seek_result = _seek(member_value, member_type)
+            debug(f"__ref_member__():  seek_result: {seek_result}")
+
+            # retv = [member_type, member_value]
+            retv = seek_result
+
+    else:
+        debug(f"__ref_member__():  frontend compiletime - deep member access - base: {base}")
+        evalret = eval.eval(base, scope)
+        debug(f"__ref_member__():  frontend compiletime - evalret: {evalret} - member: {member}")
+
+        evalret_type, evalret_value = evalret
+
+        evalret_type_name_value = eval.get_name_value(evalret_type, scope)
+        debug(f"__ref_member__():  frontend compiletime - evalret_type_name_value: {evalret_type_name_value}")
+        index = None
+        type_ = None
+
+        for evalret_type_member_index, evalret_type_member in enumerate(evalret_type_name_value[3]):
+            debug(f"__ref_member__():  frontend compiletime - evalret_type_member_index: {evalret_type_member_index}")
+            debug(f"__ref_member__():  frontend compiletime - evalret_type_member: {evalret_type_member}")
+            if evalret_type_member[0] == member:
+                index = evalret_type_member_index
+                type_ = evalret_type_member[1]
+                break
+
+        if index is None:
+            raise Exception(f"Couldn't find member {member} in {evalret_type}")
+
+        debug(f"__ref_member__():  frontend compiletime - candidate: {evalret_type_name_value[3][index]}")
+        debug(f"__ref_member__():  frontend compiletime - candidate: {evalret_value[index]}")
+
+        struct_names = eval.get_type_values("struct", scope)
+        structs = [s[0] for s in struct_names]
+        debug(f"__ref_member__():  frontend compiletime - structs: {structs}")
+
+        # handle structs
+        if evalret_type_name_value[3][index][1] in structs:
+            debug(f"__ref_member__():  frontend compiletime - struct member value is struct")
+
+            structref = evalret_value[index]
+            debug(f"__ref_member__():  frontend compiletime - structref: {structref}")
+
+            structref_name_value = eval.get_name_value(structref, scope)
+            if structref_name_value == []:
+                raise Exception(f"Invalid reference to struct in struct member value: {structref}")
+
+            retv = structref_name_value[2:]
+
+        else:
+            retv = [type_, evalret_value[index]]
+
+        return retv
+
+    debug(f"__ref_member__():  retv: {retv}")
+
+    return retv
+
+
+def validate_ref_member(node, scope):
+
+    # TODO: check node length
+    # TODO: check for base type
+
+    pass
+#
+#
 
 
 # ARRAY INTERNALS
@@ -627,6 +792,9 @@ scope["names"] = [  # names
     ["get_array_member", "mut", "internal", __get_array_member__],
     ["set_struct_member", "mut", "internal", __set_struct_member__],
     ["get_struct_member", "mut", "internal", __get_struct_member__],
+
+    ["ref_member", "mut", "internal", __ref_member__],
+
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

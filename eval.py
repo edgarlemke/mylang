@@ -97,15 +97,28 @@ def _eval_handle_not_list(li, scope):
 
     # elif len(name_matches) > 1:
     #    raise Exception(f"More than one name set, it's a bug! {li[0]}")
+    struct_values = get_type_values("struct", scope)
+    debug(f"_eval_handle_not_list():  struct_values: {struct_values}")
+
+    structs = [s[0] for s in struct_values]
+    debug(f"_eval_handle_not_list():  structs: {structs}")
 
     if name_match[2] in ["fn", "internal"]:
         debug(f"_eval_handle_not_list():  li calls fn/internal - name_match: {name_match}")
         li = _eval_handle_fn_internal(li, scope, name_match)
 
-    # not function nor internal
+    elif name_match[2] in structs:
+        debug(f"_eval_handle_not_list():  struct - name_match: {name_match}")
+        li = _eval_handle_structs(li, scope, name_match)
+
     else:
         debug(f"_eval_handle_not_list():  not function nor internal: {li}")
-        li = _eval_handle_common(li, scope, name_match)
+
+        if len(li) == 1:
+            li = _eval_handle_common(li, scope, name_match)
+        else:
+            # li = _eval_handle_struct_members(li, scope, name_match)
+            raise Exception("Handle struct members?")
 
     return li
 
@@ -135,54 +148,75 @@ def _eval_handle_fn_internal(li, scope, name_match):
     return li
 
 
+def _eval_handle_structs(li, scope, name_match):
+    debug(f"_eval_handle_structs():  li: {li} name_match: {name_match}")
+
+    return name_match[2:]
+
+
 def _eval_handle_common(li, scope, name_match):
+    debug(f"_eval_handle_common():  name_match: {name_match}")
+
     # if is list of single item
-    if len(li) == 1:
-        debug(f"_eval_handle_common():  list of single item")
-        name_match_value = name_match[3]
-        debug(f"_eval_handle_common():  name_match_value: {name_match_value}")
+    # if len(li) == 1:
+    debug(f"_eval_handle_common():  list of single item")
 
-        # if name match value is list
-        if isinstance(name_match_value, list):
-            debug(f"_eval_handle_common():  name_match_value is list")
+    name_match_type = name_match[2]
+    debug(f"_eval_handle_common():  name_match_type: {name_match_type}")
 
-            # evaluate the list
-            debug(f"_eval_handle_common():  evaluating list: {name_match[3]}")
-            evaled_name_match_value = eval(name_match_value, scope)
-            method_type = evaled_name_match_value[0]
+    name_match_value = name_match[3]
+    debug(f"_eval_handle_common():  name_match_value: {name_match_value}")
 
-            # if return_calls is set, get correct method type
-            return_calls = scope["return_call"] is not None
-            if return_calls:
-                if not callable(scope["return_call_common_list"]):
-                    raise Exception(f"""return_call_common_list not callable: {scope["return_call_common_list"]}""")
+    # if name match value is list
+    if isinstance(name_match_value, list):
+        debug(f"_eval_handle_common():  name_match_value is list")
 
-                li = scope["return_call_common_list"](evaled_name_match_value, name_match, scope)
+        # evaluate the list
+        debug(f"_eval_handle_common():  evaluating list: {name_match[3]}")
+        evaled_name_match_value = eval(name_match_value, scope)
+        method_type = evaled_name_match_value[0]
 
-            else:
-                if name_match[2] != method_type:
-                    raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
+        # if return_calls is set, get correct method type
+        return_calls = scope["return_call"] is not None
+        if return_calls:
+            if not callable(scope["return_call_common_list"]):
+                raise Exception(f"""return_call_common_list not callable: {scope["return_call_common_list"]}""")
 
-                li = evaled_name_match_value
+            li = scope["return_call_common_list"](evaled_name_match_value, name_match, scope)
 
         else:
-            debug(f"_eval_handle_common():  name_match_value isn't list")
+            if name_match[2] != method_type:
+                raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
 
-            return_call_common_not_list = scope["return_call_common_not_list"] is not None
-            if return_call_common_not_list:
-                if not callable(scope["return_call_common_not_list"]):
-                    raise Exception(f"""return_call_common_not_list not callable: {scope["return_call_common"]}""")
-
-                li = scope["return_call_common_not_list"](name_match, scope)
-
-            else:
-                li = name_match[2:]
+            li = evaled_name_match_value
 
     else:
-        debug(f"_eval_handle_common():  struct member li: {li}")
-        # li = _get_struct_member(li, scope)
+        debug(f"_eval_handle_common():  name_match_value isn't list")
+
+        return_call_common_not_list = scope["return_call_common_not_list"] is not None
+        if return_call_common_not_list:
+            if not callable(scope["return_call_common_not_list"]):
+                raise Exception(f"""return_call_common_not_list not callable: {scope["return_call_common"]}""")
+
+            li = scope["return_call_common_not_list"](name_match, scope)
+
+        else:
+            li = name_match[2:]
+
+    # else:
+    #    debug(f"_eval_handle_common():  struct member li: {li}")
+    #
+    #    if li != []:
+    #        debug(f"_eval_handle_common():  struct member li not empty: {li}")
+    #
+    #    # li = _get_struct_member(li, scope)
 
     return li
+
+
+def _eval_handle_struct_memeber(li, scope, name_match):
+    debug(f"_eval_handle_struct_member():  li: {li} name_match: {name_match}")
+    return ['NYA']
 
 
 def _call_fn(li, fn, scope):
@@ -501,6 +535,27 @@ def get_name_value(name, scope):
             return []
 
     return iterup(scope)
+
+
+def get_type_values(type_, scope):
+    debug(f"get_type_values():  type_: {type_}")
+
+    type_values = []
+
+    def iterup(scope):
+        for each_name in scope["names"]:
+            debug(f"get_type_values():  each_name: {each_name}")
+
+            if each_name[2] == type_:
+                debug(f"get_type_values():  appending {each_name} to type_values")
+                type_values.append(each_name)
+
+        if scope["parent"] is not None:
+            iterup(scope["parent"])
+
+    iterup(scope)
+
+    return type_values
 
 
 def _infer_type(arg):

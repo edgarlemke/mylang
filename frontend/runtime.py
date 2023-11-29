@@ -98,6 +98,11 @@ def __get_struct_member__(node, scope):
 #
 
 
+def __ref_member__(node, scope):
+    compiletime.__ref_member__(node, scope)
+    return node
+
+
 def __macro__(node, scope):
     # print(f"__macro__ {node}")
     return compiletime.__macro__(node, scope)
@@ -169,6 +174,7 @@ scope["names"] = [  # names
     ["get_array_member", "mut", "internal", __get_array_member__],
     ["set_struct_member", "mut", "internal", __set_struct_member__],
     ["get_struct_member", "mut", "internal", __get_struct_member__],
+    ["ref_member", "mut", "internal", __ref_member__],
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
     ["else", "mut", "internal", __else__],

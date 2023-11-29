@@ -463,7 +463,7 @@ def test_struct_decl(debug=False):
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        "def const mystruct (struct ((mut x int)))",
+        "def const mystruct (struct ((x int)))",
         debug,
     )
 
@@ -473,7 +473,7 @@ def test_struct_init(debug=False):
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(def const mystruct (struct ((mut x int))))
+        """(def const mystruct (struct ((x int))))
 (def const mystruct_ (mystruct (1)))""",
         debug,
     )
@@ -487,6 +487,49 @@ def test_get_struct_member(debug=False):
         """def const mystruct (struct ((x int)))
 def const mystruct_ (mystruct (1))
 get_struct_member mystruct_ x""",
+        debug,
+    )
+
+
+def test_GET_struct_member(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((int 1))\n",
+        "",
+        """def const mystruct (struct ((x int)))
+def const mystruct_ (mystruct (1))
+mystruct_ . x""",
+        debug,
+    )
+
+
+def test_GET_deep_struct_member(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((mystruct (1 2)) ((int 1)) ((int 2)) (mystruct_ (3 abc)) ((int 3)) ((mystruct (1 2))) ((int 1)) ((int 2)) (mystruct__ (4 jkl)) ((mystruct_ (3 abc))) ((mystruct (1 2))) ((int 2)))\n",
+        "",
+        """def const mystruct (struct ((x int) (y int)))
+def const mystruct_ (struct ((x int) (m_ mystruct)))
+def const mystruct__ (struct ((x int) (m__ mystruct_)))
+
+def const abc (mystruct (1 2))
+def const jkl (mystruct_ (3 abc))
+def const xyz (mystruct__ (4 jkl))
+
+abc
+abc . x
+abc . y
+
+jkl
+jkl . x
+jkl . m_
+jkl . m_ . x
+jkl . m_ . y
+
+xyz
+xyz . m__
+xyz . m__ . m_
+xyz . m__ . m_ . y""",
         debug,
     )
 
