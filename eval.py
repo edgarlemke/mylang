@@ -84,7 +84,7 @@ def _eval_handle_list(li, scope):
         if len(evaluated_list_) > 0:
             evaled_li.append(evaluated_list_)
 
-    debug(f"_eval_handle_list():  evaled_li: {evaled_li}")
+    debug(f"_eval_handle_list():  {li} -> {evaled_li}")
 
     return evaled_li
 
@@ -110,6 +110,10 @@ def _eval_handle_not_list(li, scope):
     elif name_match[2] in structs:
         debug(f"_eval_handle_not_list():  struct - name_match: {name_match}")
         li = _eval_handle_structs(li, scope, name_match)
+
+    elif name_match[2][0] == "Array":
+        debug(f"_eval_handle_not_list():  Array - name_match: {name_match}")
+        li = _eval_handle_arrays(li, scope, name_match)
 
     else:
         debug(f"_eval_handle_not_list():  not function nor internal: {li}")
@@ -214,9 +218,92 @@ def _eval_handle_common(li, scope, name_match):
     return li
 
 
-def _eval_handle_struct_memeber(li, scope, name_match):
+def _eval_handle_struct_member(li, scope, name_match):
     debug(f"_eval_handle_struct_member():  li: {li} name_match: {name_match}")
     return ['NYA']
+
+
+def _eval_handle_arrays(li, scope, name_match):
+    debug(f"_eval_handle_arrays():  li: {li}")
+
+    type_, value = name_match[2:]
+    debug(f"_eval_handle_arrays():  type_: {type_} value: {value}")
+
+#    new_li = [type_]
+#
+#    for value_item in value:
+#        debug(f"_eval_handle_arrays():  value_item: {value_item}")
+#
+#        value_name_value = get_name_value(value_item, scope)
+#        debug(f"_eval_handle_arrays():  value_name_value: {value_name_value}")
+#
+#        if value_name_value != []:
+#            to_append = [value_name_value[3]][0]
+#
+#        else:
+#            to_append = value_item
+#
+#        debug(f"_eval_handle_arrays():  to_append: {to_append}")
+#
+#        new_li.append(to_append)
+#
+#    debug(f"_eval_handle_arrays(): new_li: {new_li}")
+
+    # iter down arrays solving array references
+
+    def iter(value):
+        debug(f"iter():  start - value: {value}")
+
+        retv = []
+
+        # for each item in value
+        for abc in value:
+            debug(f"iter():  abc: {abc}")
+
+            # if it's a list, iter() over it
+            if isinstance(abc, list):
+                abc_list_result = iter(abc)
+                debug(f"iter():  appending to retv - abc_list_result: {abc_list_result}")
+
+                retv.append(abc_list_result)
+                debug(f"iter():  new retv: {retv}")
+
+            # if it's not a list, try to get name value
+            else:
+                abc_value = get_name_value(abc, scope)
+                debug(f"iter():  abc_value: {abc_value}")
+                # abc_fixed_value = abc_value[2:]
+                # debug(f"iter():  abc_fixed_value: {abc_fixed_value}")
+
+                # if found name value
+                if abc_value != []:
+                    debug(f"iter():  abc_value found! {abc_value[3][0]}")
+
+                    # if name value is an Array
+                    if abc_value[2][0] == "Array":
+                        abc_array = iter(abc_value[3])
+                        debug(f"iter():  adding to retv - abc_array: {abc_array}")
+
+                        # return abc_array
+                        retv.append(abc_array)
+                        debug(f"iter():  new retv: {retv}")
+
+                    else:
+                        retv.append(abc_value)
+
+                # if didn't found name value
+                else:
+                    debug(f"iter():  abc_value not found!")
+                    # return value
+                    retv.append(abc)
+
+        debug(f"iter():  end - retv: {retv}")
+
+        return retv
+
+    return [type_] + iter(value)
+
+#    return new_li
 
 
 def _call_fn(li, fn, scope):

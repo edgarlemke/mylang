@@ -208,7 +208,8 @@ macro op_lte ('a <= 'b) ((le 'a 'b))
 
 macro op_ternary ('a ? 'b : 'c) (if ('a) ('b) ('c))
 
-macro op_at ('a . 'b) ((ref_member 'a 'b))
+macro op_dot ('a . 'b) ((ref_member 'a 'b))
+macro op_at ('a @ 'b) ((ref_array_member 'a 'b))
 
 #macro op_def_mut_generic_struct (mut struct 'a = 'b 'c) (def mut 'a (struct 'b 'c))
 macro op_def_generic_struct (struct 'a := 'b 'c) (def const 'a (struct ('b 'c)))

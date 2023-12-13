@@ -75,14 +75,14 @@ def __def__(node, scope):
 
             type_ = name_candidate[2]
 
-    elif len(data) == 2:
+    elif len(data) >= 2:
         type_ = data[0]
 
     if len(data) == 1:
         value = data[0]
 
-    elif len(data) == 2:
-        value = data[1]
+    elif len(data) >= 2:
+        value = data[1:]
 
 #    if not isinstance(name, list):
 
@@ -154,12 +154,12 @@ def validate_def(node, scope):
         type_ = name_candidate[2]
         value = data[0]
 
-    elif len(data) == 2:
+    elif len(data) >= 2:
         type_ = data[0]
-        value = data[1]
+        value = data[1:]
 
     if type_ is None:
-        raise Exception("Type not found!")
+        raise Exception(f"Type not found: {type_}")
 
     # check mutability declaration
     if mutdecl not in ["const", "mut"]:
@@ -539,6 +539,212 @@ def __get_array_member__(node, scope):
 def validate_get_array_member(node, scope):
     if len(node) != 3:
         raise Exception("Wrong number of arguments for get_array_member: {node}")
+
+
+def __ref_array_member__(node, scope):
+    debug(f"__ref_array_member__():  frontend compiletime - node: {node}")
+
+    ref_array_member, array_base, array_index = node
+
+    debug(f"__ref_array_member__():  frontend compiletime - array_base: {array_base}")
+
+    if isinstance(array_base, list):
+        debug(f"__ref_array_member__():  frontend compiletime - array_base is list")
+
+        def iter_is_list(value):
+            debug(f"iter_is_list():  value: {value}")
+
+            if len(value) > 0 and value[0] == "ref_array_member":
+                debug(f"iter_is_list():  ref_array_member!")
+
+                value_ = eval.get_name_value(value[1], scope)
+                debug(f"iter_is_list():  value_: {value_}")
+
+                retv = [False]
+
+                balue_type = value_[2]
+                balue_balue = value_[3]
+
+                debug(f"iter_is_list():  balue_type: {balue_type}")
+                debug(f"iter_is_list():  balue_balue: {balue_balue}")
+
+                katapimbas = []
+                for wer in balue_balue:
+                    zxcc = iter_is_list(wer)
+                    debug(f"iter_is_list():  zxcc: {zxcc}")
+
+                    katapimbas.append(zxcc)
+
+                debug(f"iter_is_list():  katapimbas: {katapimbas}")
+
+                mir = katapimbas[0][1]
+
+                mir_T = mir[0]
+                mir_V = mir[int(array_index) + 1]
+
+                debug(f"iter_is_list():  mir: {mir}")
+
+                retv.append([mir_T[1], mir_V])
+
+                return retv
+
+            else:
+                debug(f"iter_is_list():  not ref_array_member!")
+
+                value_ = eval.get_name_value(value, scope)
+                debug(f"iter_is_list():  value_: {value_}")
+
+                if value_ != []:
+                    debug(f"iter_is_list():  value_ found!")
+
+                    type_ = value_[2]
+                    debug(f"iter_is_list():  type_: {type_}")
+
+                    if isinstance(type_, list) and value_[2][0] == "Array":
+
+                        retv = []
+                        for item in value_[3]:
+                            iter_result = iter_is_list(item)
+                            retv.append(iter_result)
+
+                        debug(f"iter_is_list():  retv: {retv}")
+
+                        all_not_found_values = all([i[0] == False for i in retv])
+                        debug(f"iter_is_list():  all_not_found_values: {all_not_found_values}")
+
+                        if all_not_found_values:
+                            retv = [True, [type_] + [i[1] for i in retv]]
+
+                        else:
+                            retv = [True, retv[0][1]]
+
+                        return retv
+
+                else:
+                    debug(f"iter_is_list():  value_ not found! {value}")
+                    return [False, value]
+
+        iter_value = array_base[1]
+        debug(f"__ref_array_member__():  frontned compiletime - iter_value: {iter_value}")
+
+        iter_result = iter_is_list(iter_value)[1]
+        debug(f"__ref_array_member__():  frontend compiletime - iter_result: {iter_result}")
+
+        type_ = iter_result[0]
+        value = iter_result[1:]
+
+        retv = [type_] + value
+
+#
+#        array_base_value = eval.get_name_value(array_base[1], scope)
+#        debug(f"__ref_array_member__():  frontend compiletime - array_base_value: {array_base_value}")
+#
+#        for item in array_base_value[3]:
+#            debug(f"__ref_array_member__():  item: {item}")
+#
+#            item_name_value = eval.get_name_value(item, scope)
+#            if item_name_value == []:
+#                raise Exception(f"Unassigned array value: {item}")
+#
+#            debug(f"__ref_array_member__():  item_name_value: {item_name_value}")
+#
+#            item_type, item_value = item_name_value[2:]
+#
+#            # handle composite types
+#            if isinstance(item_type, list):
+#                type_ = item_type[1]
+#                value = item_value[int(array_index)]
+#
+#            # handle simple types
+#            else:
+#                raise Exception("Not implemented!")
+#                type_ = 'MWER'
+#                value = 'MWER!'
+#
+#            debug(f"__ref_array_member__():  type_: {type_} value: {value}")
+
+    else:
+        debug(f"__ref_array_member__():  frontend compiletime - array_base isn't list")
+
+        def iter_isnt_list(value, original_type=None):
+            debug(f"iter_isnt_list():  start - value: {value}")
+
+            abc_value = eval.get_name_value(value, scope)
+            otwasnone = original_type is None
+
+            if abc_value != []:
+                debug(f"iter_isnt_list():  abc_value found! abc_value: {abc_value}")
+
+                type_ = abc_value[2][1]
+                if otwasnone:
+                    original_type = type_
+
+                debug(f"iter_isnt_list():  type_: {type_}")
+
+                if isinstance(type_, list) and type_[0] == "Array":
+                    debug(f"iter_isnt_list():  type_ is Array")
+
+                    new_value = abc_value[3]
+                    debug(f"iter_isnt_list():  new_value: {new_value}")
+
+                    retv = []
+                    for array_member in new_value:
+                        iter_isnt_list_result = iter_isnt_list(array_member, original_type)
+                        debug(f"iter_isnt_list():  iter_isnt_list_result: {iter_isnt_list_result}")
+                        retv.append(iter_isnt_list_result)
+
+                else:
+                    debug(f"iter_isnt_list():  type_ isn't Array")
+                    retv = abc_value[3]
+
+                if otwasnone:
+                    retv = [original_type, retv[int(array_index)][0]]
+
+                debug(f"iter_isnt_list():  retv: {retv}")
+                return retv
+
+            else:
+                debug(f"iter_isnt_list():  abc_value not found!")
+                raise Exception("abc_value not found!")
+
+#        type_, value = iter_isnt_list(array_base)
+        retv = iter_isnt_list(array_base)
+
+#        array_base_value = eval.get_name_value(array_base, scope)
+#        debug(f"__ref_array_member__():  frontend compiletime - array_base_value: {array_base_value}")
+#
+#        type_ = array_base_value[2][1]
+#        debug(f"__ref_array_member__():  frontend compiletime - type_: {type_}")
+#
+#        # handle arrays
+#        if isinstance(type_, list) and type_[0] == "Array":
+#
+#            value = array_base_value[3][int(array_index)]
+#            debug(f"__ref_array_member():  frontend compiletime - value: {value}")
+#
+#            value_name_value = eval.get_name_value(value, scope)
+#            debug(f"__ref_array_member__():  frontend compiletime - value_name_value: {value_name_value}")
+#
+#            if value_name_value != []:
+#                new_type, new_value = value_name_value[2:]
+#                value = [new_type]
+#                value += new_value
+#
+#                debug(f"__ref_array_member__():  frontend compiletime - new value: {value}")
+#
+#                return value
+#
+#            else:
+#                pass
+#
+#        else:
+#            debug(f"__ref_array_member__():  frontend compiletime - type_ isn't Array")
+#            value = array_base_value[3][int(array_index)]
+
+#    retv = [type_, value]
+    debug(f"__ref_array_member__():  frontend compiletime - retv: {retv}")
+
+    return retv
 #
 #
 
@@ -794,6 +1000,7 @@ scope["names"] = [  # names
     ["get_struct_member", "mut", "internal", __get_struct_member__],
 
     ["ref_member", "mut", "internal", __ref_member__],
+    ["ref_array_member", "mut", "internal", __ref_array_member__],
 
     ["macro", "mut", "internal", __macro__],
     ["if", "mut", "internal", __if__],
