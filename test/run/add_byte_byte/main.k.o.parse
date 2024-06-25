@@ -1,1 +1,0 @@
-((fn main () byte ((def const onetwo (byte 12)) (def const threefour (byte 34)) (def const result (byte (add onetwo threefour))) (result))))
