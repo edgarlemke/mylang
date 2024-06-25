@@ -90,6 +90,8 @@ def _eval_handle_list(li, scope):
 
 
 def _eval_handle_not_list(li, scope):
+    debug(f"_eval_handle_not_list():  li: {li}")
+
     # get name value from scope
     name_match = get_name_value(li[0], scope)
     if name_match == []:
@@ -532,7 +534,8 @@ def find_function_method(li, fn, scope):
 
                 # if found value, set solved_argument with the value
                 if found_value:
-                    solved_argument = name_value[2:]
+                    tmp_solved_argument = name_value[2:]
+                    solved_argument = [tmp_solved_argument[0]] + tmp_solved_argument[1]
 
                     # handle composite types
                     if isinstance(solved_argument[0], list):

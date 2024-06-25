@@ -144,6 +144,10 @@ myfn false""",
 
 
 def test_fn_arg_name(debug=False):
+    """
+    Test whether a function call correctly expands a name for an argument and returns it.
+    """
+
     return _test(
         i.getframeinfo(i.currentframe()).function,
         "((bool true))\n",
