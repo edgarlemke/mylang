@@ -657,6 +657,9 @@ def get_type_values(type_, scope):
 def _infer_type(arg):
     debug(f"_infer_type():  arg: {arg}")
 
+    if isinstance(arg, list):
+        raise Exception(f"List got passed to _infer_type! arg: {arg}")
+
     candidates = []
 
     # match base 10 integers

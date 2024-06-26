@@ -132,6 +132,7 @@ def validate_def(node, scope):
         raise Exception(f"Wrong number of arguments for def: {node}")
 
     def_, mutdecl, name, data = node
+    debug(f"validate_def():  data: {data}")
 
     is_reassignment = False
     type_ = None
@@ -144,7 +145,6 @@ def validate_def(node, scope):
     debug(f"validate_def():  structs: {structs}")
 
     if len(data) == 1:
-
         # gets correct name to search
         search_name = name
 
@@ -162,7 +162,15 @@ def validate_def(node, scope):
 
     elif len(data) >= 2:
         type_ = data[0]
-        value = data[1:]
+
+        debug(f"validate_def():  type_: {type_}")
+
+        if type_ in structs:
+            value = data[1:][0]
+        else:
+            value = data[1]
+
+        debug(f"validate_def():  value: {value}")
 
     if type_ is None:
         raise Exception(f"Type not found: {type_}")
@@ -176,16 +184,15 @@ def validate_def(node, scope):
         struct_type = [st for st in scope["names"] if st[2] == "struct" and st[0] == type_][0]
         debug(f"validate_def():  frontend compiletime - struct_type: {struct_type}")
 
-        if len(value) != len(struct_type[3]):
-            raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3]}")
+        if len(value) != len(struct_type[3][0]):
+            raise Exception(f"Initializing struct with wrong number of member values: {value} {struct_type[3][0]}")
 
         debug(f"validate_def():  value: {value}")
 
         found_struct_members = []
         for value_member in value:
-            debug(f"validate_def():  value_member: {value_member} struct_type[3]: {struct_type[3]}")
+            debug(f"validate_def():  value_member: {value_member} struct_type[3][0]: {struct_type[3][0]}")
 
-            # for struct_member in struct_type[3]:
             for struct_member in struct_type[3][0]:
                 debug(f"validate_def():  value_member: {value_member} struct_member: {struct_member}")
 

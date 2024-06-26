@@ -614,16 +614,16 @@ get_struct_member wrong x""",
 #    )
 
 
-# def test_struct_init_type_for_member_invalid(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "Initializing struct with invalid value type for member",
-#        """(def const mystruct (struct ((mut x int)(mut y int))))
-# (def const mystruct_ (mystruct (1 3.14)))
-# """,
-#        debug,
-#    )
+def test_struct_init_type_for_member_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Initializing struct with invalid value type for member",
+        """(def const mystruct (struct ((mut x int)(mut y int))))
+(def const mystruct_ (mystruct (1 3.14)))
+""",
+        debug,
+    )
 
 
 # TODO: fix this stuff when ACTUALLY implementing arrays
