@@ -422,7 +422,9 @@ def __ref_member__(node, scope):
             debug(f"__ref_member__():  handling struct")
 
             struct_name_value = eval.get_name_value(base_type, scope)
-            for member_index, struct_member in enumerate(struct_name_value[3]):
+            for member_index, struct_member in enumerate(struct_name_value[3][0]):
+                debug(f"__ref_member__():  member_index: {member_index} - struct_member: {struct_member}")
+
                 member_name, member_type = struct_member
                 if member_name == member:
                     break
@@ -481,7 +483,7 @@ def __ref_member__(node, scope):
         index = None
         type_ = None
 
-        for evalret_type_member_index, evalret_type_member in enumerate(evalret_type_name_value[3]):
+        for evalret_type_member_index, evalret_type_member in enumerate(evalret_type_name_value[3][0]):
             debug(f"__ref_member__():  frontend compiletime - evalret_type_member_index: {evalret_type_member_index}")
             debug(f"__ref_member__():  frontend compiletime - evalret_type_member: {evalret_type_member}")
             if evalret_type_member[0] == member:
@@ -492,7 +494,7 @@ def __ref_member__(node, scope):
         if index is None:
             raise Exception(f"Couldn't find member {member} in {evalret_type}")
 
-        debug(f"__ref_member__():  frontend compiletime - candidate: {evalret_type_name_value[3][index]}")
+        debug(f"__ref_member__():  frontend compiletime - candidate: {evalret_type_name_value[3][0][index]}")
         debug(f"__ref_member__():  frontend compiletime - candidate: {evalret_value[index]}")
 
         struct_names = eval.get_type_values("struct", scope)
@@ -500,7 +502,7 @@ def __ref_member__(node, scope):
         debug(f"__ref_member__():  frontend compiletime - structs: {structs}")
 
         # handle structs
-        if evalret_type_name_value[3][index][1] in structs:
+        if evalret_type_name_value[3][0][index][1] in structs:
             debug(f"__ref_member__():  frontend compiletime - struct member value is struct")
 
             structref = evalret_value[index]

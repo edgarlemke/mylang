@@ -508,35 +508,39 @@ def const mystruct_ (mystruct 1)""",
 #    )
 
 
-# def test_GET_struct_member(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((mystruct (1 2)) ((int 1)) ((int 2)) (mystruct_ (3 abc)) ((int 3)) ((mystruct (1 2))) ((int 1)) ((int 2)) (mystruct__ (4 jkl)) ((mystruct_ (3 abc))) ((mystruct (1 2))) ((int 2)))\n",
-#        "",
-#        """def const mystruct (struct ((x int) (y int)))
-# def const mystruct_ (struct ((x int) (m_ mystruct)))
-# def const mystruct__ (struct ((x int) (m__ mystruct_)))
-#
-# def const abc (mystruct (1 2))
-# def const jkl (mystruct_ (3 abc))
-# def const xyz (mystruct__ (4 jkl))
-#
-# abc
-# abc . x
-# abc . y
-#
-# jkl
-# jkl . x
-# jkl . m_
-# jkl . m_ . x
-# jkl . m_ . y
-#
-# xyz
-# xyz . m__
-# xyz . m__ . m_
-# xyz . m__ . m_ . y""",
-#        debug,
-#    )
+def test_deep_def_get_struct_member(debug=False):
+    """
+    Tests aninhated def-ing of structs and acessing of member
+    """
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "((mystruct (1 2)) ((int 1)) ((int 2)) (mystruct_ (3 abc)) ((int 3)) ((mystruct (1 2))) ((int 1)) ((int 2)) (mystruct__ (4 jkl)) ((mystruct_ (3 abc))) ((mystruct (1 2))) ((int 1)) ((int 2)))\n",
+        "",
+        """def const mystruct (struct ((x int) (y int)))
+def const mystruct_ (struct ((x int) (m_ mystruct)))
+def const mystruct__ (struct ((x int) (m__ mystruct_)))
+
+def const abc (mystruct (1 2))
+def const jkl (mystruct_ (3 abc))
+def const xyz (mystruct__ (4 jkl))
+
+abc
+abc . x
+abc . y
+
+jkl
+jkl . x
+jkl . m_
+jkl . m_ . x
+jkl . m_ . y
+
+xyz
+xyz . m__
+xyz . m__ . m_
+xyz . m__ . m_ . x
+xyz . m__ . m_ . y""",
+        debug,
+    )
 
 
 def test_get_struct_member_undefined_struct_invalid(debug=False):
