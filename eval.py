@@ -94,6 +94,7 @@ def _eval_handle_not_list(li, scope):
 
     # get name value from scope
     name_match = get_name_value(li[0], scope)
+    debug(f"_eval_handle_not_list():  name_match: {name_match}")
     if name_match == []:
         raise Exception(f"Unassigned name: {li[0]}")
 
@@ -165,7 +166,7 @@ def _eval_handle_common(li, scope, name_match):
 
     # if is list of single item
     # if len(li) == 1:
-    debug(f"_eval_handle_common():  list of single item")
+    # debug(f"_eval_handle_common():  list of single item")
 
     name_match_type = name_match[2]
     debug(f"_eval_handle_common():  name_match_type: {name_match_type}")
@@ -180,6 +181,9 @@ def _eval_handle_common(li, scope, name_match):
         # evaluate the list
         debug(f"_eval_handle_common():  evaluating list: {name_match[3]}")
         evaled_name_match_value = eval(name_match_value, scope)
+
+        debug(f"_eval_handle_common():  evaled_name_match_value: {evaled_name_match_value}")
+
         method_type = evaled_name_match_value[0]
 
         # if return_calls is set, get correct method type
@@ -534,8 +538,10 @@ def find_function_method(li, fn, scope):
 
                 # if found value, set solved_argument with the value
                 if found_value:
-                    tmp_solved_argument = name_value[2:]
-                    solved_argument = [tmp_solved_argument[0]] + tmp_solved_argument[1]
+                    # tmp_solved_argument = name_value[2:]
+                    # solved_argument = [tmp_solved_argument[0]] + tmp_solved_argument[1]
+                    solved_argument = name_value[2:]
+                    debug(f"find_function_method():  solved_argument: {solved_argument}")
 
                     # handle composite types
                     if isinstance(solved_argument[0], list):
@@ -649,7 +655,7 @@ def get_type_values(type_, scope):
 
 
 def _infer_type(arg):
-    #    debug(f"_infer_type():  arg: {arg}")
+    debug(f"_infer_type():  arg: {arg}")
 
     candidates = []
 

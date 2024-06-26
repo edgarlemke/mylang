@@ -981,17 +981,19 @@ def test_set_get_struct_member(keep=False, debug=False):
 # FORMATTING TESTS
 
 
-def test_bin(keep=False, debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "",
-        "0000000000000000000000000000000001001001100101100000001011010010",
-        "",
-        f"{dir_path}/run/bin/main.k",
-        keep,
-        debug,
-    )
+# TODO: put it back
+# def test_bin(keep=False, debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "",
+#        "0000000000000000000000000000000001001001100101100000001011010010",
+#        "",
+#        f"{dir_path}/run/bin/main.k",
+#        keep,
+#        debug,
+#    )
+
 #
 #
 

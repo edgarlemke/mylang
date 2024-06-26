@@ -62,6 +62,7 @@ def __def__(node, scope):
     names = scope["names"]
     def_, mutdecl, name, data = node
 
+    # extract type
     if len(data) == 1:
         if isinstance(name, list):
             debug(f"__def__():  compiletime - name is list - name: {name}")
@@ -78,15 +79,20 @@ def __def__(node, scope):
     elif len(data) >= 2:
         type_ = data[0]
 
+    debug(f"__def__():  extracted type_: {type_}")
+
+    # extract value
     if len(data) == 1:
         value = data[0]
 
     elif len(data) >= 2:
-        value = data[1:]
+        if type_ == "struct":
+            value = data[1:]
+        else:
+            value = data[1]
 
 #    if not isinstance(name, list):
-
-    debug(f"__def__():  value: {value} - typeof {name} not list")
+#    debug(f"__def__():  value: {value} - typeof {name} not list")
 
     # remove old value from names
     for index, v in enumerate(names):
@@ -165,6 +171,7 @@ def validate_def(node, scope):
     if mutdecl not in ["const", "mut"]:
         raise Exception(f"Assignment with invalid mutability declaration: {node}")
 
+    # validate structs declarations
     if type_ in structs:
         struct_type = [st for st in scope["names"] if st[2] == "struct" and st[0] == type_][0]
         debug(f"validate_def():  frontend compiletime - struct_type: {struct_type}")
@@ -176,13 +183,14 @@ def validate_def(node, scope):
 
         found_struct_members = []
         for value_member in value:
-            debug(f"validate_def():  value_member: {value_member}")
+            debug(f"validate_def():  value_member: {value_member} struct_type[3]: {struct_type[3]}")
 
-            for struct_member in struct_type[3]:
-                debug(f"validate_def():  value_member: {value_member} struct_member: {struct_member} @@@")
+            # for struct_member in struct_type[3]:
+            for struct_member in struct_type[3][0]:
+                debug(f"validate_def():  value_member: {value_member} struct_member: {struct_member}")
 
                 if struct_member in found_struct_members:
-                    debug(f"validate_det():  struct_member already found")
+                    debug(f"validate_def():  struct_member already found")
                     continue
 
                 value_member_type = None

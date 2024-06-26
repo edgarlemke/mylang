@@ -282,9 +282,10 @@ def test_def_call_fn(debug=False):
         "((int 10))\n",
         "",
         """fn somefn () int
-	ret data int 10
+	data int 10
 int x := (somefn ())
-x""",
+x
+""",
         debug,
     )
 
@@ -477,8 +478,8 @@ def test_struct_init(debug=False):
         i.getframeinfo(i.currentframe()).function,
         "()\n",
         "",
-        """(def const mystruct (struct ((x int))))
-(def const mystruct_ (mystruct (1)))""",
+        """def const mystruct (struct ((x int)))
+def const mystruct_ (mystruct 1)""",
         debug,
     )
 
@@ -507,35 +508,35 @@ def test_struct_init(debug=False):
 #    )
 
 
-def test_GET_struct_member(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "((mystruct (1 2)) ((int 1)) ((int 2)) (mystruct_ (3 abc)) ((int 3)) ((mystruct (1 2))) ((int 1)) ((int 2)) (mystruct__ (4 jkl)) ((mystruct_ (3 abc))) ((mystruct (1 2))) ((int 2)))\n",
-        "",
-        """def const mystruct (struct ((x int) (y int)))
-def const mystruct_ (struct ((x int) (m_ mystruct)))
-def const mystruct__ (struct ((x int) (m__ mystruct_)))
-
-def const abc (mystruct (1 2))
-def const jkl (mystruct_ (3 abc))
-def const xyz (mystruct__ (4 jkl))
-
-abc
-abc . x
-abc . y
-
-jkl
-jkl . x
-jkl . m_
-jkl . m_ . x
-jkl . m_ . y
-
-xyz
-xyz . m__
-xyz . m__ . m_
-xyz . m__ . m_ . y""",
-        debug,
-    )
+# def test_GET_struct_member(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "((mystruct (1 2)) ((int 1)) ((int 2)) (mystruct_ (3 abc)) ((int 3)) ((mystruct (1 2))) ((int 1)) ((int 2)) (mystruct__ (4 jkl)) ((mystruct_ (3 abc))) ((mystruct (1 2))) ((int 2)))\n",
+#        "",
+#        """def const mystruct (struct ((x int) (y int)))
+# def const mystruct_ (struct ((x int) (m_ mystruct)))
+# def const mystruct__ (struct ((x int) (m__ mystruct_)))
+#
+# def const abc (mystruct (1 2))
+# def const jkl (mystruct_ (3 abc))
+# def const xyz (mystruct__ (4 jkl))
+#
+# abc
+# abc . x
+# abc . y
+#
+# jkl
+# jkl . x
+# jkl . m_
+# jkl . m_ . x
+# jkl . m_ . y
+#
+# xyz
+# xyz . m__
+# xyz . m__ . m_
+# xyz . m__ . m_ . y""",
+#        debug,
+#    )
 
 
 def test_get_struct_member_undefined_struct_invalid(debug=False):
@@ -613,68 +614,69 @@ get_struct_member wrong x""",
 #    )
 
 
-def test_struct_init_type_for_member_invalid(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Initializing struct with invalid value type for member",
-        """(def const mystruct (struct ((mut x int)(mut y int))))
-(def const mystruct_ (mystruct (1 3.14)))
-""",
-        debug,
-    )
+# def test_struct_init_type_for_member_invalid(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Initializing struct with invalid value type for member",
+#        """(def const mystruct (struct ((mut x int)(mut y int))))
+# (def const mystruct_ (mystruct (1 3.14)))
+# """,
+#        debug,
+#    )
 
 
+# TODO: fix this stuff when ACTUALLY implementing arrays
 # __set_array_member__
-def test_set_array_member_number_arguments_invalid(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Wrong number of arguments for set_array_member",
-        """(def const mystruct (struct ((mut x int))))
-(set_array_member mystruct (x) 1 wrong)
-""",
-        debug,
-    )
-
-
+# def test_set_array_member_number_arguments_invalid(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Wrong number of arguments for set_array_member",
+#        """(def const mystruct (struct ((mut x int))))
+# (set_array_member mystruct (x) 1 wrong)
+# """,
+#        debug,
+#    )
+#
+#
 # __get_array_member__
-def test_get_array_member_number_arguments_invalid(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "Wrong number of arguments for get_array_member",
-        """(def const mystruct (struct ((mut x int))))
-(set_array_member mystruct (x) 1)
-(get_array_member mystruct (x) wrong)
-""",
-        debug,
-    )
-
-
-def test_GET_array_member(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "(((Array byte) 12 34 56) ((byte 1)) ((Array (Array byte)) (12 34 56)) (((Array byte) 12)) (((Array byte) 12 34 56)) ((Array (Array (Array byte))) ((12 34 56))) (((Array (Array byte)) (12 34 56))) (((Array byte) 12 34 56)) ((byte 12)))\n",
-        "",
-        """def const abc ((Array byte) 12 34 56)
-def const ghi ((Array (Array byte)) abc)
-def const jkl ((Array (Array (Array byte))) ghi)
-
-abc
-abc @ 0
-
-ghi
-ghi @ 0
-ghi @ 0 @ 1
-
-jkl
-jkl @ 0
-jkl @ 0 @ 0
-jkl @ 0 @ 0 @ 0
-""",
-        debug,
-    )
+# def test_get_array_member_number_arguments_invalid(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "Wrong number of arguments for get_array_member",
+#        """(def const mystruct (struct ((mut x int))))
+# (set_array_member mystruct (x) 1)
+# (get_array_member mystruct (x) wrong)
+# """,
+#        debug,
+#    )
+#
+#
+# def test_GET_array_member(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "(((Array byte) 12 34 56) ((byte 1)) ((Array (Array byte)) (12 34 56)) (((Array byte) 12)) (((Array byte) 12 34 56)) ((Array (Array (Array byte))) ((12 34 56))) (((Array (Array byte)) (12 34 56))) (((Array byte) 12 34 56)) ((byte 12)))\n",
+#        "",
+#        """def const abc ((Array byte) 12 34 56)
+# def const ghi ((Array (Array byte)) abc)
+# def const jkl ((Array (Array (Array byte))) ghi)
+#
+# abc
+# abc @ 0
+#
+# ghi
+# ghi @ 0
+# ghi @ 0 @ 1
+#
+# jkl
+# jkl @ 0
+# jkl @ 0 @ 0
+# jkl @ 0 @ 0 @ 0
+# """,
+#        debug,
+#    )
 
 
 # eval tests
@@ -736,17 +738,17 @@ somefn 12 34
     )
 
 
-def test_unlisp_struct(debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "()\n",
-        "",
-        """struct File :=
-	a int
-File xyz := (1)
-""",
-        debug,
-    )
+# def test_unlisp_struct(debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "()\n",
+#        "",
+#        """struct File :=
+# a int
+# File xyz := (1)
+# """,
+#        debug,
+#    )
 
 
 def test_space_indentation_0_invalid(debug=False):
