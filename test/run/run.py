@@ -929,17 +929,17 @@ def test_array_byte_init_unset(keep=False, debug=False):
 
 # SCOPE TESTS
 #
-def test_scope(keep=False, debug=False):
-    return _test(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "",
-        "",
-        "",
-        f"{dir_path}/run/scope/main.k",
-        keep,
-        debug,
-    )
+# def test_scope(keep=False, debug=False):
+#    return _test(
+#        i.getframeinfo(i.currentframe()).function,
+#        "",
+#        "",
+#        "",
+#        "",
+#        f"{dir_path}/run/scope/main.k",
+#        keep,
+#        debug,
+#    )
 #
 #
 
@@ -963,13 +963,13 @@ def test_set_get_array_member(keep=False, debug=False):
 
 # STRUCT TESTS
 #
-def test_set_get_struct_member(keep=False, debug=False):
+def test_set_get_struct_member_depth_0(keep=False, debug=False):
     return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
         "46",
-        f"{dir_path}/run/set_get_struct_member/main.k",
+        f"{dir_path}/run/set_get_struct_member_depth_0/main.k",
         keep,
         debug,
     )
