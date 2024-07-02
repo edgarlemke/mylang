@@ -964,12 +964,11 @@ def test_set_get_array_member(keep=False, debug=False):
 # STRUCT TESTS
 #
 def test_set_get_struct_member(keep=False, debug=False):
-    return _test(
+    return _test_exit_code(
         i.getframeinfo(i.currentframe()).function,
         "",
         "",
-        "",
-        "",
+        "46",
         f"{dir_path}/run/set_get_struct_member/main.k",
         keep,
         debug,

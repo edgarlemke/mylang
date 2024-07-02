@@ -99,7 +99,7 @@ def __get_struct_member__(node, scope):
 
 
 def __ref_member__(node, scope):
-    compiletime.__ref_member__(node, scope)
+    # compiletime.__ref_member__(node, scope)
     return node
 
 

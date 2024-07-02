@@ -484,30 +484,6 @@ def const mystruct_ (mystruct 1)""",
     )
 
 
-# def test_get_struct_member(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((int 1))\n",
-#        "",
-#        """def const mystruct (struct ((x int)))
-# def const mystruct_ (mystruct (1))
-# get_struct_member mystruct_ x""",
-#        debug,
-#    )
-
-
-# def test_GET_struct_member(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((int 1))\n",
-#        "",
-#        """def const mystruct (struct ((x int)))
-# def const mystruct_ (mystruct (1))
-# mystruct_ . x""",
-#        debug,
-#    )
-
-
 def test_deep_def_get_struct_member(debug=False):
     """
     Tests aninhated def-ing of structs and acessing of member
@@ -516,9 +492,17 @@ def test_deep_def_get_struct_member(debug=False):
         i.getframeinfo(i.currentframe()).function,
         "((mystruct (1 2)) ((int 1)) ((int 2)) (mystruct_ (3 abc)) ((int 3)) ((mystruct (1 2))) ((int 1)) ((int 2)) (mystruct__ (4 jkl)) ((mystruct_ (3 abc))) ((mystruct (1 2))) ((int 1)) ((int 2)))\n",
         "",
-        """def const mystruct (struct ((x int) (y int)))
-def const mystruct_ (struct ((x int) (m_ mystruct)))
-def const mystruct__ (struct ((x int) (m__ mystruct_)))
+        """struct mystruct :=
+	x int
+	y int
+
+struct mystruct_ :=
+	x int
+	m_ mystruct
+
+struct mystruct__ :=
+	x int
+	m__ mystruct_
 
 def const abc (mystruct (1 2))
 def const jkl (mystruct_ (3 abc))
@@ -553,69 +537,17 @@ get_struct_member wrong x""",
         debug,
     )
 
-# def test_struct_deep_member_access(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((int 1))\n",
-#        "",
-#        """def const mystruct (struct ((member_x int)))
-# def const mystruct2 (struct ((member_mystruct mystruct)))
-# def const st_mystruct (mystruct (1))
-# def const st_mystruct2 (mystruct2 (st_mystruct))
-# st_mystruct2 member_mystruct member_x""",
-#        debug,
-#    )
 
-
-# def test_struct_member_def(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((int 2))\n",
-#        "",
-#        """def const mystruct (struct ((mut x int)))
-# def const mystruct_ (mystruct (1))
-# def mut (mystruct_ x) (int 2)
-# mystruct_ x""",
-#        debug,
-#    )
-
-
-# def test_struct_member_def_type_invalid(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "Setting struct member with invalid value type",
-#        """def const mystruct (struct ((mut x int)))
-# def const mystruct_ (mystruct (1))
-# def mut (mystruct_ x) (float 3.14)
-# mystruct_ x""",
-#        debug,
-#    )
-
-
-# def test_struct_member_access_for_name(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "((int 1))\n",
-#        "",
-#        """def const mystruct (struct ((mut x int)))
-# def const mystruct_ (mystruct (1))
-# def const randomvar (int (mystruct_ x))
-# randomvar""",
-#        debug,
-#    )
-
-
-# def test_struct_init_number_of_members_invalid(debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "Initializing struct with wrong number of member values",
-#        """(def const mystruct (struct ((mut x int)(mut y int))))
-# (def const mystruct_ (mystruct (1)))
-# """,
-#        debug,
-#    )
+def test_struct_init_number_of_members_invalid(debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "Initializing struct with wrong number of member values",
+        """(def const mystruct (struct ((mut x int)(mut y int))))
+(def const mystruct_ (mystruct (1)))
+""",
+        debug,
+    )
 
 
 def test_struct_init_type_for_member_invalid(debug=False):

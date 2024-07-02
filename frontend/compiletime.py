@@ -410,6 +410,8 @@ def __ref_member__(node, scope):
     if not isinstance(base, list):
         debug(f"__ref_member__():  base isn't list")
         base_name_value = eval.get_name_value(base, scope)
+
+        debug(f"__ref_member__():  base_name_value: {base_name_value}")
         base_type = base_name_value[2]
 
         # handle arrays
@@ -451,19 +453,6 @@ def __ref_member__(node, scope):
 
                 if member_value_type_name_value[2] == "struct":
                     return [member_value_type, member_value_value]
-
-#                     return member_value_type_name_value
-
-#                    debug(f"_seek():  referencing struct")
-#
-#                    mt = member_value_type_name_value[3][0][1]
-#                    mv = member_value_name_value[3][0]
-#
-#                    debug(f"_seek():  member value mv: {mv}")
-#                    debug(f"_seek():  member type mt: {mt}")
-#
-#                    return _seek(mv, mt)
-#                return ['int', '666']
 
             seek_result = _seek(member_value, member_type)
             debug(f"__ref_member__():  seek_result: {seek_result}")
@@ -826,7 +815,7 @@ def __get_struct_member__(node, scope):
 
 def validate_get_struct_member(node, scope):
     if len(node) != 3:
-        raise Exception("Wrong number of arguments for get_struct_member: {node}")
+        raise Exception(f"Wrong number of arguments for get_struct_member: {node}")
 
     get_struct_member_, struct_name, struct_member = node
 

@@ -16,7 +16,9 @@ FAIL = "\033[91mFAIL\033[0m"
 def _test(fn_name, expected_stdout, expected_stderr, expr, debug=False):
     print(f"TEST {fn_name} - ", end="")
 
-    cmd = f"/usr/bin/python3 ../frontend/run.py --print-output --expr \"{expr}\""
+    debug_str = "--debug" if debug else ""
+
+    cmd = f"/usr/bin/python3 ../frontend/run.py --print-output {debug_str} --expr \"{expr}\""
     p = Popen(
         split(cmd),
         stdout=PIPE,
@@ -533,14 +535,34 @@ def test_write_ptr(debug=False):
 #    )
 
 
-def test_GET_struct_member(debug=False):
+def test_deep_def_get_struct_member(debug=False):
     return _test(
         i.getframeinfo(i.currentframe()).function,
-        "((int 1))\n",
+        "((def const mystruct (struct ((x int) (y int)))) (def const mystruct_ (struct ((x int) (m_ mystruct)))) (def const mystruct__ (struct ((x int) (m__ mystruct_)))) (def const abc (mystruct (1 2))) (def const jkl (mystruct_ (3 abc))) (def const xyz (mystruct__ (4 jkl))) ((ref_member abc x)) ((ref_member abc y)) ((ref_member jkl x)) ((ref_member jkl m_)) ((ref_member (ref_member jkl m_) x)) ((ref_member xyz m__)) ((ref_member (ref_member xyz m__) m_)) ((ref_member (ref_member (ref_member xyz m__) m_) x)) ((ref_member (ref_member (ref_member xyz m__) m_) y)))\n",
         "",
-        """def const mystruct (struct ((x int)))
-def const mystruct_ (mystruct (1))
-mystruct_ . x""",
+        """def const mystruct (struct ((x int) (y int)))
+def const mystruct_ (struct ((x int) (m_ mystruct)))
+def const mystruct__ (struct ((x int) (m__ mystruct_)))
+
+def const abc (mystruct (1 2))
+def const jkl (mystruct_ (3 abc))
+def const xyz (mystruct__ (4 jkl))
+
+#abc
+abc . x
+abc . y
+
+#jkl
+jkl . x
+jkl . m_
+jkl . m_ . x
+#jkl . m_ . y
+
+#xyz
+xyz . m__
+xyz . m__ . m_
+xyz . m__ . m_ . x
+xyz . m__ . m_ . y""",
         debug,
     )
 

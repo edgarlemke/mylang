@@ -179,7 +179,7 @@ def _eval_handle_common(li, scope, name_match):
         debug(f"_eval_handle_common():  name_match_value is list")
 
         # evaluate the list
-        debug(f"_eval_handle_common():  evaluating list: {name_match[3]}")
+        debug(f"_eval_handle_common():  evaluating list: {name_match_value}")
         evaled_name_match_value = eval(name_match_value, scope)
 
         debug(f"_eval_handle_common():  evaled_name_match_value: {evaled_name_match_value}")

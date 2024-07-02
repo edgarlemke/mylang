@@ -209,6 +209,8 @@ def __def__(node, scope):
     names = scope["names"]
     def_, mutdecl, name, data = node
 
+    debug(f"__def__():  data: {data}")
+
     name_candidate = []
     if len(data) == 1:
         if isinstance(name, list):
@@ -249,18 +251,25 @@ def __def__(node, scope):
 
     debug(f"__def__():  tmp_name: {tmp_name}")
 
-    if type_ == "Str":
-        str_, size = _converted_str(data[1])
+    # check if name value is a struct reference
+    if data[1][0] == "ref_member":
+        debug(f"__def__():  is struct member reference")
+        retv = __get_struct_member__(node, scope)
 
-        if mutdecl == "const":
-            function_name = functions_stack[len(functions_stack) - 1][0]
-            function_global_stack.append(f"""@{function_name}_{name} = constant [{size} x i8] c"{str_}" """)
-            retv = f"""
+    else:
+
+        if type_ == "Str":
+            str_, size = _converted_str(data[1])
+
+            if mutdecl == "const":
+                function_name = functions_stack[len(functions_stack) - 1][0]
+                function_global_stack.append(f"""@{function_name}_{name} = constant [{size} x i8] c"{str_}" """)
+                retv = f"""
 \t\t%{tmp_name} = alloca %struct.Str, align 8
 """
 
-        elif mutdecl == "mut":
-            retv = f"""
+            elif mutdecl == "mut":
+                retv = f"""
 \t\t%{tmp_name} = alloca %struct.Str, align 8
 
 \t\t%{name}_str = alloca [{size} x i8]
@@ -275,165 +284,178 @@ def __def__(node, scope):
 \t\tstore i64 {size}, i64* %{name}_size_ptr, align 8
 """.split("\n")
 
-    elif type_ in ["int", "uint", "float", "bool", "byte"]:
-        debug("__def__():  backend - type_ is int uint float or bool or byte")
+        elif type_ in ["int", "uint", "float", "bool", "byte"]:
+            debug("__def__():  backend - type_ is int uint float or bool or byte")
 
-        t = _convert_type(type_)
+            t = _convert_type(type_)
 
-        if len(data) == 1:
-            value = data[0]
-            # _increment_NAME(function_name, name)
-            # tmp_name = _get_NAME(function_name, name)
+            if len(data) == 1:
+                value = data[0]
+                # _increment_NAME(function_name, name)
+                # tmp_name = _get_NAME(function_name, name)
 
-        elif len(data) == 2:
-            value = data[1]
+            elif len(data) == 2:
+                value = data[1]
 
-        if type_ in ["int", "uint", "byte"]:
-            if value[:2] == "0x":
-                value = int(value, base=16)
+            if type_ in ["int", "uint", "byte"]:
+                if value[:2] == "0x":
+                    value = int(value, base=16)
 
-        debug(f"__def__():  backend - value: {value}")
+            debug(f"__def__():  backend - value: {value}")
 
-        if isinstance(value, list):
-            debug(f"__def__():  backend - calling return_call()")
-            value, stack = return_call(value, scope, [])
-            debug(f"__def__():  backend - value: {value} stack: {stack}")
+            if isinstance(value, list):
+                debug(f"__def__():  backend - calling return_call()")
+                value, stack = return_call(value, scope, [])
+                debug(f"__def__():  backend - value: {value} stack: {stack}")
 
-            if mutdecl == "const":
-                stack.append(f"\t\t%{name} = {value}")
+                if mutdecl == "const":
+                    stack.append(f"\t\t%{name} = {value}")
 
-            elif mutdecl == "mut":
-                stack.append(f"\t\t%{tmp_name} = {value}")
+                elif mutdecl == "mut":
+                    stack.append(f"\t\t%{tmp_name} = {value}")
 
-            retv = "\n".join(stack)
-            debug(f"__def__():  backend - retv: {retv}")
+                retv = "\n".join(stack)
+                debug(f"__def__():  backend - retv: {retv}")
 
-            # clean stack from return_call
-            stack = []
+                # clean stack from return_call
+                stack = []
 
-        else:
-            # check if it's at global backend scope
-            if scope["parent"] is None:
-                debug(F"__def__():  backend - global scope")
-                retv = f"@{name} = global {t} {value}"
-
-            # not global backend scope
             else:
-                debug(f"__def__():  backend - not global scope")
+                # check if it's at global backend scope
+                if scope["parent"] is None:
+                    debug(F"__def__():  backend - global scope")
+                    retv = f"@{name} = global {t} {value}"
 
-            # handle constants
-            if mutdecl == "const":
-
-                if len(functions_stack) == 0:
-                    retv = f"@{name} = constant {t} {value}"
-
+                # not global backend scope
                 else:
-                    debug(f"functions_stack: {functions_stack}")
+                    debug(f"__def__():  backend - not global scope")
 
-                    fn_name = functions_stack[0][0]
+                # handle constants
+                if mutdecl == "const":
 
-                    function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value}")
+                    if len(functions_stack) == 0:
+                        retv = f"@{name} = constant {t} {value}"
 
-                    # if is an integer read the pointer
-                    if type_ in ["int", "uint", "byte"]:
-                        retv = f"""\t\t; load value of constant "{name}"
+                    else:
+                        debug(f"functions_stack: {functions_stack}")
+
+                        fn_name = functions_stack[0][0]
+
+                        function_global_stack.append(f"@{fn_name}_{name} = constant {t} {value}")
+
+                        # if is an integer read the pointer
+                        if type_ in ["int", "uint", "byte"]:
+                            retv = f"""\t\t; load value of constant "{name}"
 \t\t%{name} = load {t}, {t}* @{fn_name}_{name}
 """
 
-                    else:
-                        retv = ""
+                        else:
+                            retv = ""
 
-            # handle mutable values
-            elif mutdecl == "mut":
-                # allocate space in stack and set value
-                retv = f"""\t\t%{name}_stack = alloca {t}
+                # handle mutable values
+                elif mutdecl == "mut":
+                    # allocate space in stack and set value
+                    retv = f"""\t\t%{name}_stack = alloca {t}
 \t\tstore {t} {value}, {t}* %{name}_stack
 \t\t%{tmp_name} = load {t}, {t}* %{name}_stack
 """
-        debug(f"__def__():  backend - retv: {retv}")
+            debug(f"__def__():  backend - retv: {retv}")
 
-    elif type_ == "struct":
-        #        if len(data) == 1:
-        #            value = data[0]
-        #            retv = "; STRUCT DEF"
-        #
-        #        elif len(data) == 2:
-        if len(data) == 2:
-            value = data[1]
+        elif type_ == "struct":
+            #        if len(data) == 1:
+            #            value = data[0]
+            #            retv = "; STRUCT DEF"
+            #
+            #        elif len(data) == 2:
+            if len(data) == 2:
+                value = data[1]
 
-            debug(f"__def__():  struct - value: {value}")
+                debug(f"__def__():  struct - value: {value}")
 
-            converted_members = []
-            for member in value:
-                debug(f"__def__():  struct - member: {member}")
+                converted_members = []
+                for member in value:
+                    debug(f"__def__():  struct - member: {member}")
 
-                converted_member_type = _convert_type(member[0])
-                converted_members.append(converted_member_type)
+                    converted_member_type = _convert_type(member[1])
 
-            joined_members = ", ".join(converted_members)
+                    debug(f"__def__():  converted_member_type: {converted_member_type}")
 
-            retv = f"""; "{name}" struct definition
+                    converted_members.append(converted_member_type)
+
+                joined_members = ", ".join(converted_members)
+
+                retv = f"""; "{name}" struct definition
 %{name} = type {{{joined_members}}}"""
 
-        else:
-            raise Exception("Invalid size of struct")
+            else:
+                raise Exception("Invalid size of struct")
 
-    # test for composite types
-    elif isinstance(type_, list):
-        debug(f"__def__():  backend - type_: {type_}")
+        # test for composite types
+        elif isinstance(type_, list):
+            debug(f"__def__():  backend - type_: {type_}")
 
-        type_value = eval.get_name_value(type_[0], scope)
-        debug(f"__def__():  backend - type_value: {type_value}")
+            type_value = eval.get_name_value(type_[0], scope)
+            debug(f"__def__():  backend - type_value: {type_value}")
 
-        # check for arrays
-        # print(type_value)
-        if type_value[0] == "Array":
-            debug(f"__def__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
+            # check for arrays
+            # print(type_value)
+            if type_value[0] == "Array":
+                debug(f"__def__():  backend - Array found! data: {data} name_candidate: {name_candidate}")
 
-            # check if array is already def
-            retv = None
-            if name_candidate != []:
-                member_index = 0
-                array_size = 64
+                # check if array is already def
+                retv = None
+                if name_candidate != []:
+                    member_index = 0
+                    array_size = 64
 
-                retv = _set_array_member(type_value, member_index, type_, data[0], name[0], array_size)
+                    retv = _set_array_member(type_value, member_index, type_, data[0], name[0], array_size)
+
+                else:
+                    retv = _def_array(type_value, type_, data, name)
+
+            # check for pointers
+            elif type_value[0] == "ptr":
+                debug(f"__def__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
+
+                retv = "RETV_PTR"
 
             else:
-                retv = _def_array(type_value, type_, data, name)
-
-        # check for pointers
-        elif type_value[0] == "ptr":
-            debug(f"__def__():  backend - ptr found! data: {data} name_candidate: {name_candidate}")
-
-            retv = "RETV_PTR"
+                raise Exception(f"Unknown composite type {type_}")
 
         else:
-            raise Exception(f"Unknown composite type {type_}")
 
-    else:
+            # check for structs
+            type_name_value = eval.get_name_value(type_, scope)
+            found_struct = type_name_value != [] and type_name_value[2] == "struct"
 
-        # check for structs
-        type_name_value = eval.get_name_value(type_, scope)
-        found_struct = type_name_value != [] and type_name_value[2] == "struct"
+            if found_struct:
+                debug(f"__def__():  backend - found_struct - type_name_value: {type_name_value} data: {data}")
 
-        if found_struct:
-            debug(f"__def__():  backend - found_struct - type_name_value: {type_name_value}")
+                converted_members = []
+                for member_index, member in enumerate(type_name_value[3][0]):
+                    debug(f"__def__():  backend - struct member: {member}")
 
-            converted_members = []
-            for member in type_name_value[3]:
-                debug(f"__def__():  backend - struct member: {member}")
+                    member_value = data[1][member_index]
+                    converted_member_type = _convert_type(member[1])
 
-                converted_member_type = _convert_type(member[0])
-                converted_members.append(converted_member_type)
+                    # converted_members.append(converted_member_type)
+                    converted_members.append(f"""
+\t\t; setting "{name}.{member[0]}" to {member_value}
+\t\t%{name}_{member[0]} = getelementptr %{type_}, %{type_}* %{name}, i32 0, i32 {member_index}
+\t\tstore {converted_member_type} {member_value}, {converted_member_type}* %{name}_{member[0]}""")
 
-            joined_members = ", ".join(converted_members)
+                debug(f"__def__():  backend - converted_members: {converted_members}")
 
-            retv = f"""\t\t; "{name}" of type struct "{type_}" definition
+                converted_members_text = "\n".join(converted_members)
+
+                retv = f"""\t\t; "{name}" of type struct "{type_}" definition
 \t\t%{name} = alloca %{type_}
+
+{converted_members_text}
 """
 
-        else:
-            raise Exception(f"Unknown type: {type_}")
+            else:
+                raise Exception(f"Unknown type: {type_}")
 
     debug(f"__def__():  backend - exiting __def__()")
 
@@ -1040,25 +1062,32 @@ def _validate_set_struct_member(node, scope):
 
 
 def __get_struct_member__(node, scope):
-    _validate_get_struct_member(node, scope)
+    #    _validate_get_struct_member(node, scope)
 
-    get_struct_member_, struct_name, struct_member = node
+    debug(f"__get_struct_member__():  node: {node}")
+
+    def_, mutdecl, name, data = node
+    debug(f"__get_struct_member__():  data: {data}")
+
+    get_struct_member_, struct_name, struct_member = data[1]
+
+    debug(f"__get_struct_member__():  struct_name: {struct_name} struct_member: {struct_member}")
 
     struct_name_value = eval.get_name_value(struct_name, scope)
-    debug(f"__set_struct_member__():  struct_name_value: {struct_name_value}")
+    debug(f"__get_struct_member__():  struct_name_value: {struct_name_value}")
 
     structdef_name = struct_name_value[2]
     structdef_name_value = eval.get_name_value(struct_name_value[2], scope)
 
-    members = structdef_name_value[3]
-    debug(f"__set_struct_member__():  members: {members}")
+    members = structdef_name_value[3][0]
+    debug(f"__get_struct_member__():  members: {members}")
 
     member_type = ""
     for member_index, member in enumerate(members):
-        debug(f"__set_struct_member__():  member: {member}")
+        debug(f"__get_struct_member__():  member: {member}")
 
-        if member[1] == struct_member:
-            member_type = _convert_type(member[0])
+        if member[0] == struct_member:
+            member_type = _convert_type(member[1])
             break
 
     stack = []
@@ -1067,22 +1096,83 @@ def __get_struct_member__(node, scope):
         _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
         stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}""")
 
+    _declare_name(functions_stack[0][0], f"{name}")
+
     stack.append(f"""\t\t; get struct "{structdef_name}" "{struct_name}" member "{struct_member}"
-\t\tload {member_type}, {member_type}* %{struct_name}_{struct_member}_member_ptr
+\t\t%{name} = load {member_type}, {member_type}* %{struct_name}_{struct_member}_member_ptr
 """)
 
     return "\n".join(stack)
 
 
-def _validate_get_struct_member(node, scope):
-    import frontend.compiletime as ct
-    ct.validate_get_struct_member(node, scope)
+# def _validate_get_struct_member(node, scope):
+#    # Removed because backend must handle struct member access differently
+#    #import frontend.compiletime as ct
+#    #ct.validate_get_struct_member(node, scope)
+#
+#    ref_member_node = node[3][1]
+
 #
 #
 
 
 def __ref_member__(node, scope):
-    return []
+    debug(f"__ref_member__():  node: {node} scope: {hex(id(scope))}")
+
+    return ["yaya"]
+
+#    return __get_struct_member__(node, scope)
+
+#    # TODO: add validation for members existence
+#
+#    # get struct
+#    ref_member, struct_name, struct_member = node
+#
+#    struct = eval.get_name_value(struct_name, scope)
+#    debug(f"__ref_member__():  struct: {struct}")
+#
+#    struct_def_name = struct[2]
+#    debug(f"__ref_member__():  struct_def_name: {struct_def_name}")
+#
+#    struct_def_name_value = eval.get_name_value(struct_def_name, scope)
+#    debug(f"__ref_member__():  struct_def_name_value: {struct_def_name_value}")
+#
+#    # get struct member
+#    found_member = None
+#    found_member_index = None
+#    for member_index, member in enumerate(struct_def_name_value[3][0]):
+#        debug(f"__ref_member__():  member: {member}")
+#        if member[0] == struct_member:
+#            found_member = member
+#            found_member_index = member_index
+#            break
+#
+#    debug(f"__ref_member__():  found_member: {found_member} found_member_index: {found_member_index}")
+#
+#    # get struct member type
+#    member_type = found_member[1]
+#    debug(f"__ref_member__():  member_type: {member_type}")
+#
+#    converted_member_type = _convert_type(member_type)
+#    debug(f"__ref_member__():  converted_member_type: {converted_member_type}")
+#
+#    stack = []
+#
+#    debug(f"__ref_member__():  functions_stack: {functions_stack[0]}")
+#
+#    if not _already_declared(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr"):
+#        _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
+#        stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{struct_def_name}* %{struct_name}, i64 {member_index}""")
+#
+#    stack.append(f"""\t\t; get struct "{struct_def_name}" "{struct_name}" member "{struct_member}"
+# \t\tload {member_type}, {member_type}* %{struct_name}_{struct_member}_member_ptr
+# """)
+#
+#    retv = "\n".join(stack)
+#
+#    debug(f"__ref_member__():  retv: {retv}")
+#
+#    return retv
 
 
 def __macro__(node, scope):
@@ -1488,12 +1578,12 @@ def return_call(node, scope, stack=[]):
 
         ret_value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
 
-        debug(f"return_call():  exiting return_call():  value: {value} ret_value: {ret_value} stack: {stack}\n")
-
     elif value[2] == "internal":
         debug(f"return_call():  calling an internal")
 
         ret_value = value[3](node, scope)
+
+    debug(f"return_call():  exiting return_call():  value: {value} ret_value: {ret_value} stack: {stack}\n")
 
     return ret_value, stack
 
@@ -1562,22 +1652,31 @@ def _already_declared(function_name, name):
 # SCOPE HOOKS
 #
 def return_call_common_list(evaled, name_match, scope):
-    evaled_fn = eval.get_name_value(evaled[0], scope)
-    method, solved_arguments = eval.find_function_method(evaled, evaled_fn, scope)
-    method_type = method[1]
+    debug(f"return_call_common_list():  evaled: {evaled} name_match: {name_match}")
 
-    if name_match[2] != method_type:
-        raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
+    # check if is returning a name storing a struct member value
+    if name_match[3][0] == "ref_member":
+        name_match_type = name_match[2]
+        type_return_call = _convert_type(name_match_type)
+        name_return_call = f"%{name_match[0]}"
 
-    debug(f"_return_call_common():  new method_type: {method_type}")
+    else:
+        evaled_fn = eval.get_name_value(evaled[0], scope)
+        method, solved_arguments = eval.find_function_method(evaled, evaled_fn, scope)
+        method_type = method[1]
 
-    # TODO: get correct return type and result name
+        if name_match[2] != method_type:
+            raise Exception(f"Name and evaluated value types are different - name_match type: {name_match[2]} - method_type: {method_type}")
 
-    # get type
-    type_return_call = "i64"
+        debug(f"_return_call_common():  new method_type: {method_type}")
 
-    # get var name
-    name_return_call = "%result"
+        # TODO: get correct return type and result name
+
+        # get type
+        type_return_call = "i64"
+
+        # get var name
+        name_return_call = "%result"
 
     li = [f"\tret {type_return_call} {name_return_call}"]
 
