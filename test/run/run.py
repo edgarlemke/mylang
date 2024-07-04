@@ -973,6 +973,30 @@ def test_set_get_struct_member_depth_0(keep=False, debug=False):
         keep,
         debug,
     )
+
+
+def test_set_get_struct_member_depth_1(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        f"{dir_path}/run/set_get_struct_member_depth_1/main.k",
+        keep,
+        debug,
+    )
+
+
+def test_set_get_struct_member_depth_2(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        f"{dir_path}/run/set_get_struct_member_depth_2/main.k",
+        keep,
+        debug,
+    )
 #
 #
 

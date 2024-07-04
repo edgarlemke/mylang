@@ -376,7 +376,14 @@ def __def__(node, scope):
                 for member in value:
                     debug(f"__def__():  struct - member: {member}")
 
-                    converted_member_type = _convert_type(member[1])
+                    # check if type is struct
+                    # member_type_name_value = eval.get_name_value(member[1], scope)
+                    # debug(f"__def__():  struct - member_type_name_value: {member_type_name_value}")
+
+                    # if member_type_name_value != [] and member_type_name_value[2] == "struct":
+                    #    converted_member_type = f"%{member[1]}*"
+                    # else:
+                    converted_member_type = _convert_type(member[1], scope)
 
                     debug(f"__def__():  converted_member_type: {converted_member_type}")
 
@@ -436,7 +443,18 @@ def __def__(node, scope):
                     debug(f"__def__():  backend - struct member: {member}")
 
                     member_value = data[1][member_index]
-                    converted_member_type = _convert_type(member[1])
+
+                    member_value_name_value = eval.get_name_value(member_value, scope)
+                    debug(f"__def__():  backend - member_value_name_value: {member_value_name_value}")
+
+                    if member_value_name_value != []:
+
+                        struct_candidate_name = member_value_name_value[2]
+                        struct_candidate_name_value = eval.get_name_value(struct_candidate_name, scope)
+                        if struct_candidate_name_value[2] == "struct":
+                            member_value = f"%{member_value}"
+
+                    converted_member_type = _convert_type(member[1], scope)
 
                     # converted_members.append(converted_member_type)
                     converted_members.append(f"""
@@ -696,8 +714,8 @@ def _unoverload(name, function_arguments):
     return uname
 
 
-def _convert_type(type_):
-    debug(f"_convert_type: {type_}")
+def _convert_type(type_, scope=None):
+    debug(f"_convert_type():  type_: {type_}")
 
     converted_type = None
 
@@ -728,12 +746,17 @@ def _convert_type(type_):
     elif type_ == "Str":
         converted_type = "%struct.Str*"
 
-    # try:
-    #    converted_type
-    # except:
-    #    raise Exception(f"Not convertable type: {type_}")
+    elif scope is not None:
+        # convert structs
+        type_name_value = eval.get_name_value(type_, scope)
+        if type_name_value != [] and type_name_value[2] == "struct":
+            converted_type = f"%{type_}*"
 
-    debug(f"_convert_type:  converted_type: {converted_type}")
+    # else:
+    #    raise Exception(f"NYAA ${type_}")
+    #    #converted_type = f"%{type_}*"
+
+    debug(f"_convert_type():  converted_type: {converted_type}")
 
     return converted_type
 
@@ -1069,36 +1092,91 @@ def __get_struct_member__(node, scope):
     def_, mutdecl, name, data = node
     debug(f"__get_struct_member__():  data: {data}")
 
-    get_struct_member_, struct_name, struct_member = data[1]
-
-    debug(f"__get_struct_member__():  struct_name: {struct_name} struct_member: {struct_member}")
-
-    struct_name_value = eval.get_name_value(struct_name, scope)
-    debug(f"__get_struct_member__():  struct_name_value: {struct_name_value}")
-
-    structdef_name = struct_name_value[2]
-    structdef_name_value = eval.get_name_value(struct_name_value[2], scope)
-
-    members = structdef_name_value[3][0]
-    debug(f"__get_struct_member__():  members: {members}")
-
-    member_type = ""
-    for member_index, member in enumerate(members):
-        debug(f"__get_struct_member__():  member: {member}")
-
-        if member[0] == struct_member:
-            member_type = _convert_type(member[1])
-            break
-
     stack = []
 
-    if not _already_declared(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr"):
-        _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
-        stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}""")
+    def loop(data, lvl):
+        debug(f"__get_struct_member__():  loop():  data: {data}")
+
+        child_is_ref_member = isinstance(data[1], list) and data[1][0] == "ref_member"
+        debug(f"__get_struct_member__():  loop():  child_is_ref_member: {child_is_ref_member}")
+
+        ref_member_, struct_name, struct_member = data
+
+        if child_is_ref_member:
+            struct_name = loop(data[1], lvl + 1)
+            debug(f"__get_struct_member__():  loop():  new struct_name: {struct_name}")
+
+        debug(f"__get_struct_member__():  loop():  struct_name: {struct_name} struct_member: {struct_member} data: {data}")
+
+        struct_name_value = eval.get_name_value(struct_name, scope)
+        debug(f"__get_struct_member__():  loop():  struct_name_value: {struct_name_value}")
+
+        structdef_name = struct_name_value[2]
+        structdef_name_value = eval.get_name_value(struct_name_value[2], scope)
+
+        members = structdef_name_value[3][0]
+        debug(f"__get_struct_member__():  loop():  members: {members}")
+
+        member_type = ""
+        for member_index, member in enumerate(members):
+            debug(f"__get_struct_member__():  loop():  member: {member}")
+
+            # check if member is struct
+            # member_name_value = eval.get_name_value(member[1], scope)
+            # if member_name_value != [] and member_name_value[2] == "struct":
+            #    member_type = f"%{member[1]}*"
+
+            if member[0] == struct_member:
+                member_type = _convert_type(member[1], scope)
+                break
+
+        if not _already_declared(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr"):
+            _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
+            stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}""")
+
+        debug(f"__get_struct_member__():  loop():  new stack: {stack}")
+
+        if lvl > 0:
+            return struct_name_value[3][member_index]
+
+        else:
+            return [member_type, struct_name, struct_member]
+
+    x = loop(data[1], 0)
+    member_type, struct_name, struct_member = x
+    debug(f"__get_struct_member__():  x: {x}")
+
+    debug(f"__get_struct_member__():  stack: {stack}")
+
+#    get_struct_member_, struct_name, struct_member = data[1]
+#
+#    debug(f"__get_struct_member__():  struct_name: {struct_name} struct_member: {struct_member}")
+#
+#    struct_name_value = eval.get_name_value(struct_name, scope)
+#    debug(f"__get_struct_member__():  struct_name_value: {struct_name_value}")
+#
+#    structdef_name = struct_name_value[2]
+#    structdef_name_value = eval.get_name_value(struct_name_value[2], scope)
+#
+#    members = structdef_name_value[3][0]
+#    debug(f"__get_struct_member__():  members: {members}")
+#
+#    member_type = ""
+#    for member_index, member in enumerate(members):
+#        debug(f"__get_struct_member__():  member: {member}")
+#
+#        if member[0] == struct_member:
+#            member_type = _convert_type(member[1])
+#            break
+#
+#    stack = []
+#
+#    if not _already_declared(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr"):
+#        _declare_name(functions_stack[0][0], f"{struct_name}_{struct_member}_member_ptr")
+#        stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}""")
 
     _declare_name(functions_stack[0][0], f"{name}")
-
-    stack.append(f"""\t\t; get struct "{structdef_name}" "{struct_name}" member "{struct_member}"
+    stack.append(f"""\t\t; get PENNIS HARD IN THE ASS
 \t\t%{name} = load {member_type}, {member_type}* %{struct_name}_{struct_member}_member_ptr
 """)
 
