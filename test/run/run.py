@@ -947,6 +947,18 @@ def test_array_get_bound_checking(keep=False, debug=False):
         keep,
         debug,
     )
+
+
+def test_array_set_bound_checking(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "255",
+        f"{dir_path}/run/array_set_bound_checking/main.k",
+        keep,
+        debug,
+    )
 #
 #
 

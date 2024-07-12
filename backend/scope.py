@@ -964,8 +964,36 @@ def __set_array_member__(node, scope):
 
             debug(f"__set_array_member__():  backend - index: {index} index_name_value: {index_name_value}")
 
+        # add bound check code
+        array_name = name
+        array_index = i
+        function_name = functions_stack[0][0]
+        array_size_tmp_name = _get_NAME(function_name, f"{array_name}_size")
+        _increment_NAME(function_name, f"{array_name}_size")
+
+        array_inbounds_tmp_name = _get_NAME(function_name, f"{array_name}_inbounds")
+        _increment_NAME(function_name, f"{array_name}_inbounds")
+
+        template.append(f"""\t\t; check bound
+\t\t; load array size
+\t\t%{array_size_tmp_name} = load i64, i64* %{array_name}_size_ptr
+\t\t; compare index and array size
+\t\t%{array_inbounds_tmp_name} = icmp ult i64 {array_index}, %{array_size_tmp_name}
+\t\t; branch
+\t\tbr i1 %{array_inbounds_tmp_name}, label %{array_inbounds_tmp_name}_ok, label %{array_inbounds_tmp_name}_err
+\t\t; error label
+\t{array_inbounds_tmp_name}_err:
+\t\t; TODO: write to stderr
+\t\t; TODO: unwind stack
+\t\t; exit
+\t\tcall void @linux_exit(i64 -1)
+\t\tunreachable
+\t\t; ok label
+\t{array_inbounds_tmp_name}_ok:
+\t\t""")
+
         # index is set
-        template.append(f"""\t\t; set "{name}" member "{lp_reference}"
+        template.append(f"""\t\t; set "{name}" member "{i}"
 """)
 
         if not _already_declared(functions_stack[0][0], f"{name}_members_ptr"):
@@ -1062,6 +1090,7 @@ def __get_array_member__(node, scope):
 \t\tbr i1 %{array_inbounds_tmp_name}, label %{array_inbounds_tmp_name}_ok, label %{array_inbounds_tmp_name}_err
 \t{array_inbounds_tmp_name}_err:
 \t\t; TODO: write to stderr
+\t\t; TODO: unwind stack
 \t\t; exit
 \t\tcall void @linux_exit(i64 -1)
 \t\tunreachable
