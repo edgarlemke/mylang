@@ -1047,7 +1047,26 @@ def __get_array_member__(node, scope):
     # tmp_name = _get_NAME(function_name, name)
     # _increment_NAME(function_name, name)
 
-    template = f"""\t\t; get array member
+    array_size_tmp_name = _get_NAME(function_name, f"{array_name}_size")
+    _increment_NAME(function_name, f"{array_name}_size")
+
+    array_inbounds_tmp_name = _get_NAME(function_name, f"{array_name}_inbounds")
+    _increment_NAME(function_name, f"{array_name}_inbounds")
+
+    template = f"""\t\t; check array index bound
+\t\t; load array size
+\t\t%{array_size_tmp_name} = load i64, i64* %{array_name}_size_ptr
+\t\t; compare array size and index
+\t\t%{array_inbounds_tmp_name} = icmp ult i64 {array_index}, %{array_size_tmp_name}
+\t\t; branch
+\t\tbr i1 %{array_inbounds_tmp_name}, label %{array_inbounds_tmp_name}_ok, label %{array_inbounds_tmp_name}_err
+\t{array_inbounds_tmp_name}_err:
+\t\t; TODO: write to stderr
+\t\t; exit
+\t\tcall void @linux_exit(i64 -1)
+\t\tunreachable
+\t{array_inbounds_tmp_name}_ok:
+\t\t; get array member
 \t\t%{array_name}_{array_index}_ptr = getelementptr {converted_type}, {converted_type}* %{array_name}_members, i32 {array_index}
 \t\t%{name} = load {converted_type}, {converted_type}* %{array_name}_{array_index}_ptr
 """

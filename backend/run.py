@@ -86,6 +86,15 @@ start:
 ret i64 %retv
 }
 
+define void @linux_exit (i64 %status) {
+    start:
+    ; Perform the syscall using inline assembly
+    call void asm sideeffect "syscall",
+    "{rax},{rdi}"
+    (i32 60, i64 %status)
+    unreachable
+}
+
 %struct.Str = type {i8*, i64}
 
 %Array = type {i8*, i64}
