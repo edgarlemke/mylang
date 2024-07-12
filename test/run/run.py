@@ -912,18 +912,29 @@ def test_array_byte_init(keep=False, debug=False):
     )
 
 
-# Commented out because we want to make proper array non-initialization later, with unsafe maybe?
-# def test_array_byte_init_unset(keep=False, debug=False):
-#    return _test(
-#        i.getframeinfo(i.currentframe()).function,
-#        "",
-#        "",
-#        "",
-#        "",
-#        f"{dir_path}/run/array_byte_init_unset/main.k",
-#        keep,
-#        debug,
-#    )
+def test_array_byte_init_unset(keep=False, debug=False):
+    return _test(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "",
+        "",
+        f"{dir_path}/run/array_byte_init_unset/main.k",
+        keep,
+        debug,
+    )
+
+
+def test_set_get_array_member(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        f"{dir_path}/run/set_get_array_member/main.k",
+        keep,
+        debug,
+    )
 #
 #
 
@@ -941,22 +952,6 @@ def test_array_byte_init(keep=False, debug=False):
 #        keep,
 #        debug,
 #    )
-#
-#
-
-
-# ARRAY TESTS
-#
-def test_set_get_array_member(keep=False, debug=False):
-    return _test_exit_code(
-        i.getframeinfo(i.currentframe()).function,
-        "",
-        "",
-        "46",
-        f"{dir_path}/run/set_get_array_member/main.k",
-        keep,
-        debug,
-    )
 #
 #
 
