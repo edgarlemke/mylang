@@ -106,6 +106,16 @@ def _eval_handle_not_list(li, scope):
     structs = [s[0] for s in struct_values]
     debug(f"_eval_handle_not_list():  structs: {structs}")
 
+    # handle arrays
+    is_array = False
+    if isinstance(name_match[3], list) and len(name_match[3]) >= 2:
+        candidate_array_name = name_match[3][1]
+        candidate_array_name_value = get_name_value(candidate_array_name, scope)
+
+        if candidate_array_name_value != []:
+            if candidate_array_name_value[2][0] == "Array":
+                is_array = True
+
     if name_match[2] in ["fn", "internal"]:
         debug(f"_eval_handle_not_list():  li calls fn/internal - name_match: {name_match}")
         li = _eval_handle_fn_internal(li, scope, name_match)
@@ -652,6 +662,10 @@ def get_type_values(type_, scope):
     iterup(scope)
 
     return type_values
+
+
+def get_array_values(scope):
+    debug(f"get_array_values():  scope: {hex(id(scope))}")
 
 
 def _infer_type(arg):

@@ -256,6 +256,10 @@ def __def__(node, scope):
         debug(f"__def__():  is struct member reference")
         retv = __get_struct_member__(node, scope)
 
+    elif data[1][0] == "ref_array_member":
+        debug(f"__def__():  is array member reference")
+        retv = __get_array_member__(node, scope)
+
     else:
 
         if type_ == "Str":
@@ -491,7 +495,7 @@ def _def_array(type_value, type_, data, name):
         array_size = int(type_[2])
         unset = True
 
-    array_struct_name = "_".join([type_value[0]] + type_[1:end])
+    array_struct_name = type_value[0]  # "_".join([type_value[0]] + type_[1:end])
     array_members_type = _convert_type(type_[1])
 
     debug(f"_def_array():  end: {end} array_size: {array_size} array_struct_name: {array_struct_name} array_members_type: {array_members_type} data: {data}")
@@ -1025,9 +1029,28 @@ def _validate_set_array_member(node, scope):
 
 
 def __get_array_member__(node, scope):
-    _validate_get_array_member(node, scope)
+    debug(f"__get_array_member__():  node: {node} scope: {hex(id(scope))}")
 
-    template = f"""\t\t; get array member"""
+    # _validate_get_array_member(node, scope)
+
+    def_, mutdecl, name, data = node
+    debug(f"__get_array_member__():  data: {data}")
+
+    ref_array_member_, array_name, array_index = data[1]
+
+    type_ = data[0]
+    converted_type = _convert_type(type_)
+    if converted_type[-1] == "*":
+        converted_type = converted_type[0:-1]
+
+    function_name = functions_stack[0][0]
+    # tmp_name = _get_NAME(function_name, name)
+    # _increment_NAME(function_name, name)
+
+    template = f"""\t\t; get array member
+\t\t%{array_name}_{array_index}_ptr = getelementptr {converted_type}, {converted_type}* %{array_name}_members, i32 {array_index}
+\t\t%{name} = load {converted_type}, {converted_type}* %{array_name}_{array_index}_ptr
+"""
 
     return template
 
@@ -1176,7 +1199,7 @@ def __get_struct_member__(node, scope):
 #        stack.append(f"""\t\t%{struct_name}_{struct_member}_member_ptr = getelementptr {member_type}, %{structdef_name}* %{struct_name}, i64 {member_index}""")
 
     _declare_name(functions_stack[0][0], f"{name}")
-    stack.append(f"""\t\t; get PENNIS HARD IN THE ASS
+    stack.append(f"""\t\t; get struct member
 \t\t%{name} = load {member_type}, {member_type}* %{struct_name}_{struct_member}_member_ptr
 """)
 
@@ -1251,6 +1274,11 @@ def __ref_member__(node, scope):
 #    debug(f"__ref_member__():  retv: {retv}")
 #
 #    return retv
+
+
+def __ref_array_member__(node, scope):
+    debug(f"__ref_array_member__():  node: {node} scope: {hex(id(scope))}")
+    return ['yaya']
 
 
 def __macro__(node, scope):
@@ -1733,7 +1761,7 @@ def return_call_common_list(evaled, name_match, scope):
     debug(f"return_call_common_list():  evaled: {evaled} name_match: {name_match}")
 
     # check if is returning a name storing a struct member value
-    if name_match[3][0] == "ref_member":
+    if name_match[3][0] == "ref_member" or name_match[3][0] == "ref_array_member":
         name_match_type = name_match[2]
         type_return_call = _convert_type(name_match_type)
         name_return_call = f"%{name_match[0]}"
@@ -1756,7 +1784,7 @@ def return_call_common_list(evaled, name_match, scope):
         # get var name
         name_return_call = "%result"
 
-    li = [f"\tret {type_return_call} {name_return_call}"]
+    li = [f"\t\tret {type_return_call} {name_return_call}"]
 
     return li
 
@@ -1795,6 +1823,7 @@ def _setup_scope():
     ["set_struct_member", "mut", "internal", __set_struct_member__],
     ["get_struct_member", "mut", "internal", __get_struct_member__],
     ["ref_member", "mut", "internal", __ref_member__],
+    ["ref_array_member", "mut", "internal", __ref_array_member__],
     ["macro", "mut", "internal", __macro__],
 
     ["if", "mut", "internal", __if__],

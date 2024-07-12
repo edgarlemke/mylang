@@ -88,7 +88,7 @@ ret i64 %retv
 
 %struct.Str = type {i8*, i64}
 
-%Array_byte = type {i8*, i64}
+%Array = type {i8*, i64}
 """
 
     output = default_llvm_ir + _join_lists(eval_li)
