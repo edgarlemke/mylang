@@ -40,10 +40,10 @@ def __fn__(node, scope):
         debug(f"__fn__(): arg in arguments: {arg}")
 
         if len(arg) == 2:
-            converted_argument_type = _convert_type(arg[1])
+            converted_argument_type = _convert_type(arg[1], scope)
 
         elif len(arg) == 3 and arg[1] == "mut":
-            converted_argument_type = _convert_type(arg[2])
+            converted_argument_type = _convert_type(arg[2], scope)
 
         args.append(f"{converted_argument_type} %{arg[0]}")
 
@@ -51,7 +51,7 @@ def __fn__(node, scope):
     if len(node) == 4:
         return_type = "void"
     if len(node) == 5:
-        return_type = _convert_type(return_type)
+        return_type = _convert_type(return_type, scope)
 
     debug(f"__fn__():  backend return_type: {return_type}")
 
@@ -113,8 +113,10 @@ def __fn__(node, scope):
 
     debug(f"__fn__():  backend - serialized_body: {serialized_body}")
 
-    if "ret" not in serialized_body[len(serialized_body) - 1]:
-        serialized_body.append([f"\t\tret {return_type}"])
+    # TODO: add check for last not empty string instead of last string that might be empty
+    if "ret" not in serialized_body[len(serialized_body) - 1] and return_type == "void":
+        # serialized_body.append([f"\t\tret {return_type}"])
+        serialized_body.append([f"\t\tret void"])
 
     # declaration, definition = _write_fn(uname, args, return_type, body
     function_global = "\n".join(function_global_stack)
@@ -291,7 +293,7 @@ def __def__(node, scope):
         elif type_ in ["int", "uint", "float", "bool", "byte"]:
             debug("__def__():  backend - type_ is int uint float or bool or byte")
 
-            t = _convert_type(type_)
+            t = _convert_type(type_, scope)
 
             if len(data) == 1:
                 value = data[0]
@@ -868,7 +870,7 @@ def __set__(node, scope):
     name_value = eval.get_name_value(name, scope)
     debug(f"__set__():  backend - name: {name} name_value: {name_value} value: {value} {type(value)}")
 
-    type_ = _convert_type(name_value[2])
+    type_ = _convert_type(name_value[2], scope)
 
     template = []
 
@@ -928,7 +930,7 @@ def __set_array_member__(node, scope):
     name_value = eval.get_name_value(name, scope)
 
     type_ = name_value[2]
-    converted_type = _convert_type(type_)
+    converted_type = _convert_type(type_, scope)
     if converted_type[-1] == "*":
         converted_type = converted_type[0:-1]
 
@@ -1018,7 +1020,7 @@ def __set_array_member__(node, scope):
     debug(f"__set_array_member__():  backend - value: {value} infered_value: {infered_value}")
 
     if infered_value is not None:
-        converted_infered_type = _convert_type(infered_value[0])
+        converted_infered_type = _convert_type(infered_value[0], scope)
         debug(f"__set_array_member__():  backend - converted_infered_type: {converted_infered_type}")
 
         if infered_value[0] in ["int", "uint"] and value[:2] == "0x":
@@ -1067,7 +1069,7 @@ def __get_array_member__(node, scope):
     ref_array_member_, array_name, array_index = data[1]
 
     type_ = data[0]
-    converted_type = _convert_type(type_)
+    converted_type = _convert_type(type_, scope)
     if converted_type[-1] == "*":
         converted_type = converted_type[0:-1]
 
@@ -1132,7 +1134,7 @@ def __set_struct_member__(node, scope):
         debug(f"__set_struct_member__():  member: {member}")
 
         if member[1] == struct_member:
-            member_type = _convert_type(member[0])
+            member_type = _convert_type(member[0], scope)
             break
 
     stack = []
@@ -1534,7 +1536,7 @@ def __get_ptr__(node, scope):
 
     name_value = eval.get_name_value(name, scope)
     debug(f"__get__ptr__():  backend - name_value: {name_value}")
-    type_ = _convert_type(name[2])
+    type_ = _convert_type(name[2], scope)
 
     template = f"\t\t%{name}_ptr = getelementptr {type_}, {type_}* %{name}"
 
@@ -1549,6 +1551,22 @@ def __size_of__(node, scope):
 
 def __unsafe__(node, scope):
     return []
+
+
+def __linux_open__(node, scope):
+    debug(f"__linux_open__():  node: {node}")
+
+    _validate_linux_open(node, scope)
+
+    template = """\t\t%retv = call i64 @linux_open(i8* %filename, i64 %flags, i64 %mode)
+\t\tret i64 %retv"""
+
+    return template.split("\n")
+
+
+def _validate_linux_open(node, scope):
+    if len(node) != 4:
+        raise Exception(f"Wrong number of arguments for linux_open: {node}")
 
 
 def __linux_write__(node, scope):
@@ -1570,7 +1588,7 @@ def __linux_write__(node, scope):
     is_global = is_global_name(name_value, scope)
     debug(f"__linux_write__():  is_global: {is_global}")
     if is_global and name_value[1] == "const":
-        converted_type = _convert_type(name_value[2])
+        converted_type = _convert_type(name_value[2], scope)
         fd_arg = f"{converted_type}* @{node[1]}"
 
     else:
@@ -1587,7 +1605,7 @@ def __linux_write__(node, scope):
 \t\t%size = load i64, i64* %str_size_ptr
 
 \t\tcall void @linux_write(i64 %fd, i8* %addr, i64 %size)
-"""
+\t\tret void"""
 
     return template.split("\n")
 
@@ -1630,7 +1648,7 @@ def return_call(node, scope, stack=[]):
             elif len(argument) == 3 and argument[1] == "mut":
                 name, mutdecl, type_ = argument
 
-            converted_type = _convert_type(type_)
+            converted_type = _convert_type(type_, scope)
 
             # fulfill llvm requirement to convert float values types to doubles
             if converted_type == "float":
@@ -1728,7 +1746,7 @@ def return_call(node, scope, stack=[]):
             function_return_type = "void"
 
         elif len(method) == 3:
-            function_return_type = _convert_type(method[1])
+            function_return_type = _convert_type(method[1], scope)
 
         ret_value = f"call {function_return_type} @{function_name}({converted_function_arguments})"
 
@@ -1811,7 +1829,7 @@ def return_call_common_list(evaled, name_match, scope):
     # check if is returning a name storing a struct member value
     if name_match[3][0] == "ref_member" or name_match[3][0] == "ref_array_member":
         name_match_type = name_match[2]
-        type_return_call = _convert_type(name_match_type)
+        type_return_call = _convert_type(name_match_type, scope)
         name_return_call = f"%{name_match[0]}"
 
     else:
@@ -1841,7 +1859,7 @@ def return_call_common_not_list(name_match, scope):
     debug(f"""_eval_handle_common():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]}""")
 
     if scope["is_last"] and scope["function_depth"] == 1:
-        converted_type = _convert_type(name_match[2])
+        converted_type = _convert_type(name_match[2], scope)
         li = [f"\t\tret {converted_type} %{name_match[0]}"]
 
     else:
@@ -1884,6 +1902,7 @@ def _setup_scope():
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
 
+    ["linux_open", "const", "internal", __linux_open__],
     ["linux_write", "const", "internal", __linux_write__],
 
     ["int", "const", "type", [8]],

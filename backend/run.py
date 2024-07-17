@@ -16,13 +16,6 @@ def run_li(li, print_output=False):
     # print(f"!! run_li: {li}")
 
     default = """(
-(def const stdin (int 0))
-(def const stdout (int 1))
-(def const stderr (int 2))
-
-(fn print ((text Str)) ((linux_write stdout text)))
-(fn print ((text (Array byte))) ((linux_write stdout text)))
-
 (fn add ((x int) (y int)) int ((add_int_int x y)))
 (fn sub ((x int) (y int)) int ((sub_int_int x y)))
 (fn mul ((x int) (y int)) int ((mul_int_int x y)))
@@ -72,27 +65,56 @@ def run_li(li, print_output=False):
 (fn or ((x bool) (y bool)) bool ((or_bool_bool x y)))
 (fn xor ((x bool) (y bool)) bool ((xor_bool_bool x y)))
 (fn not ((x bool)) bool ((not_bool x)))
+
+(def const stdin (int 0))
+(def const stdout (int 1))
+(def const stderr (int 2))
+
+(fn print ((text Str)) ((linux_write stdout text)))
+(fn print ((text (Array byte))) ((linux_write stdout text)))
+
+
+(def const O_RDONLY (int 0))
+(def const O_WRONLY (int 1))
+(def const O_RDWR (int 2))
+
+(def const S_IRUSR (int 0x100))
+(def const S_IWUSR (int 0x80))
+(def const S_IXUSR (int 0x40))
+
+(def const File (struct ((_descriptor int))))
 )
 """
     li = _get_list_from_expr(default) + li
 
     eval_li = eval.eval(li, scope.scope)
 
-    default_llvm_ir = """define i64 @linux_write (i64 %fildes, i8* %buf, i64 %nbyte) {
-start:
-%retv = call i64 asm sideeffect "syscall",
+    default_llvm_ir = """
+define i64 @linux_open (i8* %filename, i64 %flags, i64 %mode) {
+    start:
+        %retv = call i64 asm sideeffect "syscall",
+        "=r,{rax},{rdi},{rsi},{rdx}"
+        (i64 0, i8* %filename, i64 %flags, i64 %mode)
+
+        ret i64 %retv
+}
+
+define i64 @linux_write (i64 %fildes, i8* %buf, i64 %nbyte) {
+    start:
+        %retv = call i64 asm sideeffect "syscall",
         "={rax},{rax},{rdi},{rsi},{rdx}"
         (i64 1, i64 %fildes, i8* %buf, i64 %nbyte)
-ret i64 %retv
+
+        ret i64 %retv
 }
 
 define void @linux_exit (i64 %status) {
     start:
-    ; Perform the syscall using inline assembly
-    call void asm sideeffect "syscall",
-    "{rax},{rdi}"
-    (i32 60, i64 %status)
-    unreachable
+        call void asm sideeffect "syscall",
+        "{rax},{rdi}"
+        (i32 60, i64 %status)
+
+        unreachable
 }
 
 %struct.Str = type {i8*, i64}
