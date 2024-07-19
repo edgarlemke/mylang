@@ -1016,6 +1016,18 @@ def test_set_get_struct_member_depth_2(keep=False, debug=False):
         keep,
         debug,
     )
+
+
+def test_struct_generic(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        f"{dir_path}/run/struct_generic/main.k",
+        keep,
+        debug,
+    )
 #
 #
 
