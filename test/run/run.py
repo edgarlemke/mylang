@@ -1032,6 +1032,22 @@ def test_struct_generic(keep=False, debug=False):
 #
 
 
+# TAGGED UNIONS TESTS
+#
+def test_tagged_union_init(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        f"{dir_path}/run/tagged_union_init/main.k",
+        keep,
+        debug,
+    )
+#
+#
+
+
 # FORMATTING TESTS
 
 
