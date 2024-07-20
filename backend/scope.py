@@ -467,7 +467,7 @@ def __def__(node, scope):
 # \t\t; %{name} = alloca %{generated_struct_name}
 # """
 
-                retv = _def_struct_init(name, type_, data, scope, generated_struct_name)
+                retv = _def_struct_init(type_, node, scope, generated_struct_name)
 
             else:
                 raise Exception(f"Unknown composite type {type_}")
@@ -481,7 +481,7 @@ def __def__(node, scope):
             if found_struct:
                 debug(f"__def__():  backend - found_struct - type_name_value: {type_name_value} data: {data}")
 
-                retv = _def_struct_init(name, type_, data, scope)
+                retv = _def_struct_init(type_, node, scope)
             else:
                 raise Exception(f"Unknown type: {type_}")
 
@@ -575,7 +575,10 @@ def _set_array_member(type_value, member_index, type_, data, name, array_size):
     return retv
 
 
-def _def_struct_init(name, type_, data, scope, generated_struct_name=None):
+def _def_struct_init(type_, node, scope, generated_struct_name=None):
+    name = node[2]
+    data = node[3]
+
     debug(f"_def_struct_init():  name: {name} type: {type_} data: {data} scope:{hex(id(scope))}")
 
     if isinstance(type_, list):
@@ -584,13 +587,13 @@ def _def_struct_init(name, type_, data, scope, generated_struct_name=None):
     else:
         is_generic_struct = False
         tmp_type = type_
-        members_container = type_name_value[3][0]
 
     type_name_value = eval.get_name_value(tmp_type, scope)
     debug(f"_def_struct_init():  type_name_value: {type_name_value}")
 
+    members_container = type_name_value[3][0]
+
     if is_generic_struct:
-        members_container = type_name_value[3][0]
         type_variables_container = type_name_value[3][0][0]
         members_rest = type_name_value[3][0][1:]
         type_rest = type_[1:]
@@ -606,6 +609,9 @@ def _def_struct_init(name, type_, data, scope, generated_struct_name=None):
 
         debug(f"_def_struct_init():  new_members_container: {new_members_container}")
         members_container = new_members_container
+
+        debug(f"_def_struct_init():  LARA {type_name_value} {type_rest}")
+        members_container = _substitute_struct_generic_types(type_name_value, type_rest)
 
         # fix type_ for IR
         type_ = generated_struct_name
@@ -1296,39 +1302,16 @@ def __get_struct_member__(node, scope):
         debug(f"__get_struct_member__():  loop():  is_generic_struct: {is_generic_struct}")
 
         if is_generic_struct:
-            type_variables = members[0][0]
-            debug(f"__get_struct_member__():  loop():  type_variables: {type_variables}")
-
             type_values = struct_name_value[2][1:]
             debug(f"__get_struct_member__():  loop():  type_values: {type_values}")
 
-            substituted_types = {}
-            for tv_index, tv in enumerate(type_variables):
-                substituted_types[tv] = type_values[tv_index]
-            debug(f"__get_struct_member__():  loop():  substituted_types: {substituted_types}")
-
-            new_members = []
-            for member in members[1:]:
-                debug(f"__get_struct_member__():  loop():  member: {member}")
-                type_variable = member[1]
-                member[1] = substituted_types[type_variable]
-                new_members.append(member)
-
-            debug(f"__get_struct_member__():  loop():  new_members: {new_members}")
-
-            members = new_members
-
+            members = _substitute_struct_generic_types(structdef_name_value, type_values)
             structdef_name, converted_types = _generate_generic_struct_name(struct_name_value[2], type_values, scope)
 
+        # get member type
         member_type = ""
         for member_index, member in enumerate(members):
             debug(f"__get_struct_member__():  loop():  member: {member}")
-
-            # check if member is struct
-            # member_name_value = eval.get_name_value(member[1], scope)
-            # if member_name_value != [] and member_name_value[2] == "struct":
-            #    member_type = f"%{member[1]}*"
-
             if member[0] == struct_member:
                 member_type = _convert_type(member[1], scope)
                 break
@@ -1385,6 +1368,37 @@ def __get_struct_member__(node, scope):
 """)
 
     return "\n".join(stack)
+
+
+def _substitute_struct_generic_types(structdef_name_value, type_values):
+    debug(f"_substitute_struct_generic_types():  structdef_name_value: {structdef_name_value}  type_values: {type_values}")
+
+    members = structdef_name_value[3][0]
+    debug(f"_substitute_struct_generic_types():  members: {members}")
+
+    type_variables = members[0][0]
+    debug(f"_substitute_struct_generic_types():  type_variables: {type_variables}")
+
+    # type_values = type_name_value[2][1:]
+    # debug(f"_substitute_struct_generic_types():  type_values: {type_values}")
+
+    substituted_types = {}
+    for tv_index, tv in enumerate(type_variables):
+        substituted_types[tv] = type_values[tv_index]
+    debug(f"_substitute_struct_generic_types():  substituted_types: {substituted_types}")
+
+    new_members = []
+    for member in members[1:]:
+        debug(f"_substitute_struct_generic_types():  member: {member}")
+        type_variable = member[1]
+
+        if type_variable in substituted_types.keys():
+            member[1] = substituted_types[type_variable]
+        new_members.append(member)
+
+    debug(f"_substitute_struct_generic_types():  new_members: {new_members}")
+
+    return new_members
 
 
 # def _validate_get_struct_member(node, scope):
