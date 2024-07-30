@@ -86,7 +86,7 @@ def __def__(node, scope):
         value = data[0]
 
     elif len(data) >= 2:
-        if type_ == "struct":
+        if type_ in ["struct", "TUnion"]:
             value = data[1:]
         else:
             value = data[1]

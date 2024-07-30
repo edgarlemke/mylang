@@ -9,6 +9,21 @@ import eval
 from shared import debug
 
 
+types_sizes = {
+        "i1": 1,
+        "i8": 8,
+        "i16": 16,
+        "i32": 32,
+        "i64": 64,
+        "i128": 128,
+        "float": 32,
+        "double": 64,
+        "x86_fp80": 80,
+        "fp128": 128,
+        "ppc_fp128": 128
+}
+
+
 def __fn__(node, scope):
     debug(f"__fn__():  backend - node: {node}")
 
@@ -386,20 +401,9 @@ def __def__(node, scope):
                     converted_members = []
                     for member in value:
                         debug(f"__def__():  struct - member: {member}")
-
-                        # check if type is struct
-                        # member_type_name_value = eval.get_name_value(member[1], scope)
-                        # debug(f"__def__():  struct - member_type_name_value: {member_type_name_value}")
-
-                        # if member_type_name_value != [] and member_type_name_value[2] == "struct":
-                        #    converted_member_type = f"%{member[1]}*"
-                        # else:
                         converted_member_type = _convert_type(member[1], scope)
-
-                        debug(f"__def__():  converted_member_type: {converted_member_type}")
-
+                        debug(f"__def__():  struct - converted_member_type: {converted_member_type}")
                         converted_members.append(converted_member_type)
-
                     joined_members = ", ".join(converted_members)
 
                     retv = f"""; "{name}" struct definition
@@ -407,6 +411,65 @@ def __def__(node, scope):
 
             else:
                 raise Exception("Invalid size of struct")
+
+        # handle tagged unions
+        elif type_ == "TUnion":
+            if len(data) == 2:
+                value = data[1]
+                debug(f"__def__():  TUnion - value: {value}")
+
+                # hangle generic tagged unions definition
+                if False:
+                    retv = ""
+
+                # handle not-generic tagged union definition
+                else:
+                    # add default tag integer
+                    converted_members = ["i8"]
+                    member_types_union_definitions = []
+
+                    largest_member_type_size = 0
+                    for member in value:
+                        debug(f"__def__():  TUnion - member: {member}")
+
+                        # convert member type
+                        converted_member_type = _convert_type(member[1], scope)
+                        debug(f"__def__():  TUnion - converted_member_type: {converted_member_type}")
+
+                        # get size of member type
+                        member_type_size = 0
+                        if converted_member_type[-1] == "*":
+                            member_type_size = 8  # bytes
+                        else:
+                            member_type_size = types_sizes[converted_member_type]
+
+                        if member_type_size == 0:
+                            raise Exception("Couldn't get member type size")
+
+                        debug(f"__def__():  TUnion - member_type_size: {member_type_size}")
+
+                        # check if size of largest member type size isn't set
+                        if largest_member_type_size == 0:
+                            # if it isn't set, set it
+                            largest_member_type_size = member_type_size
+                        # else, check if current member type size is larger than largest member type size
+                        elif member_type_size > largest_member_type_size:
+                            # if it's larger, set largest member type size with larger value
+                            largest_member_type_size = member_type_size
+
+                        # append member type definition
+                        type_union_definition = ", ".join(converted_members + [f"i{member_type_size}"])
+                        member_types_union_definitions.append(f"%{name}_{member[1]} = type {{{type_union_definition}}}")
+
+                    converted_members.append(f"i{largest_member_type_size}")
+
+                    joined_members = ", ".join(converted_members)
+                    retv = f"""; "{name}" tagged union definition
+%{name} = type {{{joined_members}}}
+""" + "\n".join(member_types_union_definitions)
+
+            else:
+                raise Exception("Invalid size of TUnion")
 
         # test for composite types
         elif isinstance(type_, list):
@@ -474,14 +537,21 @@ def __def__(node, scope):
 
         else:
 
-            # check for structs
             type_name_value = eval.get_name_value(type_, scope)
-            found_struct = type_name_value != [] and type_name_value[2] == "struct"
+            debug(f"__def__():  backend - type_name_value: {type_name_value}")
 
+            # check for structs
+            found_struct = type_name_value != [] and type_name_value[2] == "struct"
             if found_struct:
                 debug(f"__def__():  backend - found_struct - type_name_value: {type_name_value} data: {data}")
-
                 retv = _def_struct_init(type_, node, scope)
+
+            # check for tagged unions
+            found_tagged_union = type_name_value != [] and type_name_value[2] == "TUnion"
+            if found_tagged_union:
+                debug(f"__def__():  backend - found_tagged_union - type_name_value: {type_name_value} data: {data}")
+                retv = _def_tagged_union(type_, node, scope)
+
             else:
                 raise Exception(f"Unknown type: {type_}")
 
@@ -603,12 +673,11 @@ def _def_struct_init(type_, node, scope, generated_struct_name=None):
         debug(f"_def_struct_init():  type_rest: {type_rest}")
 
         # TODO: validate if they have the same size
-        new_members_container = []
-        for i_index, i_member in enumerate(members_rest):
-            new_members_container.append([i_member[0], type_rest[i_index]])
-
-        debug(f"_def_struct_init():  new_members_container: {new_members_container}")
-        members_container = new_members_container
+        # new_members_container = []
+        # for i_index, i_member in enumerate(members_rest):
+        #    new_members_container.append([i_member[0], type_rest[i_index]])
+        # debug(f"_def_struct_init():  new_members_container: {new_members_container}")
+        # members_container = new_members_container
 
         debug(f"_def_struct_init():  LARA {type_name_value} {type_rest}")
         members_container = _substitute_struct_generic_types(type_name_value, type_rest)
@@ -783,6 +852,67 @@ def _validate_members_type(members_type, scope):
     return valid
 
 
+def _def_tagged_union(type_, node, scope):
+    debug(f"_def_tagged_union():  type: {type_} node: {node} scope: {hex(id(scope))}")
+
+    def_, mutdecl, name, data = node
+
+    function_name = functions_stack[0][0]
+    tmp_name = _get_NAME(function_name, name)
+    _increment_NAME(function_name, name)
+
+    tagged_union_name, tagged_union_value = data
+    debug(f"_def_tagged_union():  tagged_union_name: {tagged_union_name} tagged_union_value: {tagged_union_value}")
+
+    # get tag type
+    tag_type = ""
+
+    # check if tagged_union_value is a name
+    union_value_name_value = eval.get_name_value(tagged_union_value, scope)
+
+    # if it's a name, raise exception not implemented
+    if union_value_name_value != []:
+        raise Exception("Not implemented!")
+    # if it's not, try to infer type
+    else:
+        tag_type = eval._infer_type(tagged_union_value)[0]
+
+    if tag_type == "":
+        raise Exception("Couldn't get tag type")
+
+    tagged_union_tag_type = f"{tagged_union_name}_{tag_type}"
+    converted_tag_type = _convert_type(tag_type, scope)
+    converted_tag_value = tagged_union_value
+
+    retv = f"""\t\t; allocate space for tagged union
+\t\t%{tmp_name} = alloca %{tagged_union_name}
+"""
+
+    if union_value_name_value != []:
+        raise Exception("Not implemented!")
+    else:
+        tmp_name_ptr = _get_NAME(function_name, f"{name}_tag_ptr")
+        _increment_NAME(function_name, f"{name}_tag_ptr")
+
+        tmp_name_casted_ptr = _get_NAME(function_name, f"{name}_{tag_type}_casted_ptr")
+        _increment_NAME(function_name, f"{name}_{tag_type}_casted_ptr")
+
+        tmp_name_value_ptr = _get_NAME(function_name, f"{name}_value_ptr")
+        _increment_NAME(function_name, f"{name}_value_ptr")
+
+        retv += f"""\t\t; set tag
+\t\t%{tmp_name_ptr} = getelementptr %{tagged_union_name}, %{tagged_union_name}* %{tmp_name}, i32 0, i32 0
+\t\tstore i8 {converted_tag_value}, i8* %{tmp_name_ptr}
+\t\t; bitcast
+\t\t%{tmp_name_casted_ptr} = bitcast %{tagged_union_name}* %{tmp_name} to %{tagged_union_tag_type}*
+\t\t; set value
+\t\t%{tmp_name_value_ptr} = getelementptr %{tagged_union_tag_type}, %{tagged_union_tag_type}* %{tmp_name_casted_ptr}, i32 0, i32 1
+\t\tstore {converted_tag_type} {converted_tag_value}, {converted_tag_type}* %{tmp_name_value_ptr}
+"""
+
+    return retv
+
+
 def _unoverload(name, function_arguments):
     debug(f"_unoverload():  name: {name} function_arguments: {function_arguments} ")
 
@@ -875,15 +1005,16 @@ def _validate_type(type_, scope):
     # get types and structs from scope and parent scopes
     all_types = []
     all_structs = []
+    all_tagged_unions = []
 
-    def iterup(scope, all_types, all_structs):
+    def iterup(scope, all_types, all_structs, all_tagged_unions):
         # print(f"\n!! iterup - scope: {scope}\n")
 
         parent_scope = scope["parent"]
         children_scopes = scope["children"]
 
         if parent_scope is not None:
-            iterup(parent_scope, all_types, all_structs)
+            iterup(parent_scope, all_types, all_structs, all_tagged_unions)
 
         types = [t[0] for t in scope["names"] if t[2] == "type" and t[0] not in all_types]
         all_types += types
@@ -893,9 +1024,12 @@ def _validate_type(type_, scope):
         all_structs += structs
         # print(f"structs: {structs}")
 
-    iterup(scope, all_types, all_structs)
+        tagged_unions = [s[0] for s in scope["names"] if s[2] == "TUnion" and s[0] not in all_tagged_unions]
+        all_tagged_unions += tagged_unions
+
+    iterup(scope, all_types, all_structs, all_tagged_unions)
     exceptions = ["fn"]
-    valid_types = (all_types + all_structs + exceptions)
+    valid_types = (all_types + all_structs + all_tagged_unions + exceptions)
 
     def loop(current_type):
         for each_type in current_type:
@@ -2064,6 +2198,7 @@ def _setup_scope():
     ["Array", "const", "type", ['?']],
     ["struct", "const", "type", ['?']],
     ["enum", "const", "type", ['?']],
+    ["TUnion", "const", "type", ['?']],
 
     ["Str", "const", "type", ['?']],
 

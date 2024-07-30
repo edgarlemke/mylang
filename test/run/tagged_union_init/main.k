@@ -1,7 +1,16 @@
 TUnion Result :=
-	(T1 T2)
-	T1 value
-	T2 signal
+	value bool
+	signal int
+
 
 fn main () int
-	(Result int bool) result := 10
+	Result result := 46
+	mut int x := 0
+
+#	handle result
+#		bool
+#			x = 1
+#		int
+#			x = result
+#
+	x
