@@ -1044,6 +1044,18 @@ def test_tagged_union_init(keep=False, debug=False):
         keep,
         debug,
     )
+
+
+def test_tagged_union_init_many_handlers(keep=False, debug=False):
+    return _test_exit_code(
+        i.getframeinfo(i.currentframe()).function,
+        "",
+        "",
+        "46",
+        f"{dir_path}/run/tagged_union_init_many_handlers/main.k",
+        keep,
+        debug,
+    )
 #
 #
 

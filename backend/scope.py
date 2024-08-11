@@ -881,6 +881,33 @@ def _def_tagged_union(type_, node, scope):
     if tag_type == "":
         raise Exception("Couldn't get tag type")
 
+    debug(f"_def_tagged_union():  tag_type: {tag_type}")
+
+    # get tag value from tag type
+    tag_value = ""
+
+    # get tags of tagged union
+    union_name_name_value = eval.get_name_value(tagged_union_name, scope)
+    if union_name_name_value == []:
+        raise Exception("Blergh!")
+
+    debug(f"_def_tagged_union():  union_name_name_value: {union_name_name_value}")
+
+    tags = union_name_name_value[3][0]
+    debug(f"_def_tagged_union():  tags: {tags}")
+
+    for idx, each_tag in enumerate(tags):
+        extracted_tag = each_tag[0]
+        if extracted_tag == tag_type:
+            tag_value = idx
+            break
+
+    if tag_value == "":
+        raise Exception("Couldn't find tag value!")
+
+    debug(f"_def_tagged_union():  tag_value: {tag_value}")
+    #
+
     tagged_union_tag_type = f"{tagged_union_name}_{tag_type}"
     converted_tag_type = _convert_type(tag_type, scope)
     converted_tag_value = tagged_union_value
@@ -903,7 +930,7 @@ def _def_tagged_union(type_, node, scope):
 
         retv += f"""\t\t; set tag
 \t\t%{tmp_name_ptr} = getelementptr %{tagged_union_name}, %{tagged_union_name}* %{tmp_name}, i32 0, i32 0
-\t\tstore i8 {converted_tag_value}, i8* %{tmp_name_ptr}
+\t\tstore i8 {tag_value}, i8* %{tmp_name_ptr}
 \t\t; bitcast
 \t\t%{tmp_name_casted_ptr} = bitcast %{tagged_union_name}* %{tmp_name} to %{tagged_union_tag_type}*
 \t\t; set value
@@ -2005,7 +2032,8 @@ def __handle__(node, scope):
         # if not penultimate value, branch to next skip label
         else:
             template.append(f"""\t\t; branch not penultimate
-\t\tbr i1 %{tmp_tag_value_cmp}, label %{tmp_tag_type_handler}, label %{tmp_tag_type_handler_skip}""")
+\t\tbr i1 %{tmp_tag_value_cmp}, label %{tmp_tag_type_handler}, label %{tmp_tag_type_handler_skip}
+\t{tmp_tag_type_handler}:""")
 
         _set_branch_NAME(tmp_tag_type_handler)
 
@@ -2032,7 +2060,6 @@ def __handle__(node, scope):
         debug(f"__handle__():  serialized_handler_ir: {serialized_handler_ir}")
 
         template.append(serialized_handler_ir)
-        # template.append(f"\t\tbr label %{tmp_tag_type_handler_skip} ; bitch")
 
         if last_tag_value:
             template.append(f"""\t\t; end of last handler, branch to end
@@ -2043,14 +2070,13 @@ def __handle__(node, scope):
 \t\tbr label %{tmp_handler_end}""")
 
         else:
-            template.append(f"\t\tbr label %{tmp_handler_end} ; bitch")
+            template.append(f"\t\tbr label %{tmp_handler_end}")
             template.append(f"\t{tmp_tag_type_handler_skip}:")
 
         if last_tag_value:
             template.append(f"\t{tmp_handler_end}:")
 
             # add phi nodes
-
             debug(f"__handle__():  _names_branches: {_names_branches}")
 
             for name_, branch_data in _names_branches[function_name].items():
