@@ -540,15 +540,16 @@ def __def__(node, scope):
             type_name_value = eval.get_name_value(type_, scope)
             debug(f"__def__():  backend - type_name_value: {type_name_value}")
 
-            # check for structs
             found_struct = type_name_value != [] and type_name_value[2] == "struct"
+            found_tagged_union = type_name_value != [] and type_name_value[2] == "TUnion"
+
+            # check for structs
             if found_struct:
                 debug(f"__def__():  backend - found_struct - type_name_value: {type_name_value} data: {data}")
                 retv = _def_struct_init(type_, node, scope)
 
             # check for tagged unions
-            found_tagged_union = type_name_value != [] and type_name_value[2] == "TUnion"
-            if found_tagged_union:
+            elif found_tagged_union:
                 debug(f"__def__():  backend - found_tagged_union - type_name_value: {type_name_value} data: {data}")
                 retv = _def_tagged_union(type_, node, scope)
 
