@@ -433,7 +433,7 @@ def __def__(node, scope):
                         debug(f"__def__():  TUnion - member: {member}")
 
                         # convert member type
-                        converted_member_type = _convert_type(member[1], scope)
+                        converted_member_type = _convert_type(member[0], scope)
                         debug(f"__def__():  TUnion - converted_member_type: {converted_member_type}")
 
                         # get size of member type
@@ -459,7 +459,7 @@ def __def__(node, scope):
 
                         # append member type definition
                         type_union_definition = ", ".join(converted_members + [f"i{member_type_size}"])
-                        member_types_union_definitions.append(f"%{name}_{member[1]} = type {{{type_union_definition}}}")
+                        member_types_union_definitions.append(f"%{name}_{member[0]} = type {{{type_union_definition}}}")
 
                     converted_members.append(f"i{largest_member_type_size}")
 
@@ -859,7 +859,7 @@ def _def_tagged_union(type_, node, scope):
 
     function_name = functions_stack[0][0]
     tmp_name = _get_NAME(function_name, name)
-    _increment_NAME(function_name, name)
+    # _increment_NAME(function_name, name)
 
     tagged_union_name, tagged_union_value = data
     debug(f"_def_tagged_union():  tagged_union_name: {tagged_union_name} tagged_union_value: {tagged_union_value}")
@@ -898,7 +898,7 @@ def _def_tagged_union(type_, node, scope):
         _increment_NAME(function_name, f"{name}_{tag_type}_casted_ptr")
 
         tmp_name_value_ptr = _get_NAME(function_name, f"{name}_value_ptr")
-        _increment_NAME(function_name, f"{name}_value_ptr")
+        # _increment_NAME(function_name, f"{name}_value_ptr")
 
         retv += f"""\t\t; set tag
 \t\t%{tmp_name_ptr} = getelementptr %{tagged_union_name}, %{tagged_union_name}* %{tmp_name}, i32 0, i32 0
@@ -1093,7 +1093,7 @@ def _serialize_body(body):
 
 
 def __set__(node, scope):
-    debug(f"__set__():  backend")
+    debug(f"__set__():  backend - node: {node} scope: {hex(id(scope))}")
 
     import eval
     import list as list_
@@ -1127,8 +1127,39 @@ def __set__(node, scope):
 
     else:
 
-        template.append(f"""\t\t; set "{name}" value as "{value}"
-\t\tstore {type_} {value}, {type_}* %{name}_stack""")
+        # check if value is a name
+        value_name_value = eval.get_name_value(value, scope)
+        debug(f"__set__():  backend - value_name_value: {value_name_value}")
+        if value_name_value != []:
+
+            value_name_value_type = value_name_value[2]
+            value_name_value_type_name_value = eval.get_name_value(value_name_value_type, scope)
+
+            debug(f"__set__():  backend - value_name_value_type_name_value: {value_name_value_type_name_value}")
+
+            if value_name_value_type_name_value[2] == "TUnion":
+                tagged_union_value_ptr_name = _get_NAME(functions_stack[0][0], f"{value}_value_ptr")
+                tmp_name = _get_NAME(functions_stack[0][0], f"tmp")
+                _increment_NAME(functions_stack[0][0], f"tmp")
+
+                name_ir = _get_NAME(functions_stack[0][0], f"{name}", track_branching=True)
+                _increment_NAME(functions_stack[0][0], f"{name}")
+
+                template.append(f"""\t\t; get value from "{value}" tagged union value ptr
+\t\t%{tmp_name} = load {type_}, {type_}* %{tagged_union_value_ptr_name}
+\t\t; set "{name}" value obtained from "{value}"
+\t\tstore {type_} %{tmp_name}, {type_}* %{name}_stack
+\t\t; update "{name}" IR name
+\t\t%{name_ir} = load {type_}, {type_}* %{name}_stack""")
+        # TODO: support for other types
+        else:
+            name_ir = _get_NAME(functions_stack[0][0], f"{name}", track_branching=True)
+            _increment_NAME(functions_stack[0][0], f"{name}")
+
+            template.append(f"""\t\t; set "{name}" value as "{value}"
+\t\tstore {type_} {value}, {type_}* %{name}_stack
+\t\t; update "{name}" IR name
+\t\t%{name_ir} = load {type_}, {type_}* %{name}_stack""")
 
     debug(f"__set__():  backend - template: {template}")
 
@@ -1894,6 +1925,189 @@ def _validate_linux_write(node, scope):
         raise Exception(f"Wrong number of arguments for linux_write: {node}")
 
 
+def __handle__(node, scope):
+    debug(f"__handle__():  node: {node} scope: {hex(id(scope))}")
+
+    _validate_handle(node, scope)
+
+    handle_, handled_name, handler_code = node
+
+    handled_name_name_value = eval.get_name_value(handled_name, scope)
+    debug(f"__handle__():  handled_name_name_value: {handled_name_name_value}")
+
+    handled_name_type = ""
+    handled_name_type = handled_name_name_value[2]
+
+    # get tagged union type name value
+    tagged_union_name_value = eval.get_name_value(handled_name_name_value[2], scope)
+    tagged_union_types = [t[0] for t in tagged_union_name_value[3][0]]
+
+    function_name = functions_stack[0][0]
+    tmp_handled_name = _get_NAME(function_name, f"{handled_name}")
+    tmp_tag_value_ptr = _get_NAME(function_name, f"{handled_name}_tag_ptr")
+    tmp_tag_value = _get_NAME(function_name, f"{handled_name}_tag_value")
+
+    template = [f"""\t\t; handle "{handled_name}"
+\t\t; get tag value
+\t\t%{tmp_tag_value_ptr} = getelementptr %{handled_name_type}, %{handled_name_type}* %{tmp_handled_name}, i32 0, i32 0
+\t\t%{tmp_tag_value} = load i8, i8* %{tmp_tag_value_ptr}"""]
+
+    tmp_handler_end = _get_NAME(function_name, f"{handled_name}_handler_end")
+    _increment_NAME(function_name, f"{handled_name}_handler_end")
+
+    # iter over valid tag values
+    last_handler_label = None
+    enum_tagged_union_types = enumerate(tagged_union_types)
+    for tag_value, tag_type in enum_tagged_union_types:
+        debug(f"__handle__():  tag_value: {tag_value} tag_type: {tag_type}")
+
+        # generate tag value handler label
+        last_tag_value = tag_value == len(tagged_union_types) - 1
+
+        if not last_tag_value:
+            tmp_tag_value_cmp = _get_NAME(function_name, f"{handled_name}_tag_value_cmp")
+            _increment_NAME(function_name, f"{handled_name}_tag_value_cmp")
+
+            tmp_tag_type_handler = _get_NAME(function_name, f"{handled_name}_{tag_type}_handler")
+            _increment_NAME(function_name, f"{handled_name}_{tag_type}_handler")
+        else:
+            tmp_tag_type_handler = last_handler_label
+
+        tmp_tag_type_handler_skip = _get_NAME(function_name, f"{handled_name}_{tag_type}_handler_skip")
+        _increment_NAME(function_name, f"{handled_name}_{tag_type}_handler_skip")
+
+        # generate llvm ir for compare actual tag value with each valid tag value
+        if not last_tag_value:
+            template.append(f"""\t\t;
+\t\t; compare tag {tag_value}
+\t\t%{tmp_tag_value_cmp} = icmp eq i8 %{tmp_tag_value}, {tag_value}""")
+        else:
+            template.append(f"""\t{last_handler_label}:""")
+
+        # generate llvm ir branch
+        # check if we're at the penultimate tag value
+        penultimate_tag_value = tag_value == len(tagged_union_types) - 2
+
+        if last_tag_value:
+            pass
+
+        # if penultimate, branch directly to last handler
+        elif penultimate_tag_value:
+            last_tag_type = tagged_union_types[-1]
+            last_handler_label = _get_NAME(function_name, f"{handled_name}_{last_tag_type}_handler")
+            _increment_NAME(function_name, f"{handled_name}_{last_tag_type}_handler")
+
+            template.append(f"""\t\t; branch penultimate
+\t\tbr i1 %{tmp_tag_value_cmp}, label %{tmp_tag_type_handler}, label %{last_handler_label}
+\t{tmp_tag_type_handler}:""")
+
+        # if not penultimate value, branch to next skip label
+        else:
+            template.append(f"""\t\t; branch not penultimate
+\t\tbr i1 %{tmp_tag_value_cmp}, label %{tmp_tag_type_handler}, label %{tmp_tag_type_handler_skip}""")
+
+        _set_branch_NAME(tmp_tag_type_handler)
+
+        # generate tag value handler llvm ir
+        handler_ir = None
+        for each_handler in handler_code:
+            debug(f"__handle__():  each_handler: {each_handler}")
+            each_handler_type = each_handler[0]
+
+            if each_handler_type == tag_type:
+                handler_ir = eval.eval(each_handler[1], scope)
+                break
+
+        debug(f"__handle__():  handler_ir: {handler_ir}")
+
+        _clear_branch_NAME()
+
+        tmp_handler_ir = []
+        for hli in handler_ir:
+            tmp_handler_ir.append(hli[0])
+        debug(f"__handle__():  tmp_handler_ir: {tmp_handler_ir}")
+
+        serialized_handler_ir = "\n".join(tmp_handler_ir)
+        debug(f"__handle__():  serialized_handler_ir: {serialized_handler_ir}")
+
+        template.append(serialized_handler_ir)
+        # template.append(f"\t\tbr label %{tmp_tag_type_handler_skip} ; bitch")
+
+        if last_tag_value:
+            template.append(f"""\t\t; end of last handler, branch to end
+\t\tbr label %{tmp_handler_end}""")
+
+        elif penultimate_tag_value:
+            template.append(f"""\t\t; end of penultimate handler, branch to end
+\t\tbr label %{tmp_handler_end}""")
+
+        else:
+            template.append(f"\t\tbr label %{tmp_handler_end} ; bitch")
+            template.append(f"\t{tmp_tag_type_handler_skip}:")
+
+        if last_tag_value:
+            template.append(f"\t{tmp_handler_end}:")
+
+            # add phi nodes
+
+            debug(f"__handle__():  _names_branches: {_names_branches}")
+
+            for name_, branch_data in _names_branches[function_name].items():
+                debug(f"__handle__():  name_: {name_}")
+                debug(f"__handle__():  branch_data: {branch_data}")
+
+                end_name = _get_NAME(function_name, name_)
+                type_ = "i64"
+
+                phi_node = [f"\t\t%{end_name} = phi {type_} "]
+
+                ct = 0
+                for branch_tmp_name, branch_name_ in branch_data:
+                    if ct > 0:
+                        phi_node.append(", ")
+
+                    phi_node.append(f"[ %{branch_tmp_name}, %{branch_name_} ]")
+
+                    ct += 1
+
+                template.append("".join(phi_node))
+
+    # join it all for retv
+
+    retv = "\n".join(template)
+    return retv
+
+
+def _validate_handle(node, scope):
+    debug(f"_validate_handle():  node: {node} scope: {hex(id(scope))}")
+    # check min node size
+    if len(node) != 3:
+        raise Exception(f"Wrong number of arguments for handle: {node}")
+
+    handle_, handled_name, handler_code = node
+
+    handled_name_name_value = eval.get_name_value(handled_name, scope)
+
+    # check if name to handle is assigned
+    if handled_name_name_value == []:
+        raise Exception(f"Unassigned name to handle: {handled_name}")
+
+    # get tagged union type name value
+    tagged_union_name_value = eval.get_name_value(handled_name_name_value[2], scope)
+
+    # check if all tagged union types are handled
+    tagged_union_types = [t[0] for t in tagged_union_name_value[3][0]]
+    handler_code_types = [t[0] for t in handler_code]
+
+    missing_handlers = [t for t in tagged_union_types if t not in handler_code_types]
+    if len(missing_handlers) > 0:
+        raise Exception(f"""Missing handlers for tagged union "{handled_name}": {",".join(missing_handlers)}""")
+
+    wrong_handlers = [t for t in handler_code_types if t not in tagged_union_types]
+    if len(wrong_handlers) > 0:
+        raise Exception(f"""Wrong handlers for tagged union "{handled_name}": {",".join(wrong_handlers)}""")
+
+
 def return_call(node, scope, stack=[]):
     debug(f"return_call():  node: {node} scope: {hex(id(scope))} stack: {stack}")
 
@@ -2061,9 +2275,13 @@ def _get_var_name(function_name, prefix):
 
 
 _names_storage = {}
+_names_branches = {}
+
+_branch_name = None
+_previous_branch_names = []
 
 
-def _get_NAME(function_name, name):
+def _get_NAME(function_name, name, last=False, track_branching=False):
     debug(f"_get_NAME():  function_name: {function_name} name: {name}")
 
     # initialize key in _names_storage for function_name
@@ -2074,9 +2292,28 @@ def _get_NAME(function_name, name):
     if name not in _names_storage[function_name].keys():
         _names_storage[function_name][name] = 0
 
-    NAME = f"{name}_{_names_storage[function_name][name]}"
+    if last:
+        NAME = f"{name}_{_names_storage[function_name][name] - 1}"
+    else:
+        NAME = f"{name}_{_names_storage[function_name][name]}"
 
     debug(f"_get_NAME():  NAME: {name}")
+    debug(f"_get_NAME():  _branch_name: {_branch_name}")
+
+    if _branch_name is not None and track_branching:
+        if function_name not in _names_branches.keys():
+            debug(f"_get_NAME():  setting _names_branches[{function_name}]")
+            _names_branches[function_name] = {}
+
+        if name not in _names_branches[function_name].keys():
+            debug(f"_get_NAME():  setting _names_branches[{function_name}][{name}]")
+            _names_branches[function_name][name] = []
+
+        # _names_branches[function_name][name].append([NAME, _branch_name])
+
+        _names_branches[function_name][name].append([NAME, _branch_name])
+
+        debug(f"_get_NAME(): _names_branches: {_names_branches}")
 
     return NAME  # _names_storage[function_name][name]
 
@@ -2084,6 +2321,76 @@ def _get_NAME(function_name, name):
 def _increment_NAME(function_name, name):
     debug(f"_increment_NAME():  function_name: {function_name} name: {name}")
     _names_storage[function_name][name] += 1
+
+
+"""
+main var
+ -> function name
+  -> var name
+   -> var NAME, branch name
+  -> var name
+   ...
+ -> function name
+ ...
+
+
+ -> function name
+  -> branch name
+   -> var name
+    -> var NAME
+"""
+
+"""
+x = variant
+y = 0
+handle x
+    int
+        if x == 0
+            # y_1
+            y = 1
+        else
+            # y_2
+            y = 2
+
+        # y_3
+        y += 1
+
+    bool
+        # y_4
+        y = 666
+
+...
+# y_5 phi
+"""
+
+
+def _set_branch_NAME(branch_name):
+    debug(f"_set_branch_NAME():  branch_name: {branch_name}")
+
+    global _branch_name
+    global _previous_branch_names
+
+    debug(f"_set_branch_NAME():  before _previous_branch_names: {_previous_branch_names}")
+    debug(f"_set_branch_NAME():  before _branch_name: {_branch_name}")
+
+    _previous_branch_names.append(_branch_name)
+    _branch_name = branch_name
+
+    debug(f"_set_branch_NAME():  after _previous_branch_names: {_previous_branch_names}")
+    debug(f"_set_branch_NAME():  after _branch_name: {_branch_name}")
+
+
+def _clear_branch_NAME():
+    debug(f"_clear_branch_NAME()")
+    global _branch_name
+
+    debug(f"_clear_branch_NAME():  before _previous_branch_names: {_previous_branch_names}")
+    debug(f"_clear_branch_NAME():  before _branch_name: {_branch_name}")
+
+    _branch_name = _previous_branch_names.pop()
+
+    debug(f"_clear_branch_NAME():  after _previous_branch_names: {_previous_branch_names}")
+    debug(f"_clear_branch_NAME():  after _branch_name: {_branch_name}")
 
 
 _declared_names = {}
@@ -2135,11 +2442,17 @@ def return_call_common_list(evaled, name_match, scope):
 
 
 def return_call_common_not_list(name_match, scope):
-    debug(f"""_eval_handle_common():  backend scope - function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]}""")
+    debug(f"""return_call_common_not_list():  backend scope - name_match: {name_match} function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]}""")
 
     if scope["is_last"] and scope["function_depth"] == 1:
         converted_type = _convert_type(name_match[2], scope)
-        li = [f"\t\tret {converted_type} %{name_match[0]}"]
+
+        # check if it's a mut name to get last declared NAME
+        if name_match[1] == "mut":
+            tmp_name = _get_NAME(functions_stack[0][0], name_match[0])
+            li = [f"\t\tret {converted_type} %{tmp_name}"]
+        else:
+            li = [f"\t\tret {converted_type} %{name_match[0]}"]
 
     else:
         li = ["\t\t; NOT IMPLEMENTED"]
@@ -2180,6 +2493,8 @@ def _setup_scope():
     ["get_ptr", "mut", "internal", __get_ptr__],
     ["size_of", "mut", "internal", __size_of__],
     ["unsafe", "mut", "internal", __unsafe__],
+
+    ["handle", "mut", "internal", __handle__],
 
     ["linux_open", "const", "internal", __linux_open__],
     ["linux_write", "const", "internal", __linux_write__],
