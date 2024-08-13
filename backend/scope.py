@@ -158,7 +158,7 @@ def _validate_fn(node, scope):
     elif len(node) == 5:
         fn_, name, args, ret_type, body = node
 
-    debug(f"_validate_fn():  args: {args}")
+    debug(f"_validate_fn():  backend - name: {name} args: {args} body: {body}")
 
     # types = [t[0] for t in scope["names"] if t[2] == "type"]
 

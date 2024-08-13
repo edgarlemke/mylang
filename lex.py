@@ -37,22 +37,22 @@ def tokenize(code, autolist=True):
     """
 
     token_list = _match_tokens(code)
-    #    debug(f"tokenize():  token_list after _match_tokens: {token_list}")
+    debug(f"tokenize():  token_list after _match_tokens: {token_list}")
 
     if len(token_list) == 0:
         raise Exception("No token match!")
 
     # match literals tokens
     token_list = _match_lit_tokens(token_list, code)
-    #    debug(f"tokenize():  token_list after _match_lit_tokens: {token_list}")
+    debug(f"tokenize():  token_list after _match_lit_tokens: {token_list}")
 
     # sort out duplicated tokens
     token_list = _decide_dup_tokens(token_list, ["LIT"])
-    #    debug(f"tokenize():  token_list after _decide_dup_tokens: {token_list}")
+    debug(f"tokenize():  token_list after _decide_dup_tokens: {token_list}")
 
     # sort token_list list by start position of the token
     token_list.sort(key=lambda x: x[2])
-    #    debug(f"tokenize():  token_list after sort: {token_list}")
+    debug(f"tokenize():  token_list after sort: {token_list}")
 
     token_list = _remove_comments(token_list)
     debug(f"tokenize():  token_list after _remove_comments: {token_list}")

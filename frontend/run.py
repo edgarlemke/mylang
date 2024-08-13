@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse
 import os
 import sys
@@ -49,14 +51,12 @@ def run(
 
 
 def _get_list_from_expr(expr, print_token_list=False, print_token_tree=False):
-    # from pprint import pprint
-
     token_list = lex.tokenize(expr)
     if print_token_list:
         print(list_.list_print(token_list), end="")
         exit()
 
-    # print(f"tokenize token_list: {pprint(token_list)}\n")
+    debug(f"_get_list_from_expr():  token_list: {token_list}\n")
 
     token_list = parse.parse(token_list)
     if print_token_tree:
