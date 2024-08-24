@@ -66,7 +66,14 @@ def __fn__(node, scope):
     if len(node) == 4:
         return_type = "void"
     if len(node) == 5:
-        return_type = _convert_type(return_type, scope)
+        return_type_name_value = eval.get_name_value(return_type, scope)
+
+        debug(f"__fn__():  backend return_type_name_value: {return_type_name_value}")
+        if return_type_name_value != []:
+            if return_type_name_value[2] == "TUnion":
+                return_type = f"%{return_type}"
+            else:
+                return_type = _convert_type(return_type, scope)
 
     debug(f"__fn__():  backend return_type: {return_type}")
 
@@ -859,7 +866,7 @@ def _def_tagged_union(type_, node, scope):
     def_, mutdecl, name, data = node
 
     function_name = functions_stack[0][0]
-    tmp_name = _get_NAME(function_name, name)
+    tmp_name = _get_NAME(function_name, f"{name}_ptr")
     # _increment_NAME(function_name, name)
 
     tagged_union_name, tagged_union_value = data
@@ -867,6 +874,10 @@ def _def_tagged_union(type_, node, scope):
 
     # get tag type
     tag_type = ""
+
+    # handle function calls
+    if isinstance(tagged_union_value, list):
+        return _def_tagged_union_fn_call(type_, node, scope)
 
     # check if tagged_union_value is a name
     union_value_name_value = eval.get_name_value(tagged_union_value, scope)
@@ -919,7 +930,7 @@ def _def_tagged_union(type_, node, scope):
     if union_value_name_value != []:
         raise Exception("Not implemented!")
     else:
-        tmp_name_ptr = _get_NAME(function_name, f"{name}_tag_ptr")
+        tmp_tag_ptr = _get_NAME(function_name, f"{name}_tag_ptr")
         _increment_NAME(function_name, f"{name}_tag_ptr")
 
         tmp_name_casted_ptr = _get_NAME(function_name, f"{name}_{tag_type}_casted_ptr")
@@ -928,16 +939,59 @@ def _def_tagged_union(type_, node, scope):
         tmp_name_value_ptr = _get_NAME(function_name, f"{name}_value_ptr")
         # _increment_NAME(function_name, f"{name}_value_ptr")
 
+        tmp_loaded = _get_NAME(function_name, f"{name}")
+        increment_NAME = (function_name, f"{name}")
+
         retv += f"""\t\t; set tag
-\t\t%{tmp_name_ptr} = getelementptr %{tagged_union_name}, %{tagged_union_name}* %{tmp_name}, i32 0, i32 0
-\t\tstore i8 {tag_value}, i8* %{tmp_name_ptr}
+\t\t%{tmp_tag_ptr} = getelementptr %{tagged_union_name}, %{tagged_union_name}* %{tmp_name}, i32 0, i32 0
+\t\tstore i8 {tag_value}, i8* %{tmp_tag_ptr}
 \t\t; bitcast
 \t\t%{tmp_name_casted_ptr} = bitcast %{tagged_union_name}* %{tmp_name} to %{tagged_union_tag_type}*
 \t\t; set value
 \t\t%{tmp_name_value_ptr} = getelementptr %{tagged_union_tag_type}, %{tagged_union_tag_type}* %{tmp_name_casted_ptr}, i32 0, i32 1
 \t\tstore {converted_tag_type} {converted_tag_value}, {converted_tag_type}* %{tmp_name_value_ptr}
+\t\t; load value for future refs
+\t\t%{tmp_loaded} = load %{tagged_union_name}, %{tagged_union_name}* %{tmp_name}
 """
 
+    return retv
+
+
+def _def_tagged_union_fn_call(type_, node, scope):
+    debug(f"_def_tagged_union_fn_call():  type_: {type_} node: {node} scope: {hex(id(scope))}")
+
+    def_, mutdecl, name, data = node
+
+    function_name = functions_stack[0][0]
+    tmp_name = _get_NAME(function_name, f"{name}_ptr")
+    # _increment_NAME(function_name, name)
+
+    tmp_loaded = _get_NAME(function_name, f"{name}")
+    increment_NAME = (function_name, f"{name}")
+
+    tagged_union_name, tagged_union_value = data
+    debug(f"_def_tagged_union_fn_call():  tagged_union_name: {tagged_union_name} tagged_union_value: {tagged_union_value}")
+
+    tagged_union_value_name_value = eval.get_name_value(tagged_union_value[0], scope)
+    debug(F"_def_tagged_union_fn_call():  tagged_union_value_name_value: {tagged_union_value_name_value}")
+    # called_function_name = _unoverload(tagged_union_value, scope)
+
+    method, solved_arguments = eval.find_function_method(tagged_union_value, tagged_union_value_name_value, scope)
+    debug(f"_def_tagged_union_fn_call():  method: {method}")
+
+    called_function_arguments = method[0]
+    debug(f"_def_tagged_union_fn_call():  called_function_arguments: {called_function_arguments}")
+
+    unoverloaded_fn_name = _unoverload(tagged_union_value[0], called_function_arguments)
+    debug(f"_def_tagged_union_fn_call():  unoverloaded_fn_name: {unoverloaded_fn_name}")
+
+    retv = f"""\t\t; allocate space for tagged union
+\t\t%{tmp_name} = alloca %{tagged_union_name}
+\t\t; call function and get return value
+\t\t%{tmp_loaded}  = call %{tagged_union_name} @{unoverloaded_fn_name}()
+\t\t; store return value in allocated space
+\t\tstore %{tagged_union_name} %{tmp_loaded}, %{tagged_union_name}* %{tmp_name}
+"""
     return retv
 
 
@@ -1971,7 +2025,7 @@ def __handle__(node, scope):
     tagged_union_types = [t[0] for t in tagged_union_name_value[3][0]]
 
     function_name = functions_stack[0][0]
-    tmp_handled_name = _get_NAME(function_name, f"{handled_name}")
+    tmp_handled_name = _get_NAME(function_name, f"{handled_name}_ptr")
     tmp_tag_value_ptr = _get_NAME(function_name, f"{handled_name}_tag_ptr")
     tmp_tag_value = _get_NAME(function_name, f"{handled_name}_tag_value")
 
@@ -2472,14 +2526,26 @@ def return_call_common_not_list(name_match, scope):
     debug(f"""return_call_common_not_list():  backend scope - name_match: {name_match} function_depth: {scope["function_depth"]} - is_last: {scope["is_last"]}""")
 
     if scope["is_last"] and scope["function_depth"] == 1:
-        converted_type = _convert_type(name_match[2], scope)
+
+        name_match_name_value = eval.get_name_value(name_match[2], scope)
+        if name_match_name_value != []:
+            if name_match_name_value[2] == "TUnion":
+                converted_type = f"%{name_match[2]}"
+            else:
+                converted_type = _convert_type(name_match[2], scope)
 
         # check if it's a mut name to get last declared NAME
         if name_match[1] == "mut":
             tmp_name = _get_NAME(functions_stack[0][0], name_match[0])
             li = [f"\t\tret {converted_type} %{tmp_name}"]
         else:
-            li = [f"\t\tret {converted_type} %{name_match[0]}"]
+
+            if name_match_name_value != [] and name_match_name_value[2] == "TUnion":
+                name_match_ = _get_NAME(functions_stack[0][0], name_match[0])
+                li = [f"\t\tret {converted_type} %{name_match_}"]
+
+            else:
+                li = [f"\t\tret {converted_type} %{name_match[0]}"]
 
     else:
         li = ["\t\t; NOT IMPLEMENTED"]

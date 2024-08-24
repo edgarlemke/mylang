@@ -419,7 +419,7 @@ def _call_fn(li, fn, scope):
 def find_function_method(li, fn, scope):
     """
     li    - the list calling the function
-    fn    - the function name
+    fn    - the function name value
     scope - scope list
     """
 
